@@ -30,41 +30,43 @@ const LoginPage = () => {
         <div className="relative z-10 animate-fade-in-up">
           <div className="flex items-center gap-2 text-white">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg glass-card"></div>
-            <span className="text-2xl font-black tracking-tight">
+            <span className="flex text-2xl font-black tracking-tight items-center">
+              <img
+                alt="Logo trang"
+                className="w-13 h-10"
+                src="../../../public/logomautrang.png"
+              />
               SPACEPOCKER
             </span>
           </div>
         </div>
 
-        <div className="relative z-10 glass-card rounded-xl p-6 max-w-lg mt-auto animate-fade-in-up hover:scale-[1.01] transition-transform duration-500 ease-out">
-          <div className="flex flex-col gap-4">
-            <div className="flex gap-1 text-[#FFD700]">
+        <div className="relative z-10 bg-white/10 backdrop-blur-md rounded-3xl p-8 max-w-lg mt-auto border border-white/20 shadow-2xl hover:bg-white/15 hover:border-white/30 hover:shadow-[0_20px_60px_rgba(255,255,255,0.15)] hover:scale-[1.02] transition-all duration-500 ease-out">
+          <div className="flex flex-col gap-6">
+            <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((s) => (
-                <span
-                  key={s}
-                  className="material-symbols-outlined text-[20px] fill-1"
-                >
+                <span key={s} className="text-[#FFD700] text-xl">
                   ⭐
                 </span>
               ))}
             </div>
-            <p className="text-white text-xl font-medium leading-relaxed tracking-tight">
+            <p className="text-white text-lg font-normal leading-relaxed">
               "Spacepocker completely transformed how we manage our university's
               study pods. The booking flow is seamless and the interface is
               stunning."
             </p>
-            <div className="flex items-center gap-4 mt-2 pt-4 border-t border-white/10">
+            <div className="flex items-center gap-3 pt-4 border-t border-white/10">
               <div
-                className="w-12 h-12 rounded-full ring-2 ring-white/30 bg-cover bg-center"
+                className="w-12 h-12 rounded-full bg-cover bg-center"
                 style={{
                   backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuC0epEoHMaSCepXaFlkmUci9EDtDD6rkcHs27ywPLuiG_khCWZdafrMxlY_ztx2LZ53n5tx8oIb0hwhFlh-YCdbIjszn2MoUqIHbEAn6eWI4Nre90j9v7YGbNsg87eSB3zllYLETa93EKtB4GsdDUIg8hFIQletuN6mu1SPjM3WpXHEbrQgvMI05XXWiEfWTafzgSejXoJzj2Y-oF7ebiQQUR4Gj_hXvhS-P65_1JAVa7dVll6I8SFmWwKxty0KAz8RiuyNlP_7odPC')`,
                 }}
               ></div>
               <div>
-                <p className="text-white font-bold text-base">
+                <p className="text-white font-semibold text-sm">
                   Elena Rodriguez
                 </p>
-                <p className="text-white/70 text-sm">Campus Facilities Lead</p>
+                <p className="text-white/60 text-xs">Campus Facilities Lead</p>
               </div>
             </div>
           </div>
