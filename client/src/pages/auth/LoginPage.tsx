@@ -154,7 +154,7 @@ const LoginPage = () => {
                 </div>
                 <div className="flex justify-end mt-2">
                   <a
-                    className="text-sm font-medium text-primary hover:text-primary-dark transition-colors"
+                    className="text-primary font-bold hover:text-[#8B5CF6] hover:underline transition-colors"
                     href="#"
                   >
                     Forgot password?
@@ -173,7 +173,7 @@ const LoginPage = () => {
             <p className="text-center text-[#4d4c9a] dark:text-gray-400 text-sm mt-2">
               Don't have an account?{' '}
               <a
-                className="text-primary font-bold hover:text-[#8B5CF6] transition-colors"
+                className="text-primary font-bold hover:text-[#8B5CF6] hover:underline transition-colors"
                 href="#"
               >
                 Sign up
@@ -182,7 +182,7 @@ const LoginPage = () => {
           </form>
         </div>
         <div className="absolute bottom-6 text-xs text-gray-400 dark:text-gray-600 hidden md:block">
-          © 2026 SPACEPOCKER Inc.
+          © {new Date().getFullYear()} SPACEPOCKER
         </div>
       </div>
     </div>
