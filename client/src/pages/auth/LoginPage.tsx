@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import LeftSide from '@/components/auth/LeftSide';
 import InputField from '@/components/common/InputField';
 const LoginPage = () => {
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
   };

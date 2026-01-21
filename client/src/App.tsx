@@ -1,4 +1,3 @@
-
 import RegisterPage from './pages/auth/RegisterPage';
 import { Route, Routes } from 'react-router-dom';
 import LoginPage from './pages/auth/LoginPage';
