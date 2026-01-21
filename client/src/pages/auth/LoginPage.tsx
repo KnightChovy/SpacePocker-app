@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-
+import { LogIn, Mail, Lock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -12,10 +15,9 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row antialiased bg-background-light dark:bg-background-dark text-[#0e0d1b] dark:text-white">
-      {/* Left Section - Visuals */}
+    <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden bg-white">
       <div
-        className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 bg-cover bg-center overflow-hidden group/visual"
+        className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 bg-cover bg-center overflow-hidden"
         style={{
           backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuBTUKlrbWweEhTIsMCDyHh9Quo2Ja6uVORCyxaldKUOLGvESW_KOi3X5ueAuN1WqHE8K_Qt3b1nHMY-S3ukomJw3SpgDiDO83nkdUu1B5raK_m4UEDmPrE0ZL3OSKuPuXA-yMwGL5Bx4hM_WXCa0CY6LIVyEznBqz8VsEuYOEkMLoJrUxnpwGklW-4E2VRKe1SaBO1L3TFOLXTKJsqtOul-hSc_OmXGXnJ1VH3WiXndSKlta6gCxW9Yjyq1LgUi3H5nSxRhnN3zFcy7')`,
         }}
@@ -42,7 +44,7 @@ const LoginPage = () => {
                   key={s}
                   className="material-symbols-outlined text-[20px] fill-1"
                 >
-                  star
+                  ⭐
                 </span>
               ))}
             </div>
@@ -69,9 +71,7 @@ const LoginPage = () => {
         </div>
       </div>
 
-      {/* Right Section - Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center relative bg-white dark:bg-[#151725] p-6 sm:p-12 xl:p-24 overflow-y-auto">
-        <div className="absolute top-0 right-0 w-125 h-125 bg-primary/5 rounded-full blur-[120px] pointer-events-none translate-x-1/2 -translate-y-1/2"></div>
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center bg-white p-6 sm:p-12 h-screen overflow-y-auto relative">
         <div className="w-full max-w-110 flex flex-col gap-8 relative z-10">
           <div className="lg:hidden flex items-center gap-2 text-primary mb-2">
             <span className="text-xl font-black tracking-tight text-[#0e0d1b] dark:text-white">
@@ -88,17 +88,16 @@ const LoginPage = () => {
             </p>
           </div>
 
-          <button className="group flex w-full cursor-pointer items-center justify-center rounded-xl h-14 px-5 bg-white dark:bg-[#1c1e31] border border-[#e5e7eb] dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#252840] hover:border-[#d1d5db] dark:hover:border-gray-600 transition-all duration-200 shadow-sm gap-3 relative overflow-hidden">
-            <div className="absolute inset-0 w-1 bg-primary/0 group-hover:bg-primary transition-colors duration-200 left-0"></div>
+          <Button className="group flex w-full cursor-pointer items-center justify-center rounded-xl h-14 px-5 bg-white dark:bg-[#1c1e31] border border-[#e5e7eb] dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#252840] hover:border-[#d1d5db] dark:hover:border-gray-600 shadow-[0_10px_20px_-10px_rgba(99,102,241,0.3)] hover:shadow-[0_20px_25px_-12px_rgba(99,102,241,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-300 gap-3 relative overflow-hidden">
             <img
               alt="Google Logo"
               className="w-5 h-5"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHWuEmGQzqMVNs89AoSj36L8D9ysEQKiS_HrOR_wjIcxigRl62H7J3hWxKTGQXOkEQfXk3nPhGl4M3Ek6z61BO4hE7jlQQp7UQff4Snx499xIAonAlp4_NVpIqXTCk8YJ0trmictlLzEQvp53hgBe4oGckxAd7UzIM33HB6CQl_SdGOpJ7bDHjhBigl-nf9ZOYZmPmRbp93JBTh6Nu5gbOYwHjIcLUa60av6ggRKqCTvTbhntJvezZUG9gHjf8jc10KnmZGo-A0W9y"
+              src="../../../public/google.png"
             />
             <span className="text-[#0e0d1b] dark:text-white font-semibold text-base">
               Sign in with Google
             </span>
-          </button>
+          </Button>
 
           <div className="relative flex py-1 items-center">
             <div className="grow border-t border-gray-200 dark:border-gray-700"></div>
@@ -111,14 +110,14 @@ const LoginPage = () => {
           <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
             <div className="space-y-5">
               <div className="group relative">
-                <label
+                <Label
                   className="block text-[#0e0d1b] dark:text-gray-200 text-sm font-semibold mb-2 ml-1"
                   htmlFor="email"
                 >
                   Email
-                </label>
+                </Label>
                 <div className="relative">
-                  <input
+                  <Input
                     className="peer w-full h-12 pl-4 pr-12 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-[#1c1e31] text-[#0e0d1b] dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/80 focus:bg-white dark:focus:bg-[#1c1e31] transition-all duration-200 ease-out shadow-sm"
                     id="email"
                     placeholder="name@company.com"
@@ -128,21 +127,19 @@ const LoginPage = () => {
                     onChange={(e) => setEmail(e.target.value)}
                   />
                   <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400 peer-focus:text-primary transition-colors">
-                    <span className="material-symbols-outlined text-[20px]">
-                      mail
-                    </span>
+                    <Mail />
                   </div>
                 </div>
               </div>
               <div className="group relative">
-                <label
+                <Label
                   className="block text-[#0e0d1b] dark:text-gray-200 text-sm font-semibold mb-2 ml-1"
                   htmlFor="password"
                 >
                   Password
-                </label>
+                </Label>
                 <div className="relative">
-                  <input
+                  <Input
                     className="peer w-full h-12 pl-4 pr-12 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-[#1c1e31] text-[#0e0d1b] dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/80 focus:bg-white dark:focus:bg-[#1c1e31] transition-all duration-200 ease-out shadow-sm"
                     id="password"
                     placeholder="Enter your password"
@@ -152,9 +149,7 @@ const LoginPage = () => {
                     onChange={(e) => setPassword(e.target.value)}
                   />
                   <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400 peer-focus:text-primary transition-colors">
-                    <span className="material-symbols-outlined text-[20px]">
-                      lock
-                    </span>
+                    <Lock />
                   </div>
                 </div>
                 <div className="flex justify-end mt-2">
@@ -168,15 +163,13 @@ const LoginPage = () => {
               </div>
             </div>
 
-            <button
+            <Button
               className="mt-4 w-full h-14 rounded-xl bg-linear-to-r from-[#6366F1] to-[#8B5CF6] text-white font-bold text-lg shadow-[0_10px_20px_-10px_rgba(99,102,241,0.5)] hover:shadow-[0_20px_25px_-12px_rgba(99,102,241,0.6)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all duration-300 flex items-center justify-center gap-2 group"
               type="submit"
             >
               <span>Sign In</span>
-              <span className="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">
-                login
-              </span>
-            </button>
+              <LogIn />
+            </Button>
             <p className="text-center text-[#4d4c9a] dark:text-gray-400 text-sm mt-2">
               Don't have an account?{' '}
               <a
