@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button'
-import React from 'react'
 import { useNavigate } from 'react-router-dom';
 
 const Page = () => {
@@ -7,7 +6,7 @@ const Page = () => {
 
   return (
     <div>page-example
-      <Button onClick={() => navigate('/register')}>Go to Register</Button>
+      <Button onClick={() => navigate('/auth-register')}>Go to Register</Button>
       <Button onClick={() => navigate('/auth-login')}>Login</Button>
     </div>
   )
