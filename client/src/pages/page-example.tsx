@@ -8,8 +8,9 @@ const Page = () => {
   return (
     <div>page-example
       <Button onClick={() => navigate('/register')}>Go to Register</Button>
+      <Button onClick={() => navigate('/auth-login')}>Login</Button>
     </div>
   )
 }
 
-export default Page
+export default Page;
