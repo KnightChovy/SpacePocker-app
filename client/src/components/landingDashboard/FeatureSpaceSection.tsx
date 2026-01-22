@@ -1,6 +1,7 @@
 import { SPACES } from '@/data/constant';
 import SpaceCard from './SpaceCard';
 import { ChevronDown, Shuffle } from 'lucide-react';
+import { Button } from '../ui/button';
 
 const FeatureSpaceSection = () => {
   return (
@@ -17,14 +18,14 @@ const FeatureSpaceSection = () => {
             </p>
           </div>
           <div className="flex gap-3">
-            <button className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2">
+            <Button className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2">
               <Shuffle className="h-4 w-4" />
               Filters
-            </button>
-            <button className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2">
+            </Button>
+            <Button className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2">
               Sort by
               <ChevronDown className="h-4 w-4" />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -35,9 +36,9 @@ const FeatureSpaceSection = () => {
         </div>
 
         <div className="mt-8 flex justify-center sm:hidden">
-          <button className="flex w-full items-center justify-center rounded-xl border border-gray-200 bg-white py-3 text-sm font-bold text-[#0e0d1b] shadow-sm">
+          <Button className="flex w-full items-center justify-center rounded-xl border border-gray-200 bg-white py-3 text-sm font-bold text-[#0e0d1b] shadow-sm">
             View all spaces
-          </button>
+          </Button>
         </div>
       </div>
     </section>

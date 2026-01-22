@@ -1,3 +1,5 @@
+import { Button } from '../ui/button';
+
 const CTASection = () => {
   return (
     <section className="px-4 pb-24 sm:px-6 lg:px-8">
@@ -13,12 +15,12 @@ const CTASection = () => {
             classrooms, studios, and meeting rooms.
           </p>
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-            <button className="rounded-xl bg-white px-8 py-4 text-base font-bold text-primary shadow-lg transition-transform hover:scale-105 active:scale-95">
+            <Button className="rounded-xl bg-white px-8 py-4 text-base font-bold text-primary shadow-lg transition-transform hover:scale-105 active:scale-95">
               List your Space
-            </button>
-            <button className="rounded-xl border border-white/30 bg-white/10 px-8 py-4 text-base font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/20">
+            </Button>
+            <Button className="rounded-xl border border-white/30 bg-white/10 px-8 py-4 text-base font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/20">
               Learn How It Works
-            </button>
+            </Button>
           </div>
         </div>
       </div>
