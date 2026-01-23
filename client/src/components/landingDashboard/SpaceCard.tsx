@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Space } from '@/types/types';
 import { Heart } from 'lucide-react';
+import { Button } from '../ui/button';
 
 const SpaceCard: React.FC<{ space: Space }> = ({ space }) => {
   return (
@@ -36,9 +37,9 @@ const SpaceCard: React.FC<{ space: Space }> = ({ space }) => {
             </span>
             <span className="text-xs text-slate-400 font-medium"> / hour</span>
           </div>
-          <span className="text-xs font-bold text-primary bg-primary/5 px-3 py-1.5 rounded-full">
+          <Button className="text-xs font-bold text-primary bg-primary/5 px-3 py-1.5 rounded-full hover:bg-primary/10 transition-colors cursor-pointer">
             Details
-          </span>
+          </Button>
         </div>
       </div>
     </div>
