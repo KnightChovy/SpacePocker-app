@@ -4,13 +4,14 @@ const CTASection = () => {
   return (
     <section className="px-4 pb-24 sm:px-6 lg:px-8">
       <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] shadow-2xl">
-        <div 
+        <div
           className="absolute inset-0 z-0"
           style={{
-            backgroundImage: 'url(https://vuon-trongpho.vn/wp-content/uploads/2023/10/image-home-slider-vn-3.jpg)',
+            backgroundImage:
+              'url(https://vuon-trongpho.vn/wp-content/uploads/2023/10/image-home-slider-vn-3.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
+            backgroundRepeat: 'no-repeat',
           }}
         >
           <div className="absolute inset-0 bg-linear-to-r from-gray-800/70 to-slate-600/90"></div>

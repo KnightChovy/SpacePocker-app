@@ -58,9 +58,7 @@ const Hero = () => {
 
         <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-7xl mb-8 leading-[1.1] drop-shadow-2xl">
           Find the perfect space for <br className="hidden sm:block" />
-          <span className="text-primary">
-            your next breakthrough.
-          </span>
+          <span className="text-primary">your next breakthrough.</span>
         </h1>
 
         <p className="mx-auto max-w-2xl text-lg text-white/90 mb-12 leading-relaxed drop-shadow-lg">
