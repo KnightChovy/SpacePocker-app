@@ -38,7 +38,7 @@ const Navbar: React.FC = () => {
           </span>
         </div>
 
-        <div className="hidden md:flex items-center gap-8">
+        {/* <div className="hidden md:flex items-center gap-8">
           {['Find a Space', 'Pricing', 'List your Space'].map((item) => (
             <a
               key={item}
@@ -50,6 +50,26 @@ const Navbar: React.FC = () => {
               href="#"
             >
               {item}
+            </a>
+          ))}
+        </div> */}
+
+        <div className="hidden md:flex items-center gap-8">
+          {[
+            { label: 'Find a Space', href: '/spaces' },
+            { label: 'Pricing', href: '#' },
+            { label: 'List your Space', href: '#' },
+          ].map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              className={`text-sm font-semibold transition-colors ${
+                scrolled
+                  ? 'text-slate-600 hover:text-primary'
+                  : 'text-white/90 hover:text-white'
+              }`}
+            >
+              {item.label}
             </a>
           ))}
         </div>
