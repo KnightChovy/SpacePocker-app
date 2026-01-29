@@ -34,7 +34,7 @@ const LeftSide = () => {
       <div className="relative z-10 bg-white/10 backdrop-blur-md rounded-3xl p-8 max-w-lg mt-auto border border-white/20 shadow-2xl hover:bg-white/15 hover:border-white/30 hover:shadow-[0_20px_60px_rgba(255,255,255,0.15)] hover:scale-[1.02] transition-all duration-500 ease-out">
         <div className="flex flex-col gap-6">
           <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((s) => (
+            {[1, 2, 3, 4, 5].map(s => (
               <span key={s} className="text-[#FFD700] text-xl">
                 ⭐
               </span>

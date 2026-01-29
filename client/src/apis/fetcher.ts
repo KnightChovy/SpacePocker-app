@@ -24,11 +24,11 @@ fetcher.interceptors.request.use(
   },
   (error: AxiosError) => {
     return Promise.reject(error);
-  },
+  }
 );
 
 fetcher.interceptors.response.use(
-  (response) => {
+  response => {
     return response;
   },
   (error: AxiosError) => {
@@ -56,7 +56,7 @@ fetcher.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  },
+  }
 );
 
 export default fetcher;

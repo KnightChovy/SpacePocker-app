@@ -24,8 +24,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const setAccessToken = useAuthStore((state) => state.setAccessToken);
-  const setUserEmail = useUserStore((state) => state.setEmail);
+  const setAccessToken = useAuthStore(state => state.setAccessToken);
+  const setUserEmail = useUserStore(state => state.setEmail);
 
   const {
     register,
@@ -38,7 +38,7 @@ const LoginPage = () => {
 
   const loginMutation = useMutation({
     mutationFn: authAPI.login,
-    onSuccess: (data) => {
+    onSuccess: data => {
       toast.success('Login successful! Welcome back! 🎉');
 
       if (data.accessToken) {
