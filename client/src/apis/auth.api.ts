@@ -23,29 +23,26 @@ export const authAPI = {
     return response.data;
   },
 
-  // MockAPI doesn't support custom endpoints like /login
-  // So we'll simulate login by fetching all users and checking credentials
-  login: async (data: RegisterRequest): Promise<RegisterResponse> => {
+  login: async (data: RegisterRequest)=> {
     try {
-      // Get all users from MockAPI
       const response = await fetcher.get<RegisterResponse[]>('/Auth');
 
-      // Find user with matching email and password
       const user = response.data.find((u) => u.email === data.email);
 
       if (!user) {
         throw new Error('Invalid email or password');
       }
 
-      // Generate a mock access token
       const accessToken = `mock-token-${user.id}-${Date.now()}`;
 
       return {
-        ...user,
+        user,
         accessToken,
       };
     } catch (error) {
-      throw error;
+      console.log('Login error:', error);
+      throw new Error('Login failed. Please try again.');
     }
+  
   },
 };

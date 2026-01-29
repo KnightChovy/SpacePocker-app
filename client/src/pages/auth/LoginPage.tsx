@@ -13,8 +13,8 @@ import { Input } from '@/components/ui/input';
 import LeftSide from '@/components/auth/LeftSide';
 import { authAPI, type AuthError } from '@/apis/auth.api';
 import { useAuthStore } from '@/stores/auth.store';
+import { useUserStore } from '@/stores/user.store';
 
-// Zod validation schema
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email format'),
   password: z.string().min(1, 'Password is required'),
@@ -25,6 +25,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const LoginPage = () => {
   const navigate = useNavigate();
   const setAccessToken = useAuthStore((state) => state.setAccessToken);
+  const setUserEmail = useUserStore((state) => state.setEmail);
 
   const {
     register,
@@ -40,12 +41,11 @@ const LoginPage = () => {
     onSuccess: (data) => {
       toast.success('Login successful! Welcome back! 🎉');
 
-      // Save access token
       if (data.accessToken) {
+        setUserEmail(data.user.email);
         setAccessToken(data.accessToken);
       }
 
-      // Navigate to landing page
       setTimeout(() => {
         navigate('/');
       }, 1000);
@@ -107,7 +107,6 @@ const LoginPage = () => {
             onSubmit={handleSubmit(onSubmit)}
           >
             <div className="space-y-5">
-              {/* Email Field */}
               <div className="relative flex flex-col gap-2">
                 <Label
                   htmlFor="email"
@@ -139,7 +138,6 @@ const LoginPage = () => {
                 )}
               </div>
 
-              {/* Password Field */}
               <div className="relative flex flex-col gap-2">
                 <Label
                   htmlFor="password"
@@ -202,7 +200,7 @@ const LoginPage = () => {
             </p>
           </form>
         </div>
-        <div className="absolute bottom-20 text-xs text-gray-400 dark:text-gray-600 hidden md:block">
+        <div className="absolute bottom-10 text-xs text-gray-400 dark:text-gray-600 hidden md:block">
           © {new Date().getFullYear()} SPACEPOCKER
         </div>
       </div>

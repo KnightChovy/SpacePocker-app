@@ -13,7 +13,6 @@ import { useAuthStore } from '@/stores/auth.store';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 
-// Zod validation schema
 const registerSchema = z
   .object({
     email: z.string().min(1, 'Email is required').email('Invalid email format'),
@@ -50,12 +49,10 @@ const RegisterPage = () => {
     onSuccess: (data) => {
       toast.success('Registration successful! Welcome aboard! 🎉');
 
-      // Save access token if provided
       if (data.accessToken) {
         setAccessToken(data.accessToken);
       }
 
-      // Navigate to login or dashboard
       setTimeout(() => {
         navigate('/auth-login');
       }, 1500);
@@ -69,7 +66,7 @@ const RegisterPage = () => {
   });
 
   const onSubmit = async (data: RegisterFormData) => {
-    const { confirmPassword, ...registerData } = data;
+    const { ...registerData } = data;
     registerMutation.mutate(registerData);
   };
 
@@ -108,7 +105,6 @@ const RegisterPage = () => {
             onSubmit={handleSubmit(onSubmit)}
           >
             <div className="space-y-5">
-              {/* Email Field */}
               <div className="relative flex flex-col gap-2">
                 <Label
                   htmlFor="email"
@@ -140,7 +136,6 @@ const RegisterPage = () => {
                 )}
               </div>
 
-              {/* Password Field */}
               <div className="relative flex flex-col gap-2">
                 <Label
                   htmlFor="password"
@@ -172,7 +167,6 @@ const RegisterPage = () => {
                 )}
               </div>
 
-              {/* Confirm Password Field */}
               <div className="relative flex flex-col gap-2">
                 <Label
                   htmlFor="confirmPassword"
