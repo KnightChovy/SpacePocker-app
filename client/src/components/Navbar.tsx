@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
+import { useUserStore } from '@/stores/user.store';
 
 const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
+
+  const {email} = useUserStore();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -53,7 +56,8 @@ const Navbar: React.FC = () => {
             </a>
           ))}
         </div>
-
+          
+          {!email ? (
         <div className="flex items-center gap-4">
           <button
             className={`text-sm font-semibold transition-colors ${
@@ -76,6 +80,19 @@ const Navbar: React.FC = () => {
             Get Started
           </Button>
         </div>
+          ) : (
+        <div className="flex items-center gap-4">
+          <span
+            className={`text-sm font-semibold transition-colors ${
+              scrolled
+                ? 'text-slate-600 hover:text-primary'
+                : 'text-white/90 hover:text-white'
+            }`}
+          >
+            {email}
+          </span>
+        </div>
+          )}
       </div>
     </nav>
   );

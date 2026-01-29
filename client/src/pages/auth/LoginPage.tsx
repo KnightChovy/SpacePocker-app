@@ -1,12 +1,69 @@
-import React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
+import { AxiosError } from 'axios';
 import logoGoogle from '/logoGoogle.jpg';
 import { LogIn, Mail, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import LeftSide from '@/components/auth/LeftSide';
-import InputField from '@/components/common/InputField';
+import { authAPI, type AuthError } from '@/apis/auth.api';
+import { useAuthStore } from '@/stores/auth.store';
+import { useUserStore } from '@/stores/user.store';
+
+const loginSchema = z.object({
+  email: z.string().min(1, 'Email is required').email('Invalid email format'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+
 const LoginPage = () => {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const navigate = useNavigate();
+  const setAccessToken = useAuthStore((state) => state.setAccessToken);
+  const setUserEmail = useUserStore((state) => state.setEmail);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    mode: 'onBlur',
+  });
+
+  const loginMutation = useMutation({
+    mutationFn: authAPI.login,
+    onSuccess: (data) => {
+      toast.success('Login successful! Welcome back! 🎉');
+
+      if (data.accessToken) {
+        setUserEmail(data.user.email);
+        setAccessToken(data.accessToken);
+      }
+
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
+    },
+    onError: (error: unknown) => {
+      if (error instanceof AxiosError) {
+        const errorMessage =
+          (error.response?.data as AuthError)?.message ||
+          'Login failed. Please check your credentials.';
+        toast.error(errorMessage);
+      } else {
+        toast.error('Login failed. Please check your credentials.');
+      }
+    },
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
+    loginMutation.mutate(data);
   };
 
   return (
@@ -45,23 +102,72 @@ const LoginPage = () => {
             <div className="grow border-t border-gray-200 dark:border-gray-700"></div>
           </div>
 
-          <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+          <form
+            className="flex flex-col gap-5"
+            onSubmit={handleSubmit(onSubmit)}
+          >
             <div className="space-y-5">
-              <InputField
-                label="Email"
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                icon={<Mail size={24} />}
-              />
+              <div className="relative flex flex-col gap-2">
+                <Label
+                  htmlFor="email"
+                  className="text-[#0e0d1b] text-base font-semibold"
+                >
+                  Email
+                </Label>
+                <div className="relative flex items-center">
+                  <Mail
+                    size={24}
+                    className="absolute left-4 text-[#5c5ba8] pointer-events-none"
+                  />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    className={`w-full h-14 pl-14 pr-5 text-lg rounded-xl border-2 transition-all duration-300 ${
+                      errors.email
+                        ? 'border-red-500 focus:border-red-500'
+                        : 'border-[#e5e7eb] focus:border-[#6366F1]'
+                    }`}
+                    {...register('email')}
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
 
-              <InputField
-                label="Password"
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                icon={<Lock size={24} />}
-              />
+              <div className="relative flex flex-col gap-2">
+                <Label
+                  htmlFor="password"
+                  className="text-[#0e0d1b] text-base font-semibold"
+                >
+                  Password
+                </Label>
+                <div className="relative flex items-center">
+                  <Lock
+                    size={24}
+                    className="absolute left-4 text-[#5c5ba8] pointer-events-none"
+                  />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    className={`w-full h-14 pl-14 pr-5 text-lg rounded-xl border-2 transition-all duration-300 ${
+                      errors.password
+                        ? 'border-red-500 focus:border-red-500'
+                        : 'border-[#e5e7eb] focus:border-[#6366F1]'
+                    }`}
+                    {...register('password')}
+                  />
+                </div>
+                {errors.password && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
 
               <div className="flex justify-end mt-2">
                 <a
@@ -74,11 +180,14 @@ const LoginPage = () => {
             </div>
 
             <Button
-              className="mt-4 w-full h-14 rounded-xl bg-linear-to-r from-[#6366F1] to-[#8B5CF6] text-white font-bold text-lg shadow-[0_10px_20px_-10px_rgba(99,102,241,0.5)] hover:shadow-[0_20px_25px_-12px_rgba(99,102,241,0.6)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all duration-300 flex items-center justify-center gap-2 group"
+              className="mt-4 w-full h-14 rounded-xl bg-linear-to-r from-[#6366F1] to-[#8B5CF6] text-white font-bold text-lg shadow-[0_10px_20px_-10px_rgba(99,102,241,0.5)] hover:shadow-[0_20px_25px_-12px_rgba(99,102,241,0.6)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
               type="submit"
+              disabled={isSubmitting || loginMutation.isPending}
             >
-              <span>Sign In</span>
-              <LogIn />
+              <span>
+                {loginMutation.isPending ? 'Signing In...' : 'Sign In'}
+              </span>
+              {!loginMutation.isPending && <LogIn />}
             </Button>
             <p className="text-center text-[#4d4c9a] text-base font-medium">
               Don't have an account?{' '}
@@ -91,7 +200,7 @@ const LoginPage = () => {
             </p>
           </form>
         </div>
-        <div className="absolute bottom-20 text-xs text-gray-400 dark:text-gray-600 hidden md:block">
+        <div className="absolute bottom-10 text-xs text-gray-400 dark:text-gray-600 hidden md:block">
           © {new Date().getFullYear()} SPACEPOCKER
         </div>
       </div>
