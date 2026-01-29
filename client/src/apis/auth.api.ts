@@ -23,11 +23,11 @@ export const authAPI = {
     return response.data;
   },
 
-  login: async (data: RegisterRequest)=> {
+  login: async (data: RegisterRequest) => {
     try {
       const response = await fetcher.get<RegisterResponse[]>('/Auth');
 
-      const user = response.data.find((u) => u.email === data.email);
+      const user = response.data.find(u => u.email === data.email);
 
       if (!user) {
         throw new Error('Invalid email or password');
@@ -43,6 +43,5 @@ export const authAPI = {
       console.log('Login error:', error);
       throw new Error('Login failed. Please try again.');
     }
-  
   },
 };
