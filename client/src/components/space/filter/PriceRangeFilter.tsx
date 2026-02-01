@@ -21,7 +21,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
           min="0"
           type="range"
           value={priceRange[1]}
-          onChange={(e) => onChange([20, parseInt(e.target.value)])}
+          onChange={e => onChange([20, parseInt(e.target.value)])}
         />
         <div className="h-1 w-full bg-slate-200 rounded-full absolute top-6">
           <div

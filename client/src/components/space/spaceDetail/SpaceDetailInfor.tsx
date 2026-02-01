@@ -18,10 +18,7 @@ const SpaceDetailInfo: React.FC<SpaceDetailInfoProps> = ({
             <h2 className="text-2xl font-bold text-gray-900">
               Hosted by {host.name}
             </h2>
-            <p className="text-gray-500">
-              Joined in {host.joinedDate}
-              
-            </p>
+            <p className="text-gray-500">Joined in {host.joinedDate}</p>
           </div>
           <img
             src={host.avatar}

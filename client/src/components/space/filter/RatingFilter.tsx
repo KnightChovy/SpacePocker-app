@@ -10,7 +10,7 @@ const RatingFilter: React.FC<RatingFilterProps> = ({ minRating, onChange }) => {
     <div className="space-y-3 pt-4 border-t border-slate-100">
       <h4 className="font-semibold text-sm text-slate-900">Minimum Rating</h4>
       <div className="flex gap-2">
-        {[4.5, 4.0].map((val) => (
+        {[4.5, 4.0].map(val => (
           <button
             key={val}
             onClick={() => onChange(minRating === val ? null : val)}

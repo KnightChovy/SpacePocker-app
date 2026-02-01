@@ -36,7 +36,7 @@ const SpacesPage = () => {
   const spacesData = spaces && spaces.length > 0 ? spaces : SPACES;
 
   const filteredSpaces = useMemo(() => {
-    return spacesData.filter((space) => {
+    return spacesData.filter(space => {
       const matchesPrice =
         space.price >= filters.priceRange[0] &&
         space.price <= filters.priceRange[1];
@@ -146,7 +146,7 @@ const SpacesPage = () => {
             <div className="mb-6">
               <SearchBar
                 searchQuery={filters.searchQuery}
-                onChange={(query) =>
+                onChange={query =>
                   setFilters({ ...filters, searchQuery: query })
                 }
                 onSort={setDisplayedSpaces}
