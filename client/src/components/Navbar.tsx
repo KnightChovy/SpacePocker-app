@@ -22,7 +22,10 @@ const Navbar: React.FC = () => {
       }`}
     >
       <div className="mx-auto max-w-7xl px-6 lg:px-8 flex items-center justify-between">
-        <div className="flex items-center gap-2.5 cursor-pointer">
+        <div
+          className="flex items-center gap-2.5 cursor-pointer"
+          onClick={() => navigate('/')}
+        >
           <div
             className={`h-8 w-8 rounded-lg flex items-center justify-center shadow-lg transition-colors ${
               scrolled
@@ -46,7 +49,7 @@ const Navbar: React.FC = () => {
             { label: 'Find a Space', href: '/spaces' },
             { label: 'Pricing', href: '#' },
             { label: 'List your Space', href: '#' },
-          ].map((item) => (
+          ].map(item => (
             <a
               key={item.label}
               href={item.href}

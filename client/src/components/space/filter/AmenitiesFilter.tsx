@@ -14,7 +14,7 @@ const AmenitiesFilter: React.FC<AmenitiesFilterProps> = ({
 }) => {
   const toggleAmenity = (amenity: Amenity) => {
     const next = selectedAmenities.includes(amenity)
-      ? selectedAmenities.filter((a) => a !== amenity)
+      ? selectedAmenities.filter(a => a !== amenity)
       : [...selectedAmenities, amenity];
     onChange(next);
   };
@@ -22,7 +22,7 @@ const AmenitiesFilter: React.FC<AmenitiesFilterProps> = ({
   return (
     <div className="space-y-3 pt-4 border-t border-slate-100">
       <h4 className="font-semibold text-sm text-slate-900">Amenities</h4>
-      {availableAmenities.map((amenity) => (
+      {availableAmenities.map(amenity => (
         <label
           key={amenity}
           className="flex items-center gap-3 group cursor-pointer"

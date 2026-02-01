@@ -2,10 +2,10 @@ import { MapPin } from 'lucide-react';
 import React from 'react';
 
 interface SpaceDetailLocationProps {
-  location?: string; 
+  location?: string;
   locationDescription?: string;
   coordinates?: {
-    lat: number
+    lat: number;
     lng: number;
   };
 }

@@ -12,7 +12,9 @@ const SpaceDetailHeader: React.FC<SpaceDetailHeaderProps> = ({ space }) => {
       <p className="text-sm text-gray-600">{space.location}</p>
       <div className="flex items-center">
         <span className="text-yellow-500">{'★'.repeat(space.rating)}</span>
-        <span className="text-gray-500 ml-2">({space.reviewCount} reviews)</span>
+        <span className="text-gray-500 ml-2">
+          ({space.reviewCount} reviews)
+        </span>
       </div>
     </div>
   );

@@ -79,12 +79,11 @@ export interface AmenityDetail {
   label: string;
 }
 
-
 export interface BookingData {
   spaceId: string;
-  date: string; 
-  startTime: string; 
-  endTime: string; 
+  date: string;
+  startTime: string;
+  endTime: string;
   hours: number;
   totalPrice: number;
   guests: number;

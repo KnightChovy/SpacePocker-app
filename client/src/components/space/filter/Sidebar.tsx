@@ -48,24 +48,24 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       <PriceRangeFilter
         priceRange={filters.priceRange}
-        onChange={(range) => onFilterChange({ ...filters, priceRange: range })}
+        onChange={range => onFilterChange({ ...filters, priceRange: range })}
       />
 
       <SpaceTypeFilter
         spaceTypes={filters.spaceTypes}
         availableTypes={spaceTypes}
-        onChange={(types) => onFilterChange({ ...filters, spaceTypes: types })}
+        onChange={types => onFilterChange({ ...filters, spaceTypes: types })}
       />
 
       <AmenitiesFilter
         selectedAmenities={filters.amenities}
         availableAmenities={amenities}
-        onChange={(amenities) => onFilterChange({ ...filters, amenities })}
+        onChange={amenities => onFilterChange({ ...filters, amenities })}
       />
 
       <RatingFilter
         minRating={filters.minRating}
-        onChange={(rating) => onFilterChange({ ...filters, minRating: rating })}
+        onChange={rating => onFilterChange({ ...filters, minRating: rating })}
       />
 
       <div className="mt-auto bg-linear-to-br from-primary/10 to-indigo-100 rounded-xl p-5 border border-primary/10">

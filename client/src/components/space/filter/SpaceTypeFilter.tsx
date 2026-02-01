@@ -18,7 +18,7 @@ const SpaceTypeFilter: React.FC<SpaceTypeFilterProps> = ({
 }) => {
   const toggleSpaceType = (type: SpaceType) => {
     const next = spaceTypes.includes(type)
-      ? spaceTypes.filter((t) => t !== type)
+      ? spaceTypes.filter(t => t !== type)
       : [...spaceTypes, type];
     onChange(next);
   };
@@ -26,7 +26,7 @@ const SpaceTypeFilter: React.FC<SpaceTypeFilterProps> = ({
   return (
     <div className="space-y-3">
       <h4 className="font-semibold text-sm text-slate-900">Space Type</h4>
-      {availableTypes.map((type) => (
+      {availableTypes.map(type => (
         <label
           key={type.label}
           className="flex items-center gap-3 group cursor-pointer"

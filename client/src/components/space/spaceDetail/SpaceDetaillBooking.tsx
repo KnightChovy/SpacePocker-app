@@ -14,10 +14,10 @@ import { createBooking } from '@/services/spaceService';
 import type { BookingData } from '@/types/types';
 
 interface SpaceDetailBookingProps {
-  spaceId: string; 
+  spaceId: string;
   price: number;
   rating: number;
-  capacity: number; 
+  capacity: number;
 }
 
 const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
@@ -66,7 +66,7 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
 
   const availableEndTimes = useMemo(() => {
     const [startHour] = startTime.split(':').map(Number);
-    return timeSlots.filter((time) => {
+    return timeSlots.filter(time => {
       const [hour] = time.split(':').map(Number);
       return hour > startHour;
     });
@@ -102,7 +102,7 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
     try {
       const bookingData: BookingData = {
         spaceId,
-        date: date.toISOString().split('T')[0], 
+        date: date.toISOString().split('T')[0],
         startTime,
         endTime,
         hours,
@@ -145,7 +145,7 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
                   variant="ghost"
                   className={cn(
                     'w-full justify-start text-left font-normal p-0 h-6 hover:bg-transparent leading-none',
-                    !date && 'text-muted-foreground',
+                    !date && 'text-muted-foreground'
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
@@ -160,7 +160,7 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
                   selected={date}
                   onSelect={setDate}
                   initialFocus
-                  disabled={(date) => {
+                  disabled={date => {
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
                     return date < today || date > maxDate;
@@ -191,10 +191,10 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
             <div className="flex-1">
               <select
                 value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
+                onChange={e => setStartTime(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm"
               >
-                {timeSlots.map((time) => (
+                {timeSlots.map(time => (
                   <option key={time} value={time}>
                     {formatTimeDisplay(time)}
                   </option>
@@ -205,11 +205,11 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
             <div className="flex-1">
               <select
                 value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
+                onChange={e => setEndTime(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm"
                 disabled={availableEndTimes.length === 0}
               >
-                {availableEndTimes.map((time) => (
+                {availableEndTimes.map(time => (
                   <option key={time} value={time}>
                     {formatTimeDisplay(time)}
                   </option>

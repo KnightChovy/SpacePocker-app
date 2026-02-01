@@ -3,7 +3,7 @@ import { Wifi, Tv, Projector, AirVent, PenLine } from 'lucide-react';
 import type { AmenityDetail } from '@/types/types';
 
 interface SpaceDetailAmenitiesProps {
-  amenities?: AmenityDetail[]; 
+  amenities?: AmenityDetail[];
 }
 
 const iconMap: Record<string, React.FC<{ className?: string }>> = {

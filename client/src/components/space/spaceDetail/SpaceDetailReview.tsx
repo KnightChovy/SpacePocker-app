@@ -18,19 +18,19 @@ const SpaceDetailReviews: React.FC<SpaceDetailReviewsProps> = ({
   const calculateRatingDistribution = () => {
     const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
 
-    reviews.forEach((review) => {
+    reviews.forEach(review => {
       if (review.rating >= 1 && review.rating <= 5) {
         counts[review.rating as keyof typeof counts]++;
       }
     });
 
-    return [5, 4, 3, 2, 1].map((star) => ({
+    return [5, 4, 3, 2, 1].map(star => ({
       star,
       count: counts[star as keyof typeof counts],
       pct:
         reviews.length > 0
           ? Math.round(
-              (counts[star as keyof typeof counts] / reviews.length) * 100,
+              (counts[star as keyof typeof counts] / reviews.length) * 100
             )
           : 0,
     }));
@@ -50,7 +50,7 @@ const SpaceDetailReviews: React.FC<SpaceDetailReviewsProps> = ({
       </div>
       <div className="max-w-md mb-12">
         <div className="space-y-3">
-          {ratingDistribution.map((item) => (
+          {ratingDistribution.map(item => (
             <div
               key={item.star}
               className="grid grid-cols-[20px_1fr_60px] items-center gap-4 text-sm"
@@ -70,7 +70,7 @@ const SpaceDetailReviews: React.FC<SpaceDetailReviewsProps> = ({
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-        {displayedReviews.map((review) => (
+        {displayedReviews.map(review => (
           <div
             key={review.id}
             className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow"

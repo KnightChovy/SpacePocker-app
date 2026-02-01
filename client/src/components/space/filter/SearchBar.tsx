@@ -42,7 +42,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         <input
           type="text"
           value={searchQuery}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={e => onChange(e.target.value)}
           placeholder="Search by city, neighborhood, or school..."
           className="w-full py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none bg-transparent"
         />
@@ -53,7 +53,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           <span className="text-sm font-semibold text-slate-700">Sort by:</span>
           <select
             value={sortBy}
-            onChange={(e) => handleSortChange(e.target.value)}
+            onChange={e => handleSortChange(e.target.value)}
             className="text-sm font-medium text-slate-900 focus:outline-none bg-transparent cursor-pointer"
           >
             <option value="recommended">Recommended</option>

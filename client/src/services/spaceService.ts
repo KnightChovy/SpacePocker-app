@@ -27,51 +27,53 @@ export interface SpaceResponse {
 
 export const spaceService = {
   getAllSpaces: async (): Promise<Space[]> => {
-
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 300));
     return SPACES;
   },
 
   getFilteredSpaces: async (params?: SpaceFilterParams): Promise<Space[]> => {
-
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     let filteredSpaces = [...SPACES];
 
     if (params) {
       if (params.minPrice !== undefined) {
         filteredSpaces = filteredSpaces.filter(
-          (s) => s.price >= params.minPrice!,
+          s => s.price >= params.minPrice!
         );
       }
       if (params.maxPrice !== undefined) {
         filteredSpaces = filteredSpaces.filter(
-          (s) => s.price <= params.maxPrice!,
+          s => s.price <= params.maxPrice!
         );
       }
       if (params.spaceTypes && params.spaceTypes.length > 0) {
         filteredSpaces = filteredSpaces.filter(
-          (s) => s.type && params.spaceTypes!.includes(s.type),
+          s => s.type && params.spaceTypes!.includes(s.type)
         );
       }
       if (params.amenities && params.amenities.length > 0) {
-        filteredSpaces = filteredSpaces.filter((s) =>
-          params.amenities!.every((a) => s.amenities?.includes(a)),
+        filteredSpaces = filteredSpaces.filter(s =>
+          params.amenities!.every(a =>
+            s.amenities?.some(amenity =>
+              typeof amenity === 'string' ? amenity === a : amenity.label === a
+            )
+          )
         );
       }
       if (params.minRating !== undefined) {
         filteredSpaces = filteredSpaces.filter(
-          (s) => s.rating >= params.minRating!,
+          s => s.rating >= params.minRating!
         );
       }
       if (params.search) {
         const searchLower = params.search.toLowerCase();
         filteredSpaces = filteredSpaces.filter(
-          (s) =>
+          s =>
             s.name.toLowerCase().includes(searchLower) ||
             s.title?.toLowerCase().includes(searchLower) ||
             s.description.toLowerCase().includes(searchLower) ||
-            s.location?.toLowerCase().includes(searchLower),
+            s.location?.toLowerCase().includes(searchLower)
         );
       }
     }
@@ -80,10 +82,9 @@ export const spaceService = {
   },
 
   getSpaceById: async (id: string): Promise<Space> => {
+    await new Promise(resolve => setTimeout(resolve, 300));
 
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    const space = SPACES.find((s) => s.id === id);
+    const space = SPACES.find(s => s.id === id);
     if (!space) {
       throw new Error(`Space with id ${id} not found`);
     }
@@ -91,11 +92,10 @@ export const spaceService = {
   },
 };
 
-export const fetchSpaceDetail = async (id: string): Promise<Space> => {\
-  
-  await new Promise((resolve) => setTimeout(resolve, 500));
+export const fetchSpaceDetail = async (id: string): Promise<Space> => {
+  await new Promise(resolve => setTimeout(resolve, 500));
 
-  const space = SPACES.find((s) => s.id === id);
+  const space = SPACES.find(s => s.id === id);
   if (!space) {
     throw new Error(`Space with id ${id} not found`);
   }
@@ -111,12 +111,10 @@ export const fetchSpaceDetail = async (id: string): Promise<Space> => {\
   return space;
 };
 
- 
 export const createBooking = async (
-  bookingData: BookingData,
+  bookingData: BookingData
 ): Promise<BookingResponse> => {
-
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 500));
 
   console.log('📝 Booking Data to BE:', bookingData);
 
