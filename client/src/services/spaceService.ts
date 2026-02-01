@@ -27,22 +27,13 @@ export interface SpaceResponse {
 
 export const spaceService = {
   getAllSpaces: async (): Promise<Space[]> => {
-    // TODO: Fetch API - GET /api/spaces
-    // const response = await axiosInstance.get<SpacesResponse>('/spaces');
-    // return response.data.data;
 
-    // Mock API delay
     await new Promise((resolve) => setTimeout(resolve, 300));
     return SPACES;
   },
 
-  // Lấy spaces với filter
   getFilteredSpaces: async (params?: SpaceFilterParams): Promise<Space[]> => {
-    // TODO: Fetch API - GET /api/spaces?minPrice=...&maxPrice=...
-    // const response = await axiosInstance.get<SpacesResponse>('/spaces', { params });
-    // return response.data.data;
 
-    // Mock API delay
     await new Promise((resolve) => setTimeout(resolve, 300));
 
     let filteredSpaces = [...SPACES];
@@ -88,13 +79,8 @@ export const spaceService = {
     return filteredSpaces;
   },
 
-  // Lấy chi tiết space theo ID
   getSpaceById: async (id: string): Promise<Space> => {
-    // TODO: Fetch API - GET /api/spaces/:id
-    // const response = await axiosInstance.get<SpaceResponse>(`/spaces/${id}`);
-    // return response.data.data;
 
-    // Mock API delay
     await new Promise((resolve) => setTimeout(resolve, 300));
 
     const space = SPACES.find((s) => s.id === id);
@@ -105,27 +91,15 @@ export const spaceService = {
   },
 };
 
-/**
- * Fetch space detail với đầy đủ thông tin cho detail page
- * TODO: Thay thế bằng API call thật khi backend sẵn sàng
- * Backend API endpoint: GET /api/spaces/:id/detail
- * Response format: { data: Space }
- */
-export const fetchSpaceDetail = async (id: string): Promise<Space> => {
-  // TODO: Uncomment khi có API thật
-  // const response = await axiosInstance.get<{ data: Space }>(`/spaces/${id}/detail`);
-  // return response.data.data;
-
-  // Mock API delay để giống thật
+export const fetchSpaceDetail = async (id: string): Promise<Space> => {\
+  
   await new Promise((resolve) => setTimeout(resolve, 500));
 
-  // Trả về space từ SPACES array theo id
   const space = SPACES.find((s) => s.id === id);
   if (!space) {
     throw new Error(`Space with id ${id} not found`);
   }
 
-  // Merge với detail data nếu có
   const detailData = SPACE_DETAILS_MAP[id];
   if (detailData) {
     return {
@@ -137,24 +111,13 @@ export const fetchSpaceDetail = async (id: string): Promise<Space> => {
   return space;
 };
 
-/**
- * Tạo booking mới
- * TODO: Thay thế bằng API call thật khi backend sẵn sàng
- * Backend API endpoint: POST /api/bookings
- * Request body: BookingData
- * Response format: BookingResponse
- */
+ 
 export const createBooking = async (
   bookingData: BookingData,
 ): Promise<BookingResponse> => {
-  // TODO: Uncomment khi có API thật
-  // const response = await axiosInstance.post<BookingResponse>('/bookings', bookingData);
-  // return response.data;
 
-  // Mock API delay
   await new Promise((resolve) => setTimeout(resolve, 500));
 
-  // Mock response
   console.log('📝 Booking Data to BE:', bookingData);
 
   return {

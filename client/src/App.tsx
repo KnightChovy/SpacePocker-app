@@ -1,8 +1,8 @@
-import RegisterPage from './pages/auth/RegisterPage';
 import { Route, Routes } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+import RegisterPage from './pages/auth/RegisterPage';
 import LoginPage from './pages/auth/LoginPage';
 import LandingPage from './pages/LandingPage';
 import SpaceDetailPage from './pages/SpaceDetailPage';

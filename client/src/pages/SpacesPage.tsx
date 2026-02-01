@@ -7,7 +7,6 @@ import Sidebar from '@/components/space/filter/Sidebar';
 import SpaceList from '@/components/space/spaceList/SpaceList';
 import SearchBar from '@/components/space/filter/SearchBar';
 
-// TODO: XÓA IMPORT NÀY KHI ĐÃ CÓ API - Đây là dữ liệu tĩnh tạm thời
 import { SPACES, SPACE_TYPES, AMENITIES } from '@/data/constant';
 
 import { spaceService } from '@/services/spaceService';
@@ -23,9 +22,6 @@ const SpacesPage = () => {
 
   const [displayedSpaces, setDisplayedSpaces] = useState<Space[]>([]);
 
-  // ============================================================
-  // TODO: FETCH DATA TỪ API - Uncomment phần này khi backend sẵn sàng
-  // ============================================================
   const {
     data: spaces,
     isLoading,
@@ -37,13 +33,10 @@ const SpacesPage = () => {
     staleTime: 10 * 60 * 1000,
   });
 
-  // ============================================================
-  // TODO: XÓA DÒNG NÀY KHI ĐÃ CÓ API - Đây là fallback dữ liệu tĩnh
-  // ============================================================
   const spacesData = spaces && spaces.length > 0 ? spaces : SPACES;
 
   const filteredSpaces = useMemo(() => {
-    return spacesData.filter(space => {
+    return spacesData.filter((space) => {
       const matchesPrice =
         space.price >= filters.priceRange[0] &&
         space.price <= filters.priceRange[1];
@@ -153,7 +146,7 @@ const SpacesPage = () => {
             <div className="mb-6">
               <SearchBar
                 searchQuery={filters.searchQuery}
-                onChange={query =>
+                onChange={(query) =>
                   setFilters({ ...filters, searchQuery: query })
                 }
                 onSort={setDisplayedSpaces}
