@@ -123,7 +123,7 @@ const SpaceDetailPage: React.FC = () => {
           </div>
         </div>
 
-        <SpaceDetailGallery images={spaceData.images} />
+        <SpaceDetailGallery images={spaceData.images || []} />
 
         <div className="mt-12 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-12 lg:gap-20">
           <div className="space-y-12">
@@ -131,7 +131,16 @@ const SpaceDetailPage: React.FC = () => {
               description={spaceData.description}
               host={spaceData.host}
             />
-            <SpaceDetailAmenities amenities={spaceData.amenities} />
+            <SpaceDetailAmenities
+              amenities={
+                Array.isArray(spaceData.amenities) &&
+                spaceData.amenities.length > 0
+                  ? typeof spaceData.amenities[0] === 'string'
+                    ? undefined
+                    : (spaceData.amenities as any[])
+                  : undefined
+              }
+            />
             <SpaceDetailLocation
               location={spaceData.location}
               locationDescription={spaceData.locationDescription}

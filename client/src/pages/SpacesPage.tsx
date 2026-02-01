@@ -43,7 +43,7 @@ const SpacesPage = () => {
   const spacesData = spaces && spaces.length > 0 ? spaces : SPACES;
 
   const filteredSpaces = useMemo(() => {
-    return spacesData.filter((space) => {
+    return spacesData.filter(space => {
       const matchesPrice =
         space.price >= filters.priceRange[0] &&
         space.price <= filters.priceRange[1];
@@ -57,8 +57,12 @@ const SpacesPage = () => {
 
       const matchesAmenities =
         filters.amenities.length === 0 ||
-        filters.amenities.every((amenity) =>
-          space.amenities?.includes(amenity),
+        filters.amenities.every(
+          amenity =>
+            Array.isArray(space.amenities) &&
+            space.amenities.some(a =>
+              typeof a === 'string' ? a === amenity : a.label.includes(amenity)
+            )
         );
 
       const matchesSearch =
@@ -149,7 +153,7 @@ const SpacesPage = () => {
             <div className="mb-6">
               <SearchBar
                 searchQuery={filters.searchQuery}
-                onChange={(query) =>
+                onChange={query =>
                   setFilters({ ...filters, searchQuery: query })
                 }
                 onSort={setDisplayedSpaces}
