@@ -7,7 +7,6 @@ import Sidebar from '@/components/space/filter/Sidebar';
 import SpaceList from '@/components/space/spaceList/SpaceList';
 import SearchBar from '@/components/space/filter/SearchBar';
 
-// TODO: XÓA IMPORT NÀY KHI ĐÃ CÓ API - Đây là dữ liệu tĩnh tạm thời
 import { SPACES, SPACE_TYPES, AMENITIES } from '@/data/constant';
 
 import { spaceService } from '@/services/spaceService';
@@ -23,9 +22,6 @@ const SpacesPage = () => {
 
   const [displayedSpaces, setDisplayedSpaces] = useState<Space[]>([]);
 
-  // ============================================================
-  // TODO: FETCH DATA TỪ API - Uncomment phần này khi backend sẵn sàng
-  // ============================================================
   const {
     data: spaces,
     isLoading,
@@ -37,9 +33,6 @@ const SpacesPage = () => {
     staleTime: 10 * 60 * 1000,
   });
 
-  // ============================================================
-  // TODO: XÓA DÒNG NÀY KHI ĐÃ CÓ API - Đây là fallback dữ liệu tĩnh
-  // ============================================================
   const spacesData = spaces && spaces.length > 0 ? spaces : SPACES;
 
   const filteredSpaces = useMemo(() => {
@@ -57,8 +50,12 @@ const SpacesPage = () => {
 
       const matchesAmenities =
         filters.amenities.length === 0 ||
-        filters.amenities.every((amenity) =>
-          space.amenities?.includes(amenity),
+        filters.amenities.every(
+          amenity =>
+            Array.isArray(space.amenities) &&
+            space.amenities.some(a =>
+              typeof a === 'string' ? a === amenity : a.label.includes(amenity)
+            )
         );
 
       const matchesSearch =
