@@ -2,6 +2,8 @@ import RegisterPage from './pages/auth/RegisterPage';
 import { Route, Routes } from 'react-router-dom';
 import LoginPage from './pages/auth/LoginPage';
 import LandingPage from './pages/LandingPage';
+import SpacesPage from './pages/SpacesPage';
+
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -24,6 +26,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/auth-register" element={<RegisterPage />} />
         <Route path="/auth-login" element={<LoginPage />} />
+        <Route path="/spaces" element={<SpacesPage />} />
       </Routes>
     </>
   );

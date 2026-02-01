@@ -1,5 +1,6 @@
-import type { Space, Feature } from '../types/types';
+import type { Space, Feature, SpaceType, Amenity } from '../types/types';
 
+// TODO: XÓA DATA TĨNH NÀY KHI ĐÃ CÓ API - Backend sẽ trả về data tương tự
 export const SPACES: Space[] = [
   {
     id: '1',
@@ -13,6 +14,9 @@ export const SPACES: Space[] = [
       'https://lh3.googleusercontent.com/aida-public/AB6AXuAhMv8qNFwG35b9XGVy9xWT2EGsCulDlda03EZowocuP9z_37zxsILgVRLMNKw1B8nEwgRggbCEZDwAaeGVJ_jscWx7tsHKkdTSjqZoHLnCG3U1ABeZeH1KBrxAWSPyNseqL2MpEYtxEj0RnN6vEub0MVXCSmNVk4ityVECZ1x7a5cRlUP6LNx6Ie7bur6Fc5jkL9yE5loJqEU5KcdQTLvQbiloVyWxRPu7jWfGOjUnbtDZiLjNgSVtiw5T7j0bvdo7kx1p1ksVvU1S',
     badge: 'Verified',
     isInstantBook: true,
+    type: 'Co-working Space',
+    location: 'Downtown, San Francisco',
+    amenities: ['WiFi', 'Projector', 'Whiteboard', 'Coffee Machine'],
   },
   {
     id: '2',
@@ -20,11 +24,14 @@ export const SPACES: Space[] = [
     description:
       'Spacious lecture hall equipped with state-of-the-art AV systems.',
     price: 35,
-    rating: 4.8,
+    rating: 1,
     capacity: 40,
     imageUrl:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuDL3xl0GFXISNp8qVpObELYgdUbG_D3YKSJS53o0bQaQbNnsiQ0_Ri-1L-2zxPihml5kAmfdEPr3zvGyMDWR6eGoFfYw97t8BSvFCgwsL3X66HVFvTpCln8HflxfKyEBNlYZucV5hg6sKEy2wWatxxcuHlHIFsIvAiKtrGzivtWbtlQwYzt5VJFtS16jmG_67fTePYzfCorYdfanV8f2LAMBJOYBXTJmk5oMuaXk1FU0YPoY7pralodPsuULJfDUyhhv7uJiCqe1vUT',
     isInstantBook: false,
+    type: 'Conference Hall',
+    location: 'University District, Boston',
+    amenities: ['WiFi', 'Projector', 'Air Conditioning', 'Parking'],
   },
   {
     id: '3',
@@ -37,6 +44,15 @@ export const SPACES: Space[] = [
       'https://lh3.googleusercontent.com/aida-public/AB6AXuCwlPPMsf9lghdgPlt1bq56qVptcqi1bkMFjNHUyE4TPrQiOjR7JLsXdDAMhJn13nJq6P6OZqz7C0-9x5cEBJhqU-V_pmyD6SxjSOTTFZ5Ue2LFMBsqb4HbegPzXxkAn5or-4GwajEddanVttCumKFnSd9c1Sjb4Dl1hXPNX-HUf1Rp1kgj2UV3r897jjX4KH8ditSiJzuWO5OLmOY-fF5XhySVffajiAfUHOn4mDoSPHcTian4qESRqNpPKyK4XPlsPNr9mD1MKD08',
     badge: 'New',
     isInstantBook: false,
+    type: 'Meeting Room',
+    location: 'Tech Hub, Austin',
+    amenities: [
+      'WiFi',
+      'Whiteboard',
+      'Coffee Machine',
+      'Air Conditioning',
+      'Reception Service',
+    ],
   },
   {
     id: '4',
@@ -49,6 +65,9 @@ export const SPACES: Space[] = [
     imageUrl:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuDNMKoL3JzoxYgHGottuGmjhX5He53La-5wwoV57afcnjcqisKsn1pgDZ0XYgWVXALSATvUA0jmr-YPioKHJiGjfYUMQsT1QKI98qZYfbuqY7hDtWiBpvtRYlwHOqlNNFr8toj_ViOg_JZ1lyrsaVlG_0R_1Scy2naYTOgDCGbMPVyU-TEEa4pzHj3C0ThjhncFcwJqpdOCbPul6r8Z3eOR_OD6FWwrZNb_xunWf9FYfuVDueG2Dxl34oYJ10LsIATswqxtw63chOpi',
     isInstantBook: false,
+    type: 'Event Space',
+    location: 'Brooklyn, New York',
+    amenities: ['WiFi', 'Kitchen Access', 'Parking', 'Air Conditioning'],
   },
 ];
 
@@ -82,4 +101,27 @@ export const PARTNERS = [
   'Soylent',
   'Initech',
   'Umbrella',
+];
+
+// ============================================================
+// SIDEBAR CONSTANTS - Filter options
+// ============================================================
+
+export const SPACE_TYPES: { label: SpaceType }[] = [
+  { label: 'Meeting Room' },
+  { label: 'Conference Hall' },
+  { label: 'Private Office' },
+  { label: 'Co-working Space' },
+  { label: 'Event Space' },
+];
+
+export const AMENITIES: Amenity[] = [
+  'WiFi',
+  'Projector',
+  'Whiteboard',
+  'Coffee Machine',
+  'Air Conditioning',
+  'Parking',
+  'Kitchen Access',
+  'Reception Service',
 ];
