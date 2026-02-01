@@ -29,8 +29,8 @@ exports.SuccessResponse = SuccessResponse;
    OK RESPONSE (200)
 ======================= */
 class OK extends SuccessResponse {
-    constructor(message, metadata) {
-        super({ message, metadata });
+    constructor(payload = {}) {
+        super(Object.assign(Object.assign({}, payload), { statusCode: exports.STATUS_CODE.OK, reasonStatusCode: exports.ReasonStatusCode.OK }));
     }
 }
 exports.OK = OK;
@@ -38,13 +38,8 @@ exports.OK = OK;
    CREATED RESPONSE (201)
 ======================= */
 class Created extends SuccessResponse {
-    constructor(message, metadata, options = {}) {
-        super({
-            message,
-            statusCode: exports.STATUS_CODE.CREATED,
-            reasonStatusCode: exports.ReasonStatusCode.CREATED,
-            metadata,
-        });
+    constructor(payload = {}, options = {}) {
+        super(Object.assign(Object.assign({}, payload), { statusCode: exports.STATUS_CODE.CREATED, reasonStatusCode: exports.ReasonStatusCode.CREATED }));
         this.options = options;
     }
 }
