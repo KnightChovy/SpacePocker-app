@@ -56,7 +56,11 @@ export const spaceService = {
       }
       if (params.amenities && params.amenities.length > 0) {
         filteredSpaces = filteredSpaces.filter((s) =>
-          params.amenities!.every((a) => s.amenities?.includes(a)),
+          params.amenities!.every((a) =>
+            s.amenities?.some((amenity) =>
+              typeof amenity === 'string' ? amenity === a : amenity.label === a
+            )
+          )
         );
       }
       if (params.minRating !== undefined) {
@@ -91,7 +95,7 @@ export const spaceService = {
   },
 };
 
-export const fetchSpaceDetail = async (id: string): Promise<Space> => {\
+export const fetchSpaceDetail = async (id: string): Promise<Space> => {
   
   await new Promise((resolve) => setTimeout(resolve, 500));
 

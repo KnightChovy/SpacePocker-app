@@ -5,8 +5,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import RegisterPage from './pages/auth/RegisterPage';
 import LoginPage from './pages/auth/LoginPage';
 import LandingPage from './pages/LandingPage';
-import SpaceDetailPage from './pages/SpaceDetailPage';
-import SpacesPage from './pages/SpacesPage';
+import SpaceDetailPage from './pages/user/space/SpaceDetailPage';
+import SpacesPage from './pages/user/space/SpacesPage';
 
 function App() {
   return (
