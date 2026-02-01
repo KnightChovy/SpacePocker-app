@@ -4,14 +4,31 @@ import LoginPage from './pages/auth/LoginPage';
 import LandingPage from './pages/LandingPage';
 import SpacesPage from './pages/SpacesPage';
 
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/auth-register" element={<RegisterPage />} />
-      <Route path="/auth-login" element={<LoginPage />} />
-      <Route path="/spaces" element={<SpacesPage />} />
-    </Routes>
+    <>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/auth-register" element={<RegisterPage />} />
+        <Route path="/auth-login" element={<LoginPage />} />
+        <Route path="/spaces" element={<SpacesPage />} />
+      </Routes>
+    </>
   );
 }
 
