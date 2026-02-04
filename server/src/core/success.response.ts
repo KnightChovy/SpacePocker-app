@@ -49,12 +49,8 @@ export class SuccessResponse {
 ======================= */
 
 export class OK extends SuccessResponse {
-  constructor(payload: SuccessResponsePayload = {}) {
-    super({
-      ...payload,
-      statusCode: STATUS_CODE.OK,
-      reasonStatusCode: ReasonStatusCode.OK,
-    });
+  constructor(message?: string, metadata?: Record<string, any>) {
+    super({ message, metadata });
   }
 }
 
@@ -66,15 +62,16 @@ export class Created extends SuccessResponse {
   options?: Record<string, any>;
 
   constructor(
-    payload: SuccessResponsePayload = {},
+    message?: string,
+    metadata?: Record<string, any>,
     options: Record<string, any> = {}
   ) {
     super({
-      ...payload,
+      message,
       statusCode: STATUS_CODE.CREATED,
       reasonStatusCode: ReasonStatusCode.CREATED,
+      metadata,
     });
-
     this.options = options;
   }
 }
