@@ -1,10 +1,36 @@
-import { Button } from '@/components/ui/button';
+import { Route, Routes } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+import RegisterPage from './pages/auth/RegisterPage';
+import LoginPage from './pages/auth/LoginPage';
+import LandingPage from './pages/LandingPage';
+import SpaceDetailPage from './pages/user/space/SpaceDetailPage';
+import SpacesPage from './pages/user/space/SpacesPage';
 
 function App() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center">
-      <Button>Click me</Button>
-    </div>
+    <>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/auth-register" element={<RegisterPage />} />
+        <Route path="/auth-login" element={<LoginPage />} />
+        <Route path="/spaces" element={<SpacesPage />} />
+        <Route path="/spaces/detail/:id" element={<SpaceDetailPage />} />
+      </Routes>
+    </>
   );
 }
 

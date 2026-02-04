@@ -1,29 +1,21 @@
-import { prisma } from "../lib/prisma";
-
+import { IKeyTokenRepository } from "../interface/keyToken.repository.interface";
 class KeyTokenService {
-  static async createKeyToken(
+  constructor(private keyRepo: IKeyTokenRepository) {}
+  async createKeyToken(
     userId: string,
     publicKey: string,
     privateKey: string,
     refreshToken: string
   ) {
-    const tokens = await prisma.key.upsert({
-      where: { userId },
-      update: {
-        publicKey,
-        privateKey,
-        refreshToken,
-      },
-      create: {
-        userId,
-        publicKey,
-        privateKey,
-        refreshToken,
-        refreshTokensUsed: [],
-      },
+    const tokens = await this.keyRepo.upsertToken({
+      userId,
+      publicKey,
+      privateKey,
+      refreshToken,
+      refreshTokensUsed: [],
     });
 
-    return tokens ? tokens.publicKey : null;
+    return tokens.publicKey;
   }
 }
 
