@@ -51,7 +51,7 @@ const SpaceDetailPage: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <span className="material-symbols-outlined text-6xl text-red-500 mb-4">
+          <span className=" text-6xl text-red-500 mb-4">
             error
           </span>
           <p className="text-gray-600">{error || 'Space not found'}</p>
@@ -83,13 +83,13 @@ const SpaceDetailPage: React.FC = () => {
             </h1>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600">
               <div className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-sm text-cyan-400">
+                <span className=" text-sm text-cyan-400">
                   <MapPin />
                 </span>
                 <span>{spaceData.location}</span>
               </div>
               <div className="flex items-center gap-1 font-semibold">
-                <span className="material-symbols-outlined text-sm text-cyan-400 material-fill">
+                <span className=" text-sm text-cyan-400 material-fill">
                   ⭐
                 </span>
                 <span className="text-gray-900">{spaceData.rating}</span>
