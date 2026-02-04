@@ -30,7 +30,7 @@ function App() {
         <Route path="/auth-login" element={<LoginPage />} />
         <Route path="/spaces" element={<SpacesPage />} />
         <Route path="/spaces/detail/:id" element={<SpaceDetailPage />} />
-        <Route path='/user/*' element={<UserRoute />} />
+        <Route path="/user/*" element={<UserRoute />} />
       </Routes>
     </>
   );

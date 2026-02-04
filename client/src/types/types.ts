@@ -103,10 +103,10 @@ export const BookingStatus = {
   CONFIRMED: 'Confirmed',
   PENDING: 'Pending Approval',
   COMPLETED: 'Completed',
-  CANCELLED: 'Cancelled'
+  CANCELLED: 'Cancelled',
 } as const;
 
-export type BookingStatus = typeof BookingStatus[keyof typeof BookingStatus];
+export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus];
 
 export interface SpaceUser {
   id: string;
