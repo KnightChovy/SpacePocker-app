@@ -4,6 +4,8 @@ import morgan from "morgan";
 import helmet from "helmet";
 import dotenv from "dotenv";
 import routes from "./routes";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger";
 //import compression from "compression";
 
 //init middleware
@@ -20,6 +22,8 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(morgan("common"));
 app.use("", routes);
 app.use(cors());

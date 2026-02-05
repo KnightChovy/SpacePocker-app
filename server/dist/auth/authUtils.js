@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -23,15 +14,15 @@ const HEADER = {
     AUTHORIZATION: "authorization",
     REFRESHTOKEN: "x-refresh-token",
 };
-exports.authentication = (0, asyncHandler_1.asyncHandler)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.authentication = (0, asyncHandler_1.asyncHandler)(async (req, res, next) => {
     const userId = req.headers[HEADER.CLIENT_ID];
     if (!userId)
-        throw new error_response_1.AuthFailureError("Invalid request");
-    const keyStore = yield prisma_1.prisma.key.findUnique({
+        throw new error_response_1.NotFoundError("User not found");
+    const keyStore = await prisma_1.prisma.key.findUnique({
         where: { userId: String(userId) },
     });
     if (!keyStore) {
-        throw new error_response_1.AuthFailureError("Invalid request");
+        throw new error_response_1.NotFoundError("Key store not found");
     }
     const refreshToken = req.headers[HEADER.REFRESHTOKEN];
     if (refreshToken) {
@@ -56,7 +47,6 @@ exports.authentication = (0, asyncHandler_1.asyncHandler)((req, res, next) => __
     }
     try {
         const decodeUser = jsonwebtoken_1.default.verify(accessToken, keyStore.publicKey);
-        console.log("Decoded user from access token:", decodeUser);
         if (String(userId) !== String(decodeUser.userId)) {
             throw new error_response_1.AuthFailureError("Invalid user");
         }
@@ -67,8 +57,8 @@ exports.authentication = (0, asyncHandler_1.asyncHandler)((req, res, next) => __
     catch (error) {
         throw error;
     }
-}));
-const createTokenPair = (payload, publicKey, privateKey) => __awaiter(void 0, void 0, void 0, function* () {
+});
+const createTokenPair = async (payload, publicKey, privateKey) => {
     try {
         //access token
         const accessToken = jsonwebtoken_1.default.sign(payload, privateKey, {
@@ -88,5 +78,5 @@ const createTokenPair = (payload, publicKey, privateKey) => __awaiter(void 0, vo
         console.log("error createTokenPair: ", error);
         throw error;
     }
-});
+};
 exports.createTokenPair = createTokenPair;
