@@ -5,11 +5,9 @@ import TransactionList from '../../components/admin/TransactionList';
 import type { StatData, PaymentTransaction } from '@/types/admin-types';
 import { TransactionStatus, PayoutStatus } from '@/types/admin-types';
 
-// AI Insights helper function
 const getAIInsights = async (
   transactions: PaymentTransaction[]
 ): Promise<string> => {
-  // Simulate AI analysis
   const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
   const successRate =
     (transactions.filter(t => t.status === 'Succeeded').length /
@@ -135,7 +133,7 @@ const MOCK_TRANSACTIONS: PaymentTransaction[] = [
   },
 ];
 
-const AdminFinancialPage: React.FC = () => {
+const FinancialPage: React.FC = () => {
   const [activeItem, setActiveItem] = useState('finance');
   const [isOpen, setIsOpen] = useState(false);
   const [aiInsight, setAiInsight] = useState<string>(
@@ -152,7 +150,6 @@ const AdminFinancialPage: React.FC = () => {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark transition-colors duration-200">
-      {/* Sidebar Component */}
       <AppSidebar
         activeItem={activeItem}
         setActiveItem={setActiveItem}
@@ -161,7 +158,6 @@ const AdminFinancialPage: React.FC = () => {
       />
 
       <div className="flex-1 flex flex-col h-full relative overflow-hidden">
-        {/* Header Section */}
         <header className="absolute top-0 left-0 right-0 z-10 px-6 py-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button className="md:hidden p-2 text-gray-500 hover:text-indigo-500 rounded-lg">
@@ -213,10 +209,8 @@ const AdminFinancialPage: React.FC = () => {
           </div>
         </header>
 
-        {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden pt-22 pb-8 px-6 md:px-8 bg-background-light dark:bg-background-dark">
           <div className="max-w-7xl mx-auto flex flex-col gap-6">
-            {/* AI Insight Notification */}
             <div className="p-4 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl flex items-start gap-4">
               <div className="p-2 bg-indigo-500 text-white rounded-xl">
                 <span className="material-symbols-outlined">auto_awesome</span>
@@ -231,19 +225,18 @@ const AdminFinancialPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               {MOCK_STATS.map(stat => (
                 <SummaryCard key={stat.label} {...stat} />
               ))}
             </div>
 
-            {/* Transaction Table Section */}
             <TransactionList transactions={MOCK_TRANSACTIONS} />
 
             <footer className="mt-8 text-center text-xs text-gray-400 dark:text-gray-500 pb-4">
               <p>
-                © 2023 SPACEPOCKER Inc. All rights reserved.{' '}
+                © {new Date().getFullYear()} SPACEPOCKER Inc. All rights
+                reserved.{' '}
                 <a className="hover:text-indigo-500 ml-2" href="#">
                   Financial Policy
                 </a>
@@ -256,4 +249,4 @@ const AdminFinancialPage: React.FC = () => {
   );
 };
 
-export default AdminFinancialPage;
+export default FinancialPage;

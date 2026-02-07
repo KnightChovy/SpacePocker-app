@@ -7,11 +7,8 @@ import LoginPage from './pages/auth/LoginPage';
 import LandingPage from './pages/LandingPage';
 import SpaceDetailPage from './pages/user/space/SpaceDetailPage';
 import SpacesPage from './pages/user/space/SpacesPage';
-import AdminDashboardPage from './pages/admin/AdminDashboardPage';
-import AdminUsersPage from './pages/admin/AdminUsersPage';
-import AdminSpacesPage from './pages/admin/AdminSpacesPage';
-import AdminFinancialPage from './pages/admin/AdminFinancialPage';
 import UserRoute from './routes/userRoute';
+import AdminRoute from './routes/adminRoute';
 
 function App() {
   return (
@@ -34,14 +31,9 @@ function App() {
         <Route path="/auth-login" element={<LoginPage />} />
         <Route path="/spaces" element={<SpacesPage />} />
         <Route path="/spaces/detail/:id" element={<SpaceDetailPage />} />
-        <Route path="/admin" element={<AdminDashboardPage />} />
-        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-        <Route path="/admin/users" element={<AdminUsersPage />} />
-        <Route path="/admin/spaces" element={<AdminSpacesPage />} />
-        <Route path="/admin/finance" element={<AdminFinancialPage />} />
-        <Route path="/admin/settings" element={<AdminDashboardPage />} />
-        <Route path="/admin/security" element={<AdminDashboardPage />} />
+
         <Route path="/user/*" element={<UserRoute />} />
+        <Route path="/admin/*" element={<AdminRoute />} />
       </Routes>
     </>
   );

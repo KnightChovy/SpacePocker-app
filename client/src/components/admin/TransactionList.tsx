@@ -58,7 +58,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
       </div>
 
       <div className="overflow-x-auto -mx-6">
-        <table className="w-full text-left border-collapse min-w-[800px]">
+        <table className="w-full text-left border-collapse min-w-200">
           <thead>
             <tr className="text-xs text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
               <th className="py-3 px-6 font-medium uppercase tracking-wider">

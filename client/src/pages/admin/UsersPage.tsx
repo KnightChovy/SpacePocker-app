@@ -77,7 +77,7 @@ const INITIAL_USERS: User[] = [
   },
 ];
 
-const AdminUsersPage: React.FC = () => {
+const UsersPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('users');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -102,8 +102,7 @@ const AdminUsersPage: React.FC = () => {
       />
 
       <div className="flex-1 flex flex-col h-full relative overflow-hidden">
-        {/* Sticky Header */}
-        <header className="px-6 py-4 glass-panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 h-auto sm:h-[88px] shrink-0">
+        <header className="px-6 py-4 glass-panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 h-auto sm:h-22 shrink-0">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsSidebarOpen(true)}
@@ -149,11 +148,9 @@ const AdminUsersPage: React.FC = () => {
           </div>
         </header>
 
-        {/* Scrollable Content */}
         <main className="flex-1 overflow-y-auto pt-6 pb-8 px-4 md:px-8">
           <div className="max-w-7xl mx-auto flex flex-col gap-6">
             <div className="bg-surface-light rounded-2xl shadow-float border border-gray-100 flex flex-col overflow-hidden">
-              {/* Table Toolbar */}
               <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                 <div className="flex items-center gap-2 text-sm text-text-secondary-light">
                   <span className="material-symbols-outlined text-[18px]">
@@ -170,9 +167,8 @@ const AdminUsersPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Table */}
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[800px]">
+                <table className="w-full text-left border-collapse min-w-200">
                   <thead>
                     <tr className="bg-gray-50/50 text-xs font-semibold text-text-secondary-light uppercase tracking-wider border-b border-gray-200">
                       <th className="py-4 px-6 w-12 text-center">
@@ -250,7 +246,6 @@ const AdminUsersPage: React.FC = () => {
                 </table>
               </div>
 
-              {/* Pagination */}
               <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-sm text-gray-500">
                   Showing page{' '}
@@ -273,7 +268,8 @@ const AdminUsersPage: React.FC = () => {
 
             <footer className="mt-8 text-center text-xs text-text-secondary-light pb-4">
               <p>
-                © 2024 SPACEPOCKER Inc. All rights reserved.{' '}
+                © {new Date().getFullYear()} SPACEPOCKER Inc. All rights
+                reserved.{' '}
                 <a
                   className="hover:text-primary ml-2 underline underline-offset-4"
                   href="#"
@@ -289,4 +285,4 @@ const AdminUsersPage: React.FC = () => {
   );
 };
 
-export default AdminUsersPage;
+export default UsersPage;

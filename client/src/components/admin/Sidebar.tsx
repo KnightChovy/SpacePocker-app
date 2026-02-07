@@ -15,7 +15,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   setIsOpen,
 }) => {
   const navigate = useNavigate();
-  // const location = useLocation();
 
   const menuItems = [
     {
@@ -51,7 +50,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile Overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -59,13 +57,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`fixed lg:relative inset-y-0 left-0 z-50 flex flex-col w-72 h-full bg-white border-r border-gray-100 shrink-0 transition-transform duration-300 lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Brand */}
         <div className="p-8 flex items-center gap-4">
           <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
             <span className="material-symbols-outlined text-2xl">
@@ -82,7 +78,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 px-4 mt-6 overflow-y-auto">
           <div className="mb-8">
             <p className="px-4 mb-4 text-[11px] font-bold text-gray-400 uppercase tracking-[2px]">
@@ -145,7 +140,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </nav>
 
-        {/* User Footer */}
         <div className="p-4 mt-auto">
           <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
             <img
@@ -167,7 +161,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Material Icons CSS Link */}
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"

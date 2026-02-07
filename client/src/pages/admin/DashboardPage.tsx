@@ -9,7 +9,7 @@ import SystemHealth from '../../components/admin/SystemHealth';
 import TransactionTable from '../../components/admin/TransactionTable';
 import type { Stat, Transaction, LogEntry } from '../../types/admin-types';
 
-const AdminDashboardPage: React.FC = () => {
+const DashboardPage: React.FC = () => {
   const [activeItem, setActiveItem] = useState<string>('dashboard');
   const [isOpen, setIsOpen] = useState<boolean>(true);
   const [stats] = useState<Stat[]>([
@@ -121,14 +121,12 @@ const AdminDashboardPage: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header />
         <main className="flex-1 overflow-y-auto p-6 lg:p-10 space-y-8">
-          {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, idx) => (
               <StatCard key={idx} {...stat} />
             ))}
           </div>
 
-          {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <TransactionChart />
@@ -139,7 +137,6 @@ const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Transactions Table */}
           <TransactionTable transactions={transactions} />
         </main>
       </div>
@@ -147,4 +144,4 @@ const AdminDashboardPage: React.FC = () => {
   );
 };
 
-export default AdminDashboardPage;
+export default DashboardPage;

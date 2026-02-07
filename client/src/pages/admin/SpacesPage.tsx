@@ -119,7 +119,7 @@ const MOCK_SPACES: Space[] = [
   },
 ];
 
-const AdminSpacesPage: React.FC = () => {
+const SpacesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('All Categories');
   const [pendingOnly, setPendingOnly] = useState(false);
@@ -128,7 +128,6 @@ const AdminSpacesPage: React.FC = () => {
   const [activeItem, setActiveItem] = useState('spaces'); // Set active item for sidebar
   const [isOpen, setIsOpen] = useState(false); // Sidebar open state for mobile
 
-  // Derive Stats
   const stats: InventoryStats = useMemo(() => {
     return {
       total: MOCK_SPACES.length,
@@ -138,15 +137,11 @@ const AdminSpacesPage: React.FC = () => {
     };
   }, []);
 
-  // Filter Logic
   const filteredSpaces = useMemo(() => {
     return MOCK_SPACES.filter(space => {
       const matchesSearch =
         space.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         space.location.toLowerCase().includes(searchQuery.toLowerCase());
-      //   const matchesCategory =
-      //     activeTab === 'All Categories' ||
-      //     space.category === activeTab.slice(0, -1); // Simple mapping
       const matchesPending = !pendingOnly || space.status === 'Pending Review';
 
       return (
@@ -161,7 +156,6 @@ const AdminSpacesPage: React.FC = () => {
 
   const handleGenerateInsight = async () => {
     setLoadingInsight(true);
-    // Simulate API call for generating insight
     await new Promise(resolve => setTimeout(resolve, 2000));
     const insight = `Based on ${filteredSpaces.length} spaces: ${stats.approved} approved (${Math.round((stats.approved / stats.total) * 100)}%), ${stats.pending} pending review, ${stats.rejected} rejected. Most popular category: ${activeTab === 'All Categories' ? 'All' : activeTab}.`;
     setAiInsight(insight);
@@ -187,9 +181,8 @@ const AdminSpacesPage: React.FC = () => {
           subtitle="Manage and monitor all spaces in your platform."
         />
 
-        <main className="flex-1 overflow-y-auto pt-[88px] pb-8 px-6 md:px-8">
+        <main className="flex-1 overflow-y-auto pt-22 pb-8 px-6 md:px-8">
           <div className="max-w-7xl mx-auto flex flex-col gap-6">
-            {/* AI Insight Bar */}
             <div className="bg-indigo-600/5 border border-indigo-200 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="size-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
@@ -229,7 +222,7 @@ const AdminSpacesPage: React.FC = () => {
 
           <footer className="mt-12 text-center text-xs text-text-secondary pb-4">
             <p>
-              © 2023 SPACEPOCKER Inc. All rights reserved.{' '}
+              © {new Date().getFullYear()} SPACEPOCKER Inc. All rights reserved.{' '}
               <a className="hover:text-primary ml-2" href="#">
                 Privacy Policy
               </a>
@@ -241,4 +234,4 @@ const AdminSpacesPage: React.FC = () => {
   );
 };
 
-export default AdminSpacesPage;
+export default SpacesPage;

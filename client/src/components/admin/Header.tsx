@@ -34,7 +34,6 @@ const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-3 sm:gap-4">
-        {/* Search Input */}
         <div className="hidden md:flex items-center w-72 bg-white border border-gray-200 rounded-2xl px-4 py-2.5 focus-within:ring-4 focus-within:ring-indigo-100 transition-all shadow-sm">
           <span className="material-symbols-outlined text-gray-400 mr-2 text-lg">
             search
@@ -53,7 +52,6 @@ const Header: React.FC<HeaderProps> = ({
           </span>
         </div>
 
-        {/* Pending Only Filter - Only show if setPendingOnly is provided */}
         {setPendingOnly && (
           <button
             onClick={() => setPendingOnly(!pendingOnly)}
@@ -72,7 +70,6 @@ const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
-        {/* Date Filter */}
         <button className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-2xl px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
           <span className="material-symbols-outlined text-[18px] text-gray-500">
             calendar_today
@@ -83,7 +80,6 @@ const Header: React.FC<HeaderProps> = ({
           </span>
         </button>
 
-        {/* Export Action */}
         <button className="flex items-center gap-2 bg-indigo-600 text-white rounded-2xl px-5 py-2.5 text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:shadow-indigo-300 transition-all active:scale-95">
           <span className="material-symbols-outlined text-[20px]">
             ios_share
