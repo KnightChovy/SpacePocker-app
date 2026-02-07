@@ -3,11 +3,13 @@ import {
   type Feature,
   type SpaceType,
   type Amenity,
+} from '../types/types';
+import {
   type BookingUser,
   type SpaceUser,
   type UserStats,
   BookingStatus,
-} from '../types/types';
+} from '../types/user-type';
 
 // TODO: XÓA DATA TĨNH NÀY KHI ĐÃ CÓ API - Backend sẽ trả về data tương tự
 export const SPACES: Space[] = [
