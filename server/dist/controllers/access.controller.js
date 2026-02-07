@@ -6,25 +6,25 @@ class AccessController {
         this.accessService = accessService;
         this.handleRefreshToken = async (req, res, next) => {
             new success_response_1.OK({
-                message: 'Token refreshed successfully',
+                message: "Token refreshed successfully",
                 metadata: await this.accessService.handleRefreshToken(req.body),
             }).send(res);
         };
         this.logout = async (req, res, next) => {
             new success_response_1.OK({
-                message: 'User logged out successfully',
+                message: "User logged out successfully",
                 metadata: await this.accessService.logout(req.body),
             }).send(res);
         };
         this.signUp = async (req, res, next) => {
             new success_response_1.Created({
-                message: 'User created successfully',
+                message: "User created successfully",
                 metadata: await this.accessService.signUp(req.body),
             }).send(res);
         };
         this.login = async (req, res, next) => {
             new success_response_1.OK({
-                message: 'User logged in successfully',
+                message: "User logged in successfully",
                 metadata: await this.accessService.login(req.body),
             }).send(res);
         };

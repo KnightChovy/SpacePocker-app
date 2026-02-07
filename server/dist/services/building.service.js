@@ -94,8 +94,8 @@ class BuildingService {
             throw new error_response_1.NotFoundError('Building not found!');
         }
         const updateData = {};
-        if (data.buildingName) {
-            updateData.buildingName = data.buildingName;
+        if (data.name) {
+            updateData.buildingName = data.name;
         }
         if (data.address) {
             updateData.address = data.address;
