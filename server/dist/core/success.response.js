@@ -11,7 +11,7 @@ exports.ReasonStatusCode = {
 };
 class SuccessResponse {
     constructor({ message, statusCode = exports.STATUS_CODE.OK, reasonStatusCode = exports.ReasonStatusCode.OK, metadata = {}, }) {
-        this.message = message !== null && message !== void 0 ? message : reasonStatusCode;
+        this.message = message ?? reasonStatusCode;
         this.status = statusCode;
         this.reason = reasonStatusCode;
         this.metadata = metadata;
@@ -30,7 +30,11 @@ exports.SuccessResponse = SuccessResponse;
 ======================= */
 class OK extends SuccessResponse {
     constructor(payload = {}) {
-        super(Object.assign(Object.assign({}, payload), { statusCode: exports.STATUS_CODE.OK, reasonStatusCode: exports.ReasonStatusCode.OK }));
+        super({
+            ...payload,
+            statusCode: exports.STATUS_CODE.OK,
+            reasonStatusCode: exports.ReasonStatusCode.OK,
+        });
     }
 }
 exports.OK = OK;
@@ -39,7 +43,11 @@ exports.OK = OK;
 ======================= */
 class Created extends SuccessResponse {
     constructor(payload = {}, options = {}) {
-        super(Object.assign(Object.assign({}, payload), { statusCode: exports.STATUS_CODE.CREATED, reasonStatusCode: exports.ReasonStatusCode.CREATED }));
+        super({
+            ...payload,
+            statusCode: exports.STATUS_CODE.CREATED,
+            reasonStatusCode: exports.ReasonStatusCode.CREATED,
+        });
         this.options = options;
     }
 }
