@@ -1,4 +1,15 @@
-import type { Space, Feature, SpaceType, Amenity } from '../types/types';
+import {
+  type Space,
+  type Feature,
+  type SpaceType,
+  type Amenity,
+} from '../types/types';
+import {
+  type BookingUser,
+  type SpaceUser,
+  type UserStats,
+  BookingStatus,
+} from '../types/user-type';
 
 // TODO: XÓA DATA TĨNH NÀY KHI ĐÃ CÓ API - Backend sẽ trả về data tương tự
 export const SPACES: Space[] = [
@@ -35,7 +46,6 @@ export const SPACES: Space[] = [
     host: {
       name: 'Sarah Jenkins',
       joinedDate: '2021',
-      isSuperhost: true,
       avatar:
         'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop',
     },
@@ -406,3 +416,123 @@ export const SPACE_DETAILS_MAP: Record<
     ],
   },
 };
+
+export const USER_INFO = {
+  name: 'Alex Mitchell',
+  shortName: 'Alex M.',
+  role: 'Senior Designer',
+  plan: 'Pro Plan',
+  email: 'alex.m@example.com',
+  phone: '+1 (555) 000-1234',
+  profileImage:
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuBd7RBGmICJjpaetMn8SU0OUOrfBRhADQ2muJ_0A-WlTF6__1ZOh-onRgoS7Bob8czqWBy-nMJN2hpinYpEe2QeSdzcWlyHEJXTcEOGPlog46T1HMMjeyk19Cq9xvNPQWLRdpvnht0RLoAk_23_t2KQsMPtc5Nbg1XW4_Oq7bcRHAd_nbKeS-kwVZh3KA2fQCBgRiH8uOGlSwHIiKF8-HecShihzpWpcrwWJunygAM6E_Mw7Z5vmizrfyi0z9din6K0h_lOKsNys2ik',
+};
+
+export const USER_STATS: UserStats = {
+  totalBookings: 12,
+  hoursSpent: '48h',
+  credits: 120.0,
+};
+
+export const SPACESUSER: SpaceUser[] = [
+  {
+    id: 'S-001',
+    name: 'Creative Studio A',
+    location: 'Downtown Hub, Floor 3',
+    rating: 4.9,
+    pricePerHour: 45,
+    image:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuDKZY3FHhDC8vs2RXJGt_--Anw_Ams-vV4Kd26MJKKi9E-4mNx1D_RD1Y9hVTwiwtHOjTC36QjYv2jaTLDdDAvBXh_TdDayKMtqd5NmWFErDNZtYtA0NHYQ6QrYZm-4SjHnUvZJ7JlyyFHn3ULHJTDXatbOijjvrhChPccAsHtzLeG4C_pAWFeNQyl-auAkkuImiDw_M5uElOOpVwCbM_o7y0TLpVywnLQRkAdzlwdkX0Ih4qMYRwR5IRKwH6uz9OkKOk8LAQ0oBSU_',
+    amenities: ['WIFI', 'PROJECTOR'],
+    capacity: '10 people',
+  },
+  {
+    id: 'S-002',
+    name: 'Podcast Room 02',
+    location: 'Westside Studio, B1',
+    rating: 4.7,
+    pricePerHour: 35,
+    image:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuC66z9AEFpf_-qIvuF52yYmdzGlP85vdOZT41iEynugoVhty_ibBh1LKRnZRug4UyBuhnAVs1vD4EKb0KYStEPZAO4DQhWpjyYYDgxBESYW63RLMfFmQpB1VVM8DB_nCJ6Rd9HYUQre2K4H7xSmuc-nhRYIcTcr1MNZcwJ_6WtX3b9_JzLpIYyobO7I-za1l87uc08FAA89aPNc9mcTomga16snggaqQQ6TA5NIVbIJprovrDAmDDnpfXQ_nr2-kzODBqujJrUirIfr',
+    amenities: ['SOUNDPROOF', 'MIC'],
+    capacity: '4 people',
+  },
+  {
+    id: 'S-003',
+    name: 'Conference Hall B',
+    location: 'City Center, Floor 12',
+    rating: 5.0,
+    pricePerHour: 120,
+    image:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuDboo55yMNQRs4MtqadEDjOq--Alw2-tQGCWbwFgal9UiFx4M0RuogNy07XuX4FdtYCKwFK4FXZcKel_JJU_J9w6kTBCsvD29og-ZKN29hhLIjjTF4IRcvkPg6dV-Q7heIwcFQ1Q4NZh9VwYlHVI58OsWuWA9UBZCeMPJy1b0JO64ixUC1P-zEy3CWPlpBYmTuPcJD4h3kb_v8h4o8kVWqtk7t-GmrNHV4ION4WRiwIxInmUbuf1bXoGcKPwHw1bWVsNi5wrlfJeMNF',
+    amenities: ['50+ PEOPLE', 'AV SYSTEM'],
+    capacity: '50+ people',
+  },
+  {
+    id: 'S-004',
+    name: 'Sunny Loft Studio',
+    location: 'Arts District, Floor 2',
+    rating: 4.8,
+    pricePerHour: 45,
+    image:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAeo9Yu6q2P4hARVqMkas1owYyeId3YFgwqT0xevAO-47uavH7rl-ySCih_OS4oD2qnn0EQRGWMeqCJUrAuNfFG8bnk2agRhxUiKdn-4jHKgvR_Q5hjk405jCED3nLE5mWz4WYPWehi9uFG6flBUt3BpHcP947S83xieEPhUTbtRX4maTZWMm2KwfGB0s7mVE4lWqdWHWKAD4DAD9Uu9TAGXwVy7dXFK9NIzJqAWHlB0sLQreNCkYIIbFBa54v7EFDDVk3C9h9Bhe7y',
+    amenities: ['NATURAL LIGHT', 'WIFI'],
+    capacity: '12 people',
+  },
+  {
+    id: 'S-005',
+    name: 'The Brick Room',
+    location: 'SoHo District',
+    rating: 4.6,
+    pricePerHour: 30,
+    image:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuCiu2dP6fH6_aphA1S4Cj4EOJB4yZOOn082O6OA2VC5m59EWRlFIHXw6m1ZI7iZhfsBp2ApirkXplLgHD89nYcWsISuYUnRzxpbaSQNLkIgVZ8sVY3qWljX7mzv2hSoTGbzsGcgwUujo7Sq2wYuarJeNeZGZJ-npWAYTMl6cVifit2BMkXvZjy8Q6d2zfd-GrS5YqMbpfGebS3UkS0CZ8rmv3oHjXhZP2RE1M7dbAKrCG-g4iyyKkeZSjt3cLsb-93KSUlHB2AFtL7o',
+    amenities: ['COFFEE', 'WHITEBOARD'],
+    capacity: '8 people',
+  },
+];
+
+export const BOOKINGSUSER: BookingUser[] = [
+  {
+    id: '#BK-9928',
+    spaceId: 'S-003',
+    spaceName: 'Conference Hall B',
+    location: 'City Center, Floor 12',
+    status: BookingStatus.COMPLETED,
+    date: 'Oct 20, 2023',
+    startTime: '09:00 AM',
+    endTime: '05:00 PM',
+    duration: '8h',
+    price: 450.0,
+    paymentMethod: 'Visa •••• 4242',
+    image: SPACESUSER[2].image,
+  },
+  {
+    id: '#BK-8832',
+    spaceId: 'S-002',
+    spaceName: 'Podcast Room 02',
+    location: 'Westside Studio, B1',
+    status: BookingStatus.COMPLETED,
+    date: 'Oct 15, 2023',
+    startTime: '02:00 PM',
+    endTime: '04:00 PM',
+    duration: '2h',
+    price: 60.0,
+    paymentMethod: 'Wallet',
+    image: SPACESUSER[1].image,
+  },
+  {
+    id: '#BK-7120',
+    spaceId: 'S-004',
+    spaceName: 'Sunny Loft Studio',
+    location: 'Arts District, Floor 2',
+    status: BookingStatus.COMPLETED,
+    date: 'Sep 30, 2023',
+    startTime: '10:00 AM',
+    endTime: '02:00 PM',
+    duration: '4h',
+    price: 180.0,
+    paymentMethod: 'Visa •••• 1234',
+    image: SPACESUSER[3].image,
+  },
+];

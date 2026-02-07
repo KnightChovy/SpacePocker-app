@@ -29,7 +29,7 @@ const InputField: React.FC<InputFieldProps> = ({
       />
       <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
         {typeof icon === 'string' ? (
-          <span className="material-symbols-outlined text-[24px]">{icon}</span>
+          <span className=" text-[24px]">{icon}</span>
         ) : (
           icon
         )}

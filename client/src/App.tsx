@@ -11,6 +11,7 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminSpacesPage from './pages/admin/AdminSpacesPage';
 import AdminFinancialPage from './pages/admin/AdminFinancialPage';
+import UserRoute from './routes/userRoute';
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
         <Route path="/admin/finance" element={<AdminFinancialPage />} />
         <Route path="/admin/settings" element={<AdminDashboardPage />} />
         <Route path="/admin/security" element={<AdminDashboardPage />} />
+        <Route path="/user/*" element={<UserRoute />} />
       </Routes>
     </>
   );
