@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-    PayoutStatus,
+  PayoutStatus,
   type PaymentTransaction,
   TransactionStatus,
 } from '../../types/admin-types';

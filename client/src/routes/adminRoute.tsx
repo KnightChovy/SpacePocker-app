@@ -4,8 +4,6 @@ import SpacesPage from '@/pages/admin/SpacesPage';
 import UsersPage from '@/pages/admin/UsersPage';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
-
-
 const AdminRoute = () => {
   return (
     <Routes>
@@ -15,7 +13,7 @@ const AdminRoute = () => {
       <Route path="/finance" element={<FinancialPage />} />
       <Route path="/settings" element={<DashboardPage />} />
       <Route path="/security" element={<DashboardPage />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
     </Routes>
   );
 };
