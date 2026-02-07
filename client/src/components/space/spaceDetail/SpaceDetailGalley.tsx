@@ -35,7 +35,7 @@ const SpaceDetailGallery: React.FC<SpaceDetailGalleryProps> = ({ images }) => {
             <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
             {idx === 3 && (
               <button className="absolute bottom-4 right-4 bg-white/95 backdrop-blur shadow-lg px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-white transition-all transform active:scale-95">
-                <span className="material-symbols-outlined">
+                <span className="">
                   <Image />
                 </span>
                 Show all photos

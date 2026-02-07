@@ -255,7 +255,7 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
       </div>
 
       <div className="flex items-center gap-3 p-3 bg-teal-50 rounded-xl border border-teal-100">
-        <span className="material-symbols-outlined text-teal-600 material-fill">
+        <span className=" text-teal-600 material-fill">
           <Gem />
         </span>
         <div className="flex flex-col">

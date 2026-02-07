@@ -33,7 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     <aside className="w-72 hidden lg:flex flex-col gap-8 shrink-0 h-[calc(100vh-120px)] sticky top-24 overflow-y-auto custom-scrollbar pr-2">
       <div className="flex items-center justify-between pb-2 border-b border-slate-200">
         <h3 className="font-bold text-slate-900 flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary">
+          <span className=" text-primary">
             <SlidersHorizontal />
           </span>{' '}
           Filters
