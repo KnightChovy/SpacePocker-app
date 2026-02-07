@@ -1,19 +1,23 @@
-"use strict";
+'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ForbiddenError = exports.NotFoundError = exports.AuthFailureError = exports.BadRequestError = exports.ConflictRequestError = exports.ErrorResponse = exports.ReasonPhrases = exports.ResponseStatusCode = exports.STATUS_CODE = void 0;
 exports.STATUS_CODE = {
+    BAD_REQUEST: 400,
+    UNAUTHORIZED: 401,
     FORBIDDEN: 403,
-    CONFLICT: 409,
     NOT_FOUND: 404,
+    CONFLICT: 409,
 };
 exports.ResponseStatusCode = {
-    FORBIDDEN: "bad request",
-    CONFLICT: "Conflict error",
+    BAD_REQUEST: 'Bad request',
+    UNAUTHORIZED: 'Unauthorized',
+    FORBIDDEN: 'Forbidden',
+    CONFLICT: 'Conflict error',
 };
 exports.ReasonPhrases = {
-    FORBIDDEN: "Forbidden",
-    UNAUTHORIZED: "Unauthorized",
-    NOT_FOUND: "Not found",
+    FORBIDDEN: 'Forbidden',
+    UNAUTHORIZED: 'Unauthorized',
+    NOT_FOUND: 'Not found',
 };
 class ErrorResponse extends Error {
     constructor(message, status) {
@@ -30,13 +34,13 @@ class ConflictRequestError extends ErrorResponse {
 }
 exports.ConflictRequestError = ConflictRequestError;
 class BadRequestError extends ErrorResponse {
-    constructor(message = exports.ResponseStatusCode.FORBIDDEN, statusCode = exports.STATUS_CODE.FORBIDDEN) {
+    constructor(message = exports.ResponseStatusCode.BAD_REQUEST, statusCode = exports.STATUS_CODE.BAD_REQUEST) {
         super(message, statusCode);
     }
 }
 exports.BadRequestError = BadRequestError;
 class AuthFailureError extends ErrorResponse {
-    constructor(message = exports.ReasonPhrases.UNAUTHORIZED, statusCode = exports.STATUS_CODE.FORBIDDEN) {
+    constructor(message = exports.ReasonPhrases.UNAUTHORIZED, statusCode = exports.STATUS_CODE.UNAUTHORIZED) {
         super(message, statusCode);
     }
 }
