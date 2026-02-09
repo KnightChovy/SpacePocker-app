@@ -62,7 +62,7 @@ export default class BookingRequestService {
 
     const room = await this.roomRepo.findById(roomId);
     if (!room) {
-      throw new NotFoundError(`Room with id '${roomId}' not found`);
+      throw new NotFoundError(`Room with id not found`);
     }
     if (!room.isAvailable) {
       throw new BadRequestError(
@@ -112,7 +112,7 @@ export default class BookingRequestService {
   async getBookingRequestById(id: string) {
     const bookingRequest = await this.bookingRequestRepo.findById(id);
     if (!bookingRequest) {
-      throw new NotFoundError(`Booking request with id '${id}' not found`);
+      throw new NotFoundError(`Booking request with id not found`);
     }
     return bookingRequest;
   }
