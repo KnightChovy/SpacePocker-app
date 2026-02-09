@@ -10,3 +10,8 @@
 //     roomType:
 //   })
 // }
+import { Room } from '@prisma/client';
+
+export interface IRoomRepository {
+  findById(roomId: string): Promise<Room | null>;
+}
