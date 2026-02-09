@@ -8,14 +8,11 @@ export interface CreateBookingRequestInput {
   purpose?: string;
 }
 
-export interface CheckOverlapInput {
+export interface CheckUserPendingOverlapInput {
+  userId: string;
   roomId: string;
   startTime: Date;
   endTime: Date;
-}
-
-export interface CheckUserPendingOverlapInput extends CheckOverlapInput {
-  userId: string;
 }
 
 export interface IBookingRequestRepository {
@@ -23,12 +20,7 @@ export interface IBookingRequestRepository {
 
   findById(id: string): Promise<BookingRequest | null>;
 
-  findRoomById(roomId: string): Promise<Room | null>;
-
-  findOverlappingApprovedBookings(input: CheckOverlapInput): Promise<Booking[]>;
-
   findOverlappingPendingRequests(
     input: CheckUserPendingOverlapInput,
   ): Promise<BookingRequest[]>;
 }
-//asdasdasd

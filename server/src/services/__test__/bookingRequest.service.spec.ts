@@ -1,5 +1,7 @@
 import BookingRequestService from '../bookingRequest.service';
 import { IBookingRequestRepository } from '../../interface/bookingRequest.repository.interface';
+import { IRoomRepository } from '../../interface/room.repository.interface';
+import { IBookingRepository } from '../../interface/booking.repository.interface';
 import {
   BadRequestError,
   NotFoundError,
@@ -8,7 +10,9 @@ import {
 
 describe('BookingRequestService', () => {
   let bookingRequestService: BookingRequestService;
-  let mockRepo: jest.Mocked<IBookingRequestRepository>;
+  let mockBookingRequestRepo: jest.Mocked<IBookingRequestRepository>;
+  let mockRoomRepo: jest.Mocked<IRoomRepository>;
+  let mockBookingRepo: jest.Mocked<IBookingRepository>;
 
   const mockRoom = {
     id: 'r-001',
@@ -59,14 +63,22 @@ describe('BookingRequestService', () => {
   futureEndTime.setHours(11, 0, 0, 0);
 
   beforeEach(() => {
-    mockRepo = {
+    mockBookingRequestRepo = {
       create: jest.fn(),
       findById: jest.fn(),
-      findRoomById: jest.fn(),
-      findOverlappingApprovedBookings: jest.fn(),
       findOverlappingPendingRequests: jest.fn(),
     };
-    bookingRequestService = new BookingRequestService(mockRepo);
+    mockRoomRepo = {
+      findById: jest.fn(),
+    };
+    mockBookingRepo = {
+      findOverlappingApprovedBookings: jest.fn(),
+    };
+    bookingRequestService = new BookingRequestService(
+      mockBookingRequestRepo,
+      mockRoomRepo,
+      mockBookingRepo,
+    );
     jest.clearAllMocks();
   });
 
@@ -216,7 +228,7 @@ describe('BookingRequestService', () => {
 
     describe('Room Validation', () => {
       it('should throw NotFoundError if room not found', async () => {
-        mockRepo.findRoomById.mockResolvedValue(null);
+        mockRoomRepo.findById.mockResolvedValue(null);
 
         await expect(
           bookingRequestService.createBookingRequest(validData),
@@ -226,11 +238,11 @@ describe('BookingRequestService', () => {
           bookingRequestService.createBookingRequest(validData),
         ).rejects.toThrow(`Room with id '${validData.roomId}' not found`);
 
-        expect(mockRepo.findRoomById).toHaveBeenCalledWith(validData.roomId);
+        expect(mockRoomRepo.findById).toHaveBeenCalledWith(validData.roomId);
       });
 
       it('should throw BadRequestError if room is not available', async () => {
-        mockRepo.findRoomById.mockResolvedValue({
+        mockRoomRepo.findById.mockResolvedValue({
           ...mockRoom,
           isAvailable: false,
         });
@@ -247,8 +259,8 @@ describe('BookingRequestService', () => {
 
     describe('Conflict Detection', () => {
       it('should throw ConflictRequestError if overlapping approved booking exists', async () => {
-        mockRepo.findRoomById.mockResolvedValue(mockRoom);
-        mockRepo.findOverlappingApprovedBookings.mockResolvedValue([
+        mockRoomRepo.findById.mockResolvedValue(mockRoom);
+        mockBookingRepo.findOverlappingApprovedBookings.mockResolvedValue([
           {
             id: 'booking-001',
             userId: 'u-002',
@@ -269,7 +281,7 @@ describe('BookingRequestService', () => {
           bookingRequestService.createBookingRequest(validData),
         ).rejects.toThrow('Room is already booked from');
 
-        expect(mockRepo.findOverlappingApprovedBookings).toHaveBeenCalledWith({
+        expect(mockBookingRepo.findOverlappingApprovedBookings).toHaveBeenCalledWith({
           roomId: validData.roomId,
           startTime: expect.any(Date),
           endTime: expect.any(Date),
@@ -277,9 +289,9 @@ describe('BookingRequestService', () => {
       });
 
       it('should throw ConflictRequestError if user has pending request for same time slot', async () => {
-        mockRepo.findRoomById.mockResolvedValue(mockRoom);
-        mockRepo.findOverlappingApprovedBookings.mockResolvedValue([]);
-        mockRepo.findOverlappingPendingRequests.mockResolvedValue([
+        mockRoomRepo.findById.mockResolvedValue(mockRoom);
+        mockBookingRepo.findOverlappingApprovedBookings.mockResolvedValue([]);
+        mockBookingRequestRepo.findOverlappingPendingRequests.mockResolvedValue([
           {
             id: 'br-existing',
             userId: 'u-001',
@@ -303,7 +315,7 @@ describe('BookingRequestService', () => {
           'You already have a pending booking request for this room',
         );
 
-        expect(mockRepo.findOverlappingPendingRequests).toHaveBeenCalledWith({
+        expect(mockBookingRequestRepo.findOverlappingPendingRequests).toHaveBeenCalledWith({
           roomId: validData.roomId,
           userId: validData.userId,
           startTime: expect.any(Date),
@@ -314,16 +326,16 @@ describe('BookingRequestService', () => {
 
     describe('Success', () => {
       it('should create booking request successfully', async () => {
-        mockRepo.findRoomById.mockResolvedValue(mockRoom);
-        mockRepo.findOverlappingApprovedBookings.mockResolvedValue([]);
-        mockRepo.findOverlappingPendingRequests.mockResolvedValue([]);
-        mockRepo.create.mockResolvedValue(mockBookingRequest);
+        mockRoomRepo.findById.mockResolvedValue(mockRoom);
+        mockBookingRepo.findOverlappingApprovedBookings.mockResolvedValue([]);
+        mockBookingRequestRepo.findOverlappingPendingRequests.mockResolvedValue([]);
+        mockBookingRequestRepo.create.mockResolvedValue(mockBookingRequest);
 
         const result =
           await bookingRequestService.createBookingRequest(validData);
 
         expect(result).toEqual(mockBookingRequest);
-        expect(mockRepo.create).toHaveBeenCalledWith({
+        expect(mockBookingRequestRepo.create).toHaveBeenCalledWith({
           userId: validData.userId,
           roomId: validData.roomId,
           startTime: expect.any(Date),
@@ -335,10 +347,10 @@ describe('BookingRequestService', () => {
       it('should create booking request without purpose', async () => {
         const dataWithoutPurpose = { ...validData, purpose: undefined };
 
-        mockRepo.findRoomById.mockResolvedValue(mockRoom);
-        mockRepo.findOverlappingApprovedBookings.mockResolvedValue([]);
-        mockRepo.findOverlappingPendingRequests.mockResolvedValue([]);
-        mockRepo.create.mockResolvedValue({
+        mockRoomRepo.findById.mockResolvedValue(mockRoom);
+        mockBookingRepo.findOverlappingApprovedBookings.mockResolvedValue([]);
+        mockBookingRequestRepo.findOverlappingPendingRequests.mockResolvedValue([]);
+        mockBookingRequestRepo.create.mockResolvedValue({
           ...mockBookingRequest,
           purpose: null,
         });
@@ -347,7 +359,7 @@ describe('BookingRequestService', () => {
           await bookingRequestService.createBookingRequest(dataWithoutPurpose);
 
         expect(result.purpose).toBeNull();
-        expect(mockRepo.create).toHaveBeenCalledWith({
+        expect(mockBookingRequestRepo.create).toHaveBeenCalledWith({
           userId: dataWithoutPurpose.userId,
           roomId: dataWithoutPurpose.roomId,
           startTime: expect.any(Date),
@@ -360,17 +372,17 @@ describe('BookingRequestService', () => {
 
   describe('getBookingRequestById()', () => {
     it('should return booking request if found', async () => {
-      mockRepo.findById.mockResolvedValue(mockBookingRequest);
+      mockBookingRequestRepo.findById.mockResolvedValue(mockBookingRequest);
 
       const result =
         await bookingRequestService.getBookingRequestById('br-001');
 
       expect(result).toEqual(mockBookingRequest);
-      expect(mockRepo.findById).toHaveBeenCalledWith('br-001');
+      expect(mockBookingRequestRepo.findById).toHaveBeenCalledWith('br-001');
     });
 
     it('should throw NotFoundError if booking request not found', async () => {
-      mockRepo.findById.mockResolvedValue(null);
+      mockBookingRequestRepo.findById.mockResolvedValue(null);
 
       await expect(
         bookingRequestService.getBookingRequestById('non-existent'),

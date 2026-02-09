@@ -4,9 +4,15 @@ import {
   NotFoundError,
   ConflictRequestError,
 } from '../core/error.response';
+import { IRoomRepository } from '../interface/room.repository.interface';
+import { IBookingRepository } from '../interface/booking.repository.interface';
 
 export default class BookingRequestService {
-  constructor(private bookingRequestRepo: IBookingRequestRepository) {}
+  constructor(
+    private bookingRequestRepo: IBookingRequestRepository,
+    private roomRepo: IRoomRepository,
+    private bookingRepo: IBookingRepository,
+  ) {}
 
   async createBookingRequest(data: {
     userId: string;
@@ -54,7 +60,7 @@ export default class BookingRequestService {
       throw new BadRequestError('Cannot book a room in the past');
     }
 
-    const room = await this.bookingRequestRepo.findRoomById(roomId);
+    const room = await this.roomRepo.findById(roomId);
     if (!room) {
       throw new NotFoundError(`Room with id '${roomId}' not found`);
     }
@@ -65,7 +71,7 @@ export default class BookingRequestService {
     }
 
     const overlappingBookings =
-      await this.bookingRequestRepo.findOverlappingApprovedBookings({
+      await this.bookingRepo.findOverlappingApprovedBookings({
         roomId,
         startTime,
         endTime,
