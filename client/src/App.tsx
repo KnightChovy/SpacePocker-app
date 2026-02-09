@@ -8,6 +8,14 @@ import LandingPage from './pages/LandingPage';
 import SpaceDetailPage from './pages/user/space/SpaceDetailPage';
 import SpacesPage from './pages/user/space/SpacesPage';
 
+// Manager imports
+import ManagerLayout from './components/layouts/ManagerLayout';
+import ManagerDashboardPage from './pages/manager/ManagerDashboardPage';
+import ManagerSchedulePage from './pages/manager/ManagerSchedulePage';
+import ManagerRoomPage from './pages/manager/ManagerRoomPage';
+import ManagerBookingPage from './pages/manager/ManagerBookingPage';
+import { AnalyticsPage } from './pages/manager/AnalyticsPage';
+
 function App() {
   return (
     <>
@@ -29,6 +37,15 @@ function App() {
         <Route path="/auth-login" element={<LoginPage />} />
         <Route path="/spaces" element={<SpacesPage />} />
         <Route path="/spaces/detail/:id" element={<SpaceDetailPage />} />
+
+        {/* Manager Routes */}
+        <Route path="/manager" element={<ManagerLayout />}>
+          <Route path="" element={<ManagerDashboardPage />} />
+          <Route path="schedule" element={<ManagerSchedulePage />} />
+          <Route path="rooms" element={<ManagerRoomPage />} />
+          <Route path="bookings" element={<ManagerBookingPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+        </Route>
       </Routes>
     </>
   );

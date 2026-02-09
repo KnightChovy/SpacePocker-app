@@ -35,7 +35,6 @@ export const SPACES: Space[] = [
     host: {
       name: 'Sarah Jenkins',
       joinedDate: '2021',
-      isSuperhost: true,
       avatar:
         'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop',
     },
