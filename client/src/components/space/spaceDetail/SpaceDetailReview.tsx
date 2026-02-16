@@ -41,9 +41,7 @@ const SpaceDetailReviews: React.FC<SpaceDetailReviewsProps> = ({
   return (
     <section id="reviews-section" className="pt-12 border-t border-gray-100">
       <div className="flex items-center gap-2 mb-8">
-        <span className="material-symbols-outlined text-cyan-400 material-fill text-2xl">
-          ★
-        </span>
+        <span className=" text-cyan-400 material-fill text-2xl">★</span>
         <h3 className="text-2xl font-bold text-gray-900">
           {rating} · {reviews.length} reviews
         </h3>

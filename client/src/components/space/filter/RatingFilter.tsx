@@ -21,7 +21,7 @@ const RatingFilter: React.FC<RatingFilterProps> = ({ minRating, onChange }) => {
             }`}
           >
             <span
-              className={`material-symbols-outlined text-[16px] ${minRating === val ? 'fill-current' : ''}`}
+              className={` text-[16px] ${minRating === val ? 'fill-current' : ''}`}
             >
               ★
             </span>{' '}
