@@ -458,7 +458,7 @@ export const roomPerformances: RoomPerformance[] = [
   },
   {
     id: '3',
-    name: 'Lab 305',
+    name: 'Lab 315',
     location: 'Science Bldg',
     revenue: 6150,
     occupancy: 78,
