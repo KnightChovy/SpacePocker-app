@@ -1,8 +1,6 @@
 import type { ScheduleRoom, ScheduleBooking, Building } from '@/types/types';
 import { BUILDINGS, ROOMS, BOOKINGS } from '@/data/constantManager';
-// import axiosInstance from '@/lib/axios';
 
-// Response types
 export interface BuildingsResponse {
   data: Building[];
 }
