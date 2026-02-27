@@ -1,4 +1,4 @@
-import BookingList from '@/components/userDashboard/favorites/BookingList';
+import BookingList from '@/components/features/user/favorites/BookingList';
 import { ArrowLeftRight, Shuffle } from 'lucide-react';
 
 const Favorites = () => {

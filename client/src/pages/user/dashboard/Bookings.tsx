@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import FilterButton from '@/components/userDashboard/bookings/FilterButton';
-import PaginationButton from '@/components/userDashboard/bookings/PaginationButton';
-import BookingList from '@/components/userDashboard/bookings/BookingList';
+import FilterButton from '@/components/features/user/bookings/FilterButton';
+import PaginationButton from '@/components/features/user/bookings/PaginationButton';
+import BookingList from '@/components/features/user/bookings/BookingList';
 
 const Bookings = () => {
   const [activeTab, setActiveTab] = useState<'Active' | 'Past' | 'Cancelled'>(

@@ -3,9 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import type { FilterState, Space } from '@/types/types';
 
 import Navbar from '@/components/Navbar';
-import Sidebar from '@/components/space/filter/Sidebar';
-import SpaceList from '@/components/space/spaceList/SpaceList';
-import SearchBar from '@/components/space/filter/SearchBar';
+import Sidebar from '@/components/features/space/filter/Sidebar';
+import SpaceList from '@/components/features/space/spaceList/SpaceList';
+import SearchBar from '@/components/features/space/filter/SearchBar';
 
 import { SPACES, SPACE_TYPES, AMENITIES } from '@/data/constant';
 

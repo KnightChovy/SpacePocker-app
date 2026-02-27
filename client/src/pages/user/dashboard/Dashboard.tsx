@@ -1,8 +1,8 @@
 import { USER_STATS, SPACESUSER } from '@/data/constant';
 import { Calendar } from 'lucide-react';
-import StatCard from '@/components/userDashboard/dashboard/StatCard';
-import QuickActionButton from '@/components/userDashboard/dashboard/QuickActionButton';
-import BookingList from '@/components/userDashboard/dashboard/BookingList';
+import StatCard from '@/components/features/user/dashboard/StatCard';
+import QuickActionButton from '@/components/features/user/dashboard/QuickActionButton';
+import BookingList from '@/components/features/user/dashboard/BookingList';
 
 const Dashboard = () => {
   return (

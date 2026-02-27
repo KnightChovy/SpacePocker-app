@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Layout from '@/components/userDashboard/Layout';
+import Layout from '@/components/user/Layout';
 import Dashboard from '@/pages/user/dashboard/Dashboard';
 import Bookings from '@/pages/user/dashboard/Bookings';
 import Favorites from '@/pages/user/dashboard/Favorites';
