@@ -151,7 +151,6 @@ export class BuildingService {
       throw new NotFoundError('Building not found');
     }
 
-    // Validation
     if (data.buildingName !== undefined && data.buildingName.trim() === '') {
       throw new BadRequestError('Building name cannot be empty');
     }
@@ -164,7 +163,6 @@ export class BuildingService {
       throw new BadRequestError('Campus cannot be empty');
     }
 
-    // Validate latitude and longitude if provided
     if (data.latitude !== undefined) {
       if (
         typeof data.latitude !== 'number' ||

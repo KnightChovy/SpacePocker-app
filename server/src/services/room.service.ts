@@ -38,7 +38,6 @@ export default class RoomService {
       roomCode,
     } = data;
 
-    // Validation
     if (!buildingId) {
       throw new BadRequestError('Building ID is required');
     }
@@ -61,13 +60,11 @@ export default class RoomService {
       throw new BadRequestError('Room code is required');
     }
 
-    // Check if building exists
     const building = await this.buildingRepo.findById(buildingId);
     if (!building) {
       throw new NotFoundError('Building not found');
     }
 
-    // Check if room code already exists
     const existingRoom = await this.roomRepo.findByRoomCode(roomCode);
     if (existingRoom) {
       throw new ConflictRequestError(`Room code '${roomCode}' already exists`);
@@ -119,7 +116,6 @@ export default class RoomService {
 
     const filter: any = {};
 
-    // Search by room name or room code
     if (search && typeof search === 'string') {
       filter.OR = [
         {
@@ -137,12 +133,10 @@ export default class RoomService {
       ];
     }
 
-    // Filter by building
     if (buildingId && typeof buildingId === 'string') {
       filter.buildingId = buildingId;
     }
 
-    // Filter by room type
     if (roomType && typeof roomType === 'string') {
       const validRoomTypes = ['MEETING', 'CLASSROOM', 'EVENT', 'OTHER'];
       if (validRoomTypes.includes(roomType.toUpperCase())) {
@@ -150,12 +144,10 @@ export default class RoomService {
       }
     }
 
-    // Filter by availability
     if (isAvailable !== undefined) {
       filter.isAvailable = isAvailable === 'true' || isAvailable === true;
     }
 
-    // Filter by price range
     if (minPrice !== undefined || maxPrice !== undefined) {
       filter.pricePerHour = {};
       if (minPrice !== undefined) {
@@ -172,7 +164,6 @@ export default class RoomService {
       }
     }
 
-    // Filter by minimum capacity
     if (minCapacity !== undefined) {
       const parsedMinCapacity = parseInt(String(minCapacity), 10);
       if (!isNaN(parsedMinCapacity)) {
@@ -180,7 +171,6 @@ export default class RoomService {
       }
     }
 
-    // Sorting
     let orderBy: any = undefined;
     if (sortBy) {
       const validSortFields = [
@@ -201,7 +191,6 @@ export default class RoomService {
       }
     }
 
-    // Pagination
     const parsedLimit = limit ? parseInt(String(limit), 10) : 10;
     const parsedOffset = offset ? parseInt(String(offset), 10) : 0;
 
@@ -267,7 +256,6 @@ export default class RoomService {
       throw new NotFoundError('Room not found');
     }
 
-    // Validation
     if (data.name !== undefined && data.name.trim() === '') {
       throw new BadRequestError('Room name cannot be empty');
     }

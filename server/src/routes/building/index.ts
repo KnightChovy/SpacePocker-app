@@ -6,7 +6,6 @@ import '../../docs/building.doc';
 
 const buildingRouter = express.Router();
 
-// Public routes (no authentication required)
 buildingRouter.get(
   '/buildings',
   asyncHandler(buildingController.getAllBuildings),
@@ -16,7 +15,6 @@ buildingRouter.get(
   asyncHandler(buildingController.getBuildingById),
 );
 
-// Protected routes (authentication required)
 buildingRouter.use(authentication);
 buildingRouter.post(
   '/buildings',

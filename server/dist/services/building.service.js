@@ -7,24 +7,42 @@ class BuildingService {
         this.buildingRepository = buildingRepository;
     }
     async createBuilding(data) {
-        const { buildingName, address, description, campus, managerId } = data;
-        if (!buildingName || !address) {
-            throw new error_response_1.BadRequestError('Name and address are required');
+        const { buildingName, address, campus, managerId, latitude, longitude } = data;
+        // Validation
+        if (!buildingName || buildingName.trim() === '') {
+            throw new error_response_1.BadRequestError('Building name is required');
         }
-        if (!campus) {
+        if (!address || address.trim() === '') {
+            throw new error_response_1.BadRequestError('Address is required');
+        }
+        if (!campus || campus.trim() === '') {
             throw new error_response_1.BadRequestError('Campus is required');
         }
         if (!managerId) {
             throw new error_response_1.BadRequestError('Manager ID is required');
         }
-        const createBuilding = await this.buildingRepository.create({
+        // Validate latitude and longitude if provided
+        if (latitude !== undefined) {
+            if (typeof latitude !== 'number' || latitude < -90 || latitude > 90) {
+                throw new error_response_1.BadRequestError('Latitude must be between -90 and 90');
+            }
+        }
+        if (longitude !== undefined) {
+            if (typeof longitude !== 'number' ||
+                longitude < -180 ||
+                longitude > 180) {
+                throw new error_response_1.BadRequestError('Longitude must be between -180 and 180');
+            }
+        }
+        const building = await this.buildingRepository.create({
             buildingName,
             address,
-            description,
             campus,
             managerId,
+            latitude,
+            longitude,
         });
-        return { createBuilding };
+        return { building };
     }
     async getBuildingById(id) {
         if (!id) {
@@ -87,45 +105,48 @@ class BuildingService {
     }
     async updateBuilding(id, data) {
         if (!id) {
-            throw new error_response_1.BadRequestError('Building ID is required!');
+            throw new error_response_1.BadRequestError('Building ID is required');
         }
-        const foundId = await this.buildingRepository.findById(id);
-        if (!foundId) {
-            throw new error_response_1.NotFoundError('Building not found!');
+        const existingBuilding = await this.buildingRepository.findById(id);
+        if (!existingBuilding) {
+            throw new error_response_1.NotFoundError('Building not found');
         }
-        const updateData = {};
-        if (data.buildingName) {
-            updateData.buildingName = data.buildingName;
+        if (data.buildingName !== undefined && data.buildingName.trim() === '') {
+            throw new error_response_1.BadRequestError('Building name cannot be empty');
         }
-        if (data.address) {
-            updateData.address = data.address;
+        if (data.address !== undefined && data.address.trim() === '') {
+            throw new error_response_1.BadRequestError('Address cannot be empty');
         }
-        if (data.description !== undefined) {
-            updateData.description = data.description;
+        if (data.campus !== undefined && data.campus.trim() === '') {
+            throw new error_response_1.BadRequestError('Campus cannot be empty');
         }
-        if (data.campus) {
-            updateData.campus = data.campus;
+        if (data.latitude !== undefined) {
+            if (typeof data.latitude !== 'number' ||
+                data.latitude < -90 ||
+                data.latitude > 90) {
+                throw new error_response_1.BadRequestError('Latitude must be between -90 and 90');
+            }
         }
-        if (data.managerId) {
-            updateData.managerId = data.managerId;
+        if (data.longitude !== undefined) {
+            if (typeof data.longitude !== 'number' ||
+                data.longitude < -180 ||
+                data.longitude > 180) {
+                throw new error_response_1.BadRequestError('Longitude must be between -180 and 180');
+            }
         }
-        const updateBuilding = await this.buildingRepository.update(id, updateData);
-        return {
-            updateBuilding,
-        };
+        const building = await this.buildingRepository.update(id, data);
+        return { building };
     }
     async deleteBuilding(id) {
         if (!id) {
-            throw new error_response_1.BadRequestError('Building ID is required!!');
+            throw new error_response_1.BadRequestError('Building ID is required');
         }
-        const deleteBuilding = await this.buildingRepository.findById(id);
-        if (!deleteBuilding) {
-            throw new error_response_1.NotFoundError('Building not found!');
+        const existingBuilding = await this.buildingRepository.findById(id);
+        if (!existingBuilding) {
+            throw new error_response_1.NotFoundError('Building not found');
         }
-        await this.buildingRepository.delete(id);
-        return {
-            message: 'Building delete successfully!',
-        };
+        const building = await this.buildingRepository.delete(id);
+        return { building };
     }
 }
 exports.BuildingService = BuildingService;
