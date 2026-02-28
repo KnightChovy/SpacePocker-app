@@ -40,7 +40,6 @@ export interface UpdateBookingData extends Partial<CreateBookingData> {
 }
 
 export const scheduleService = {
-
   getBuildings: async (): Promise<Building[]> => {
     await new Promise(resolve => setTimeout(resolve, 300));
 
@@ -65,7 +64,6 @@ export const scheduleService = {
     params?: ScheduleFilterParams
   ): Promise<ScheduleBooking[]> => {
     await new Promise(resolve => setTimeout(resolve, 300));
-
 
     let filteredBookings = [...BOOKINGS];
 

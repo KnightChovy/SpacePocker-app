@@ -1,9 +1,9 @@
 import type { StatItem } from '@/types/types';
 import {
-  CircleDollarSign ,
+  CircleDollarSign,
   CalendarCheck,
   PieChart,
-  Bell ,
+  Bell,
   TrendingUp,
   TrendingDown,
   type LucideIcon,
@@ -25,7 +25,7 @@ const StatCard = ({ label, value, trend, subtext, type }: StatItem) => {
     switch (type) {
       case 'revenue':
         return {
-          Icon: CircleDollarSign ,
+          Icon: CircleDollarSign,
           bgColor: 'bg-blue-50',
           iconColor: 'text-blue-500',
           borderColor: 'border-blue-100',

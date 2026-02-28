@@ -107,7 +107,11 @@ export interface BookingResponse {
 export type RoomStatus = 'available' | 'occupied' | 'maintenance' | 'booked';
 export type BookingStatus = 'confirmed' | 'pending' | 'completed' | 'cancelled';
 export type BookingType = 'primary' | 'teal' | 'amber' | 'maintenance';
-export type ActivityType = 'booking' | 'maintenance' | 'inquiry' | 'cancellation';
+export type ActivityType =
+  | 'booking'
+  | 'maintenance'
+  | 'inquiry'
+  | 'cancellation';
 export type StatType = 'revenue' | 'bookings' | 'occupancy' | 'inquiries';
 
 // Status Label Maps
@@ -242,7 +246,6 @@ export interface BookingDistribution {
   booked: number;
   available: number;
 }
-
 
 // USER TYPES
 export interface User {
