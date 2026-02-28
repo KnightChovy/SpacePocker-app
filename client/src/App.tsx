@@ -8,6 +8,7 @@ import LandingPage from './pages/LandingPage';
 import SpaceDetailPage from './pages/user/space/SpaceDetailPage';
 import SpacesPage from './pages/user/space/SpacesPage';
 import UserRoute from './routes/userRoute';
+import AdminRoute from './routes/adminRoute';
 
 // Manager imports
 import ManagerLayout from './components/layouts/ManagerLayout';
@@ -48,6 +49,7 @@ function App() {
           <Route path="analytics" element={<AnalyticsPage />} />
         </Route>
         <Route path="/user/*" element={<UserRoute />} />
+        <Route path="/admin/*" element={<AdminRoute />} />
       </Routes>
     </>
   );
