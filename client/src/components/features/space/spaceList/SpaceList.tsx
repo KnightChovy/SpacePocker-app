@@ -1,5 +1,5 @@
 import type { Space } from '@/types/types';
-import SpaceCard from '../spaceList/SpaceCard';
+import SpaceCard from './SpaceCard';
 
 interface SpaceListProps {
   spaces: Space[];

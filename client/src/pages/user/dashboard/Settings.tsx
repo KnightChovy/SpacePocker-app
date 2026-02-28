@@ -1,7 +1,7 @@
 import React from 'react';
-import NotificationRow from '@/components/userDashboard/settings/NotificationRow';
-import PersonalInfoSection from '@/components/userDashboard/settings/PersonalInfoSection';
-import AccountSecuritySection from '@/components/userDashboard/settings/AccountSecuritySection';
+import NotificationRow from '@/components/features/user/settings/NotificationRow';
+import PersonalInfoSection from '@/components/features/user/settings/PersonalInfoSection';
+import AccountSecuritySection from '@/components/features/user/settings/AccountSecuritySection';
 import { Save } from 'lucide-react';
 
 const Settings: React.FC = () => {

@@ -3,7 +3,7 @@ import {
   PayoutStatus,
   type PaymentTransaction,
   TransactionStatus,
-} from '../../types/admin-types';
+} from '@/types/admin-types';
 
 interface TransactionListProps {
   transactions: PaymentTransaction[];

@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Layout from '@/components/userDashboard/Layout';
+import Layout from '@/components/features/user/Layout';
 import Dashboard from '@/pages/user/dashboard/Dashboard';
 import Bookings from '@/pages/user/dashboard/Bookings';
 import Favorites from '@/pages/user/dashboard/Favorites';
@@ -15,7 +15,7 @@ const UserRoute = () => {
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/billing" element={<Billings />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/user/dashboard" replace />} />
       </Routes>
     </Layout>
   );

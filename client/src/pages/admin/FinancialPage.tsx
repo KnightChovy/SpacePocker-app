@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import AppSidebar from '../../components/admin/Sidebar';
-import SummaryCard from '../../components/admin/SummaryCard';
-import TransactionList from '../../components/admin/TransactionList';
+import AppSidebar from '@/components/features/admin/Sidebar';
+import SummaryCard from '@/components/features/admin/SummaryCard';
+import TransactionList from '@/components/features/admin/TransactionList';
 import type { StatData, PaymentTransaction } from '@/types/admin-types';
 import { TransactionStatus, PayoutStatus } from '@/types/admin-types';
-import financialData from '../../data/admin-financial.json';
+import financialData from '@/data/admin-financial.json';
 
 const getAIInsights = async (
   transactions: PaymentTransaction[]

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Transaction } from '../../types/admin-types';
+import type { Transaction } from '@/types/admin-types';
 
 interface Props {
   transactions: Transaction[];

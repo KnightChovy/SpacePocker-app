@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import Sidebar from '../../components/admin/Sidebar';
-import Header from '../../components/admin/Header';
-import settingsData from '../../data/admin-settings.json';
+import Sidebar from '@/components/features/admin/Sidebar';
+import Header from '@/components/features/admin/Header';
+import settingsData from '@/data/admin-settings.json';
 
 const SettingsPage: React.FC = () => {
   const [activeItem, setActiveItem] = useState<string>('settings');

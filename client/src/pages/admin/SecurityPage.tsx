@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import Sidebar from '../../components/admin/Sidebar';
-import Header from '../../components/admin/Header';
+import Sidebar from '@/components/features/admin/Sidebar';
+import Header from '@/components/features/admin/Header';
 import securityData from '../../data/admin-security.json';
 
 interface SecurityLog {

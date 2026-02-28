@@ -82,7 +82,7 @@ const BookingDetailModal = ({
               <X className="size-5" />
             </button>
           </div>
-          
+
           <div className="px-6 py-5 space-y-5">
             <div className="flex items-start gap-4">
               <div className="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">

@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import Sidebar from '../../components/admin/Sidebar';
-import { RoleBadge, StatusBadge } from '../../components/admin/Badge';
-import type { User } from '../../types/admin-types';
-import usersData from '../../data/admin-users.json';
+import Sidebar from '@/components/features/admin/Sidebar';
+import { RoleBadge, StatusBadge } from '@/components/features/admin/Badge';
+import type { User } from '@/types/admin-types';
+import usersData from '@/data/admin-users.json';
 
 const INITIAL_USERS: User[] = usersData.users.map(user => ({
   ...user,

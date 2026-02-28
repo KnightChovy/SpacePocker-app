@@ -1,5 +1,5 @@
 import React from 'react';
-import type { StatData } from '../../types/admin-types';
+import type { StatData } from '@/types/admin-types';
 
 const FinancialStatCard: React.FC<StatData> = ({
   label,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { TrendingUp } from 'lucide-react';
-import type { Stat } from '../../types/admin-types';
+import type { Stat } from '@/types/admin-types';
 
 const StatCard: React.FC<Stat> = ({ label, value, trend, icon: Icon }) => {
   return (
@@ -17,7 +17,7 @@ const StatCard: React.FC<Stat> = ({ label, value, trend, icon: Icon }) => {
                   : 'bg-emerald-100 text-emerald-600'
           }`}
         >
-          <Icon size={24} strokeWidth={2} />
+          <Icon size={24} />
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 rounded-full">
           <TrendingUp size={14} className="text-emerald-600" />
