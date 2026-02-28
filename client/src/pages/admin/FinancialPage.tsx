@@ -4,6 +4,7 @@ import SummaryCard from '../../components/admin/SummaryCard';
 import TransactionList from '../../components/admin/TransactionList';
 import type { StatData, PaymentTransaction } from '@/types/admin-types';
 import { TransactionStatus, PayoutStatus } from '@/types/admin-types';
+import financialData from '../../data/admin-financial.json';
 
 const getAIInsights = async (
   transactions: PaymentTransaction[]
@@ -16,122 +17,22 @@ const getAIInsights = async (
   return `Based on ${transactions.length} recent transactions totaling $${totalAmount.toLocaleString()}, your platform shows a ${successRate.toFixed(1)}% success rate. Revenue is trending positively with strong user engagement.`;
 };
 
-const MOCK_STATS: StatData[] = [
-  {
-    label: 'Gross Volume',
-    value: '$482,900.00',
-    trend: '18.2%',
-    trendDirection: 'up',
-    icon: 'payments',
-    iconBg: 'bg-indigo-50 dark:bg-indigo-500/10',
-    iconColor: 'text-indigo-600 dark:text-indigo-400',
-  },
-  {
-    label: 'Net Revenue (Fee)',
-    value: '$48,290.00',
-    trend: '21%',
-    trendDirection: 'up',
-    icon: 'monetization_on',
-    iconBg: 'bg-teal-50 dark:bg-teal-500/10',
-    iconColor: 'text-teal-600 dark:text-teal-400',
-  },
-  {
-    label: 'Payouts Pending',
-    value: '$12,450.00',
-    trend: '0%',
-    trendDirection: 'neutral',
-    icon: 'pending',
-    iconBg: 'bg-orange-50 dark:bg-orange-500/10',
-    iconColor: 'text-orange-600 dark:text-orange-400',
-  },
-  {
-    label: 'Refund Rate',
-    value: '1.2%',
-    trend: '0.5%',
-    trendDirection: 'down',
-    icon: 'replay',
-    iconBg: 'bg-rose-50 dark:bg-rose-500/10',
-    iconColor: 'text-rose-600 dark:text-rose-400',
-  },
-];
+const MOCK_STATS: StatData[] = financialData.stats.map(stat => ({
+  ...stat,
+  trendDirection: stat.trendDirection as 'up' | 'down' | 'neutral',
+}));
 
-const MOCK_TRANSACTIONS: PaymentTransaction[] = [
-  {
-    id: '#TRX-99281',
-    user: {
-      id: 'u1',
-      name: 'Sarah Wilson',
-      role: 'Renter',
-      avatar: 'https://picsum.photos/seed/sarah/100/100',
-    },
-    date: 'Oct 24, 2023',
-    time: '14:20',
-    amount: 450.0,
-    fee: 45.0,
-    status: TransactionStatus.SUCCEEDED,
-    payoutStatus: PayoutStatus.PAID,
-  },
-  {
-    id: '#TRX-99280',
-    user: {
-      id: 'u2',
-      name: 'James Rodriguez',
-      role: 'Renter',
-      avatar: 'https://picsum.photos/seed/james/100/100',
-    },
-    date: 'Oct 24, 2023',
-    time: '11:05',
-    amount: 120.0,
-    fee: 12.0,
-    status: TransactionStatus.SUCCEEDED,
-    payoutStatus: PayoutStatus.SCHEDULED,
-  },
-  {
-    id: '#TRX-99279',
-    user: {
-      id: 'u3',
-      name: 'Elena Li',
-      role: 'Host',
-      avatar: 'https://picsum.photos/seed/elena/100/100',
-    },
-    date: 'Oct 23, 2023',
-    time: '16:45',
-    amount: 85.0,
-    fee: 8.5,
-    status: TransactionStatus.SUCCEEDED,
-    payoutStatus: PayoutStatus.PAID,
-  },
-  {
-    id: '#TRX-99278',
-    user: {
-      id: 'u4',
-      name: 'Michael Jordan',
-      role: 'Renter',
-      avatar: 'https://picsum.photos/seed/michael/100/100',
-    },
-    date: 'Oct 23, 2023',
-    time: '09:12',
-    amount: 320.0,
-    fee: 0.0,
-    status: TransactionStatus.REFUNDED,
-    payoutStatus: PayoutStatus.CANCELLED,
-  },
-  {
-    id: '#TRX-99277',
-    user: {
-      id: 'u5',
-      name: 'Anna Klein',
-      role: 'Host',
-      avatar: 'https://picsum.photos/seed/anna/100/100',
-    },
-    date: 'Oct 22, 2023',
-    time: '18:30',
-    amount: 1200.0,
-    fee: 120.0,
-    status: TransactionStatus.SUCCEEDED,
-    payoutStatus: PayoutStatus.PROCESSING,
-  },
-];
+const MOCK_TRANSACTIONS: PaymentTransaction[] = financialData.transactions.map(
+  tx => ({
+    ...tx,
+    status:
+      TransactionStatus[
+        tx.status.toUpperCase() as keyof typeof TransactionStatus
+      ],
+    payoutStatus:
+      PayoutStatus[tx.payoutStatus.toUpperCase() as keyof typeof PayoutStatus],
+  })
+);
 
 const FinancialPage: React.FC = () => {
   const [activeItem, setActiveItem] = useState('finance');

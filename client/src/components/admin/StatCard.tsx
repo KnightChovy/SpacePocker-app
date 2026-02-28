@@ -7,17 +7,17 @@ const StatCard: React.FC<Stat> = ({ label, value, trend, icon: Icon }) => {
     <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group">
       <div className="flex items-start justify-between">
         <div
-          className={`p-3 rounded-2xl bg-opacity-10 group-hover:scale-110 transition-transform duration-300 ${
+          className={`p-3 rounded-2xl group-hover:scale-110 transition-transform duration-300 ${
             label === 'Total Revenue'
-              ? 'bg-indigo-600 text-indigo-600'
+              ? 'bg-indigo-100 text-indigo-600'
               : label === 'Active Spaces'
-                ? 'bg-purple-600 text-purple-600'
+                ? 'bg-purple-100 text-purple-600'
                 : label === 'New Hosts'
-                  ? 'bg-blue-600 text-blue-600'
-                  : 'bg-emerald-600 text-emerald-600'
+                  ? 'bg-blue-100 text-blue-600'
+                  : 'bg-emerald-100 text-emerald-600'
           }`}
         >
-          <Icon size={24} />
+          <Icon size={24} strokeWidth={2} />
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 rounded-full">
           <TrendingUp size={14} className="text-emerald-600" />

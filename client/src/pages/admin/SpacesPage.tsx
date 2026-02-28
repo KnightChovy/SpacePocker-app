@@ -4,120 +4,18 @@ import Header from '../../components/admin/Header';
 import StatsSection from '../../components/admin/StatsSection';
 import InventoryTable from '../../components/admin/InventoryTable';
 import type { Space, InventoryStats } from '../../types/admin-types';
+import spacesData from '../../data/admin-spaces.json';
 
-const MOCK_SPACES: Space[] = [
-  {
-    id: '1',
-    name: 'Tech Innovation Hub',
-    subName: 'Room 304 - Capacity: 25',
-    image: 'https://picsum.photos/id/1/200/200',
-    host: {
-      name: 'Sarah Wilson',
-      avatar: 'https://picsum.photos/id/64/40/40',
-    },
-    location: 'San Francisco, CA',
-    category: 'Meeting Room',
-    price: 75.0,
-    priceUnit: 'hr',
-    status: 'Approved',
-  },
-  {
-    id: '2',
-    name: 'Downtown Lecture Hall',
-    subName: 'Main Hall - Capacity: 150',
-    image: 'https://picsum.photos/id/2/200/200',
-    host: {
-      name: 'James Rodriguez',
-      avatar: '',
-      initials: 'JR',
-    },
-    location: 'Austin, TX',
-    category: 'Classroom',
-    price: 200.0,
-    priceUnit: 'hr',
-    status: 'Pending Review',
-  },
-  {
-    id: '3',
-    name: 'Quiet Zone Pods',
-    subName: 'Pod A, B, C',
-    image: 'https://picsum.photos/id/3/200/200',
-    host: {
-      name: 'Elena Li',
-      avatar: '',
-      initials: 'EL',
-    },
-    location: 'Seattle, WA',
-    category: 'Office',
-    price: 45.0,
-    priceUnit: 'day',
-    status: 'Approved',
-  },
-  {
-    id: '4',
-    name: 'Basement Storage',
-    subName: 'Unit 4B',
-    image: 'https://picsum.photos/id/4/200/200',
-    host: {
-      name: 'Mike K.',
-      avatar: '',
-      initials: 'MK',
-    },
-    location: 'Chicago, IL',
-    category: 'Storage',
-    price: 15.0,
-    priceUnit: 'hr',
-    status: 'Rejected',
-  },
-  {
-    id: '5',
-    name: 'Executive Suite 500',
-    subName: 'Top Floor - Capacity: 10',
-    image: 'https://picsum.photos/id/5/200/200',
-    host: {
-      name: 'Admin Demo',
-      avatar: '',
-      initials: 'AD',
-    },
-    location: 'New York, NY',
-    category: 'Office',
-    price: 120.0,
-    priceUnit: 'hr',
-    status: 'Pending Review',
-  },
-  {
-    id: '6',
-    name: 'Loft Studio',
-    subName: 'Studio A - Capacity: 40',
-    image: 'https://picsum.photos/id/6/200/200',
-    host: {
-      name: 'Elena Li',
-      avatar: '',
-      initials: 'EL',
-    },
-    location: 'Los Angeles, CA',
-    category: 'Classroom',
-    price: 150.0,
-    priceUnit: 'hr',
-    status: 'Approved',
-  },
-  {
-    id: '7',
-    name: 'Global Workspace',
-    subName: 'Hot Desk Area',
-    image: 'https://picsum.photos/id/7/200/200',
-    host: {
-      name: 'Mike K.',
-      avatar: '',
-      initials: 'MK',
-    },
-    location: 'London, UK',
-    category: 'Office',
-    price: 35.0,
-    priceUnit: 'day',
-    status: 'Approved',
-  },
-];
+const MOCK_SPACES: Space[] = spacesData.spaces.map(space => ({
+  ...space,
+  category: space.category as
+    | 'Meeting Room'
+    | 'Classroom'
+    | 'Office'
+    | 'Storage',
+  status: space.status as 'Approved' | 'Pending Review' | 'Rejected',
+  priceUnit: space.priceUnit as 'hr' | 'day',
+}));
 
 const SpacesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');

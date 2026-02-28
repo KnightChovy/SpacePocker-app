@@ -2,6 +2,8 @@ import FinancialPage from '@/pages/admin/FinancialPage';
 import DashboardPage from '@/pages/admin/DashboardPage';
 import SpacesPage from '@/pages/admin/SpacesPage';
 import UsersPage from '@/pages/admin/UsersPage';
+import SettingsPage from '@/pages/admin/SettingsPage';
+import SecurityPage from '@/pages/admin/SecurityPage';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 const AdminRoute = () => {
@@ -11,8 +13,8 @@ const AdminRoute = () => {
       <Route path="/users" element={<UsersPage />} />
       <Route path="/spaces" element={<SpacesPage />} />
       <Route path="/finance" element={<FinancialPage />} />
-      <Route path="/settings" element={<DashboardPage />} />
-      <Route path="/security" element={<DashboardPage />} />
+      <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/security" element={<SecurityPage />} />
       <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
     </Routes>
   );

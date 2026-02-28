@@ -2,80 +2,13 @@ import React, { useState, useMemo } from 'react';
 import Sidebar from '../../components/admin/Sidebar';
 import { RoleBadge, StatusBadge } from '../../components/admin/Badge';
 import type { User } from '../../types/admin-types';
+import usersData from '../../data/admin-users.json';
 
-const INITIAL_USERS: User[] = [
-  {
-    id: '1',
-    name: 'Sarah Wilson',
-    handle: '@sarahw_design',
-    email: 'sarah.wilson@example.com',
-    role: 'Admin',
-    status: 'Active',
-    lastLogin: '2 mins ago',
-    avatarUrl: 'https://picsum.photos/seed/sarah/100/100',
-  },
-  {
-    id: '2',
-    name: 'James Rodriguez',
-    handle: '@jrod_spaces',
-    email: 'j.rodriguez@studio.net',
-    role: 'Host',
-    status: 'Active',
-    lastLogin: '4 hours ago',
-    avatarUrl: 'https://picsum.photos/seed/james/100/100',
-  },
-  {
-    id: '3',
-    name: 'Elena Li',
-    handle: '@elena_li',
-    email: 'elena.li@example.com',
-    role: 'Guest',
-    status: 'Idle',
-    lastLogin: '2 days ago',
-    avatarUrl: 'https://picsum.photos/seed/elena/100/100',
-  },
-  {
-    id: '4',
-    name: 'Marcus T.',
-    handle: 'Restricted',
-    email: 'marcus.trades@spam.com',
-    role: 'Host',
-    status: 'Suspended',
-    lastLogin: 'Oct 12, 2023',
-    isRestricted: true,
-    avatarUrl: 'https://picsum.photos/seed/marcust/100/100',
-  },
-  {
-    id: '5',
-    name: 'Priya Kapoor',
-    handle: '@priya_k',
-    email: 'priya.k@example.org',
-    role: 'Guest',
-    status: 'Active',
-    lastLogin: '1 week ago',
-    avatarUrl: 'https://picsum.photos/seed/priya/100/100',
-  },
-  {
-    id: '6',
-    name: 'David Miller',
-    handle: '@dmiller_dev',
-    email: 'david.miller@devops.io',
-    role: 'Admin',
-    status: 'Active',
-    lastLogin: 'Just now',
-    avatarUrl: 'https://picsum.photos/seed/david/100/100',
-  },
-  {
-    id: '7',
-    name: 'Anita M.',
-    handle: '@anita_spaces',
-    email: 'anita@co-work.com',
-    role: 'Host',
-    status: 'Offline',
-    lastLogin: '3 weeks ago',
-    avatarUrl: 'https://picsum.photos/seed/anita/100/100',
-  },
-];
+const INITIAL_USERS: User[] = usersData.users.map(user => ({
+  ...user,
+  role: user.role as 'Admin' | 'Host' | 'Guest',
+  status: user.status as 'Active' | 'Idle' | 'Offline' | 'Suspended',
+}));
 
 const UsersPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('users');
