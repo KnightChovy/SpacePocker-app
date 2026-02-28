@@ -15,7 +15,7 @@ const UserRoute = () => {
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/billing" element={<Billings />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/user/dashboard" replace />} />
       </Routes>
     </Layout>
   );

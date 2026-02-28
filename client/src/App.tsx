@@ -9,14 +9,7 @@ import SpaceDetailPage from './pages/user/space/SpaceDetailPage';
 import SpacesPage from './pages/user/space/SpacesPage';
 import UserRoute from './routes/userRoute';
 import AdminRoute from './routes/adminRoute';
-
-// Manager imports
-import ManagerLayout from './components/layouts/ManagerLayout';
-import ManagerDashboardPage from './pages/manager/ManagerDashboardPage';
-import ManagerSchedulePage from './pages/manager/ManagerSchedulePage';
-import ManagerRoomPage from './pages/manager/ManagerRoomPage';
-import ManagerBookingPage from './pages/manager/ManagerBookingPage';
-import { AnalyticsPage } from './pages/manager/AnalyticsPage';
+import ManagerRoute from './routes/managerRoute';
 
 function App() {
   return (
@@ -40,14 +33,7 @@ function App() {
         <Route path="/spaces" element={<SpacesPage />} />
         <Route path="/spaces/detail/:id" element={<SpaceDetailPage />} />
 
-        {/* Manager Routes */}
-        <Route path="/manager" element={<ManagerLayout />}>
-          <Route path="dashboard" element={<ManagerDashboardPage />} />
-          <Route path="schedule" element={<ManagerSchedulePage />} />
-          <Route path="rooms" element={<ManagerRoomPage />} />
-          <Route path="bookings" element={<ManagerBookingPage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
-        </Route>
+        <Route path="/manager/*" element={<ManagerRoute />} />
         <Route path="/user/*" element={<UserRoute />} />
         <Route path="/admin/*" element={<AdminRoute />} />
       </Routes>
