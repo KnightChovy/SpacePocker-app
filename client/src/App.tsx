@@ -42,7 +42,7 @@ function App() {
 
         {/* Manager Routes */}
         <Route path="/manager" element={<ManagerLayout />}>
-          <Route path="" element={<ManagerDashboardPage />} />
+          <Route path="dashboard" element={<ManagerDashboardPage />} />
           <Route path="schedule" element={<ManagerSchedulePage />} />
           <Route path="rooms" element={<ManagerRoomPage />} />
           <Route path="bookings" element={<ManagerBookingPage />} />

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { LogEntry } from '../../types/admin-types';
+import type { LogEntry } from '@/types/admin-types';
 
 interface Props {
   logs: LogEntry[];

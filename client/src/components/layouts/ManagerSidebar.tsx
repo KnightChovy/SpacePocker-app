@@ -29,7 +29,7 @@ interface ManagerSidebarProps {
 const MANAGER_MENU: MenuItem[] = [
   {
     label: 'Dashboard',
-    to: '/manager',
+    to: '/manager/dashboard',
     icon: <LayoutDashboard className="h-5 w-5" />,
   },
   {

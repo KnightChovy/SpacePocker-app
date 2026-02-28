@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Space } from '../../types/admin-types';
+import type { Space } from '@/types/admin-types';
 
 interface InventoryTableProps {
   spaces: Space[];

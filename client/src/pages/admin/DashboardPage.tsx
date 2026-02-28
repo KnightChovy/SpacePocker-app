@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { DollarSign, Building2, UserPlus, Server } from 'lucide-react';
-import Sidebar from '../../components/admin/Sidebar';
-import Header from '../../components/admin/Header';
-import StatCard from '../../components/admin/StatCard';
-import TransactionChart from '../../components/admin/TransactionChart';
-import UserAcquisitionChart from '../../components/admin/UserAcquisitionChart';
-import SystemHealth from '../../components/admin/SystemHealth';
-import TransactionTable from '../../components/admin/TransactionTable';
-import type { Stat, Transaction, LogEntry } from '../../types/admin-types';
-import dashboardData from '../../data/admin-dashboard.json';
+import Sidebar from '@/components/features/admin/Sidebar';
+import Header from '@/components/features/admin/Header';
+import StatCard from '@/components/features/admin/StatCard';
+import TransactionChart from '@/components/features/admin/TransactionChart';
+import UserAcquisitionChart from '@/components/features/admin/UserAcquisitionChart';
+import SystemHealth from '@/components/features/admin/SystemHealth';
+import TransactionTable from '@/components/features/admin/TransactionTable';
+import type { Stat, Transaction, LogEntry } from '@/types/admin-types';
+import dashboardData from '@/data/admin-dashboard.json';
 
 const iconMap = {
   DollarSign,

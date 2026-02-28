@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import Sidebar from '../../components/admin/Sidebar';
-import Header from '../../components/admin/Header';
-import StatsSection from '../../components/admin/StatsSection';
-import InventoryTable from '../../components/admin/InventoryTable';
-import type { Space, InventoryStats } from '../../types/admin-types';
-import spacesData from '../../data/admin-spaces.json';
+import Sidebar from '@/components/features/admin/Sidebar';
+import Header from '@/components/features/admin/Header';
+import StatsSection from '@/components/features/admin/StatsSection';
+import InventoryTable from '@/components/features/admin/InventoryTable';
+import type { Space, InventoryStats } from '@/types/admin-types';
+import spacesData from '@/data/admin-spaces.json';
 
 const MOCK_SPACES: Space[] = spacesData.spaces.map(space => ({
   ...space,

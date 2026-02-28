@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Role, Status } from '../../types/admin-types';
+import type { Role, Status } from '@/types/admin-types';
 
 interface BadgeProps {
   type: Role | Status;
