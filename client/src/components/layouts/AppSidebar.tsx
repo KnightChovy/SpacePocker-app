@@ -29,27 +29,21 @@ export interface SidebarFooterCard {
 }
 
 interface AppSidebarProps {
-  // Brand
   brandName: string;
   brandSubtitle?: string;
   brandIcon: ReactNode;
   brandIconBg?: string;
 
-  // Navigation
   menuSections: MenuSection[];
 
-  // Footer cards (help, optimization, profile, etc.)
   footerCards?: SidebarFooterCard[];
 
-  // Active state
   activeItemId?: string;
   onItemClick?: (itemId: string) => void;
 
-  // Mobile
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 
-  // Styling
   iconType?: 'lucide' | 'material';
   sidebarClassName?: string;
   linkClassName?: string;
@@ -106,7 +100,6 @@ function SidebarContent({
   return (
     <ScrollArea className="h-full flex flex-col">
       <div className="flex flex-col h-full p-4">
-        {/* Brand Logo */}
         <div className="flex gap-3 px-2 py-4 mb-6">
           <div
             className={cn(
@@ -129,7 +122,6 @@ function SidebarContent({
           </div>
         </div>
 
-        {/* Navigation Sections */}
         <nav className="flex flex-col gap-2 flex-1">
           {menuSections.map((section, sectionIdx) => (
             <div key={sectionIdx} className="mb-2">
@@ -177,21 +169,18 @@ function SidebarContent({
           ))}
         </nav>
 
-        {/* Footer Cards */}
         {footerCards.length > 0 && (
           <div className="mt-auto space-y-4">
             {footerCards.map((card, idx) => {
-              // Custom render
               if (card.renderCustom) {
                 return <div key={idx}>{card.renderCustom()}</div>;
               }
 
-              // Predefined variants
               if (card.variant === 'action') {
                 return (
                   <div
                     key={idx}
-                    className="bg-gradient-to-br from-[#0e0d1b] to-[#1c1e31] rounded-2xl p-5 text-white shadow-lg relative overflow-hidden group cursor-pointer"
+                    className="bg-linear-to-br from-[#0e0d1b] to-[#1c1e31] rounded-2xl p-5 text-white shadow-lg relative overflow-hidden group cursor-pointer"
                     onClick={card.onClick}
                   >
                     <div className="absolute top-0 right-0 h-24 w-24 bg-primary blur-2xl opacity-40 group-hover:opacity-60 transition-opacity" />
@@ -215,11 +204,10 @@ function SidebarContent({
                 );
               }
 
-              // Default help variant
               return (
                 <div
                   key={idx}
-                  className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-4 border border-primary/10 dark:border-primary/20"
+                  className="bg-linear-to-br from-primary/10 to-primary/5 rounded-2xl p-4 border border-primary/10 dark:border-primary/20"
                   onClick={card.onClick}
                 >
                   <div className="flex items-start gap-3">
@@ -271,7 +259,6 @@ export default function AppSidebar({
 
   return (
     <>
-      {/* Mobile Sidebar */}
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
         <SheetContent side="left" className="w-72 p-0 [&>button]:hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-border-light dark:border-border-dark">
@@ -303,7 +290,6 @@ export default function AppSidebar({
         </SheetContent>
       </Sheet>
 
-      {/* Desktop Sidebar */}
       <aside
         className={cn(
           'hidden lg:flex w-72 flex-col bg-background-light dark:bg-surface-dark border-r border-border-light dark:border-border-dark h-full shrink-0',

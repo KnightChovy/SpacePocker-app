@@ -23,7 +23,6 @@ export default function ScheduleFilterPanel({
 }: FilterPanelProps) {
   return (
     <div className="hidden xl:flex w-72 flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-10 shrink-0">
-      {/* Calendar Card */}
       <div className="bg-white rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-border-light">
         <Calendar
           mode="single"
@@ -33,7 +32,6 @@ export default function ScheduleFilterPanel({
         />
       </div>
 
-      {/* Building Filters */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -68,7 +66,6 @@ export default function ScheduleFilterPanel({
 
       <div className="h-px bg-border-light w-full" />
 
-      {/* Amenities */}
       <div className="flex flex-col gap-3">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
           Room Amenities
@@ -90,7 +87,6 @@ export default function ScheduleFilterPanel({
         </div>
       </div>
 
-      {/* Optimization Card */}
       <div className="mt-auto bg-linear-to-br from-[#0e0d1b] to-[#1c1e31] rounded-2xl p-5 text-white shadow-lg relative overflow-hidden group cursor-pointer">
         <div className="absolute top-0 right-0 h-24 w-24 bg-primary blur-2xl opacity-40 group-hover:opacity-60 transition-opacity" />
         <div className="relative z-10">

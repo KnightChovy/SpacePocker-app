@@ -34,16 +34,13 @@ export const QuickActions = () => {
 
   const handleNewBooking = () => {
     navigate('/manager/bookings');
-    // The booking page will handle showing the modal
   };
 
   const handleMaintenance = () => {
     navigate('/manager/schedule');
-    // Navigate to schedule page for maintenance scheduling
   };
 
   const handleAddUser = () => {
-    // TODO: Implement user management modal or page
     console.log('Add user clicked - feature coming soon');
   };
 

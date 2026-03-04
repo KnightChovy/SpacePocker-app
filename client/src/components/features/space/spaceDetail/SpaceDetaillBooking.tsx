@@ -56,7 +56,6 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
 
   const timeSlots = useMemo(() => {
     const slots = [];
-    // 6:00 AM đến 23:00 PM
     for (let hour = 6; hour <= 23; hour++) {
       const timeString = `${hour.toString().padStart(2, '0')}:00`;
       slots.push(timeString);

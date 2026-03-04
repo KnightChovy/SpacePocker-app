@@ -30,7 +30,6 @@ const ManagerSchedulePage = () => {
     },
   ];
 
-  // Fetch buildings on mount
   useEffect(() => {
     const fetchBuildings = async () => {
       try {

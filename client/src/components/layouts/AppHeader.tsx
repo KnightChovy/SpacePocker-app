@@ -27,32 +27,25 @@ export interface HeaderProfile {
 }
 
 interface AppHeaderProps {
-  // Title
   title?: string;
   subtitle?: string;
   hideTitle?: boolean;
 
-  // Search
   showSearch?: boolean;
   searchPlaceholder?: string;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
   searchClassName?: string;
 
-  // Actions (buttons in header)
   actions?: HeaderAction[];
 
-  // Profile
   profile?: HeaderProfile;
 
-  // Mobile menu
   onMenuClick: () => void;
 
-  // Custom elements
   leftExtra?: ReactNode;
   rightExtra?: ReactNode;
 
-  // Styling
   headerClassName?: string;
   iconType?: 'lucide' | 'material';
 }
@@ -131,9 +124,7 @@ export default function AppHeader({
         headerClassName
       )}
     >
-      {/* Left Section */}
       <div className="flex items-center gap-4 flex-1 min-w-0">
-        {/* Mobile Menu Button */}
         <button
           className="lg:hidden text-slate-500 dark:text-text-sub-dark p-2 hover:bg-gray-100 dark:hover:bg-surface-dark rounded-lg"
           onClick={onMenuClick}
@@ -145,7 +136,6 @@ export default function AppHeader({
           )}
         </button>
 
-        {/* Title */}
         {!hideTitle && title && (
           <div className="min-w-0">
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-text-main-dark tracking-tight truncate">
@@ -159,10 +149,8 @@ export default function AppHeader({
           </div>
         )}
 
-        {/* Left Extra */}
         {leftExtra}
 
-        {/* Search Bar */}
         {showSearch && (
           <div
             className={cn(
@@ -191,20 +179,15 @@ export default function AppHeader({
         )}
       </div>
 
-      {/* Right Section */}
       <div className="flex items-center gap-2 sm:gap-4">
-        {/* Actions */}
         {actions.map(action => renderAction(action))}
 
-        {/* Right Extra */}
         {rightExtra}
 
-        {/* Divider */}
         {profile && (
           <div className="h-8 w-px bg-slate-200 dark:bg-border-dark mx-2 hidden sm:block" />
         )}
 
-        {/* Profile */}
         {profile && (
           <button
             onClick={profile.onClick}

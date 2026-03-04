@@ -30,19 +30,16 @@ const ManagerBookingPage: React.FC = () => {
     },
   ];
   
-  // State
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
 
-  // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  // Fetch bookings
   const fetchBookings = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -66,7 +63,6 @@ const ManagerBookingPage: React.FC = () => {
     fetchBookings();
   }, [fetchBookings]);
 
-  // Handlers
   const handleAddBooking = async (data: {
     customerName: string;
     customerDepartment: string;
@@ -77,7 +73,6 @@ const ManagerBookingPage: React.FC = () => {
     amount: string;
   }) => {
     try {
-      // Get room info (in real app, this would come from a room service)
       const roomMap: Record<string, { name: string; building: string }> = {
         r1: { name: 'Lab 305', building: 'Science Building' },
         r2: { name: 'Studio 4', building: 'Arts Center' },
@@ -113,7 +108,6 @@ const ManagerBookingPage: React.FC = () => {
   };
 
   const handleEditBooking = (booking: Booking) => {
-    // TODO: Implement edit modal
     console.log('Edit booking:', booking);
   };
 
@@ -138,7 +132,6 @@ const ManagerBookingPage: React.FC = () => {
     }
   };
 
-  // Get unique buildings for filter
   const buildings = [...new Set(bookings.map(b => b.room.building))];
 
   return (
@@ -157,9 +150,7 @@ const ManagerBookingPage: React.FC = () => {
       />
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 custom-scrollbar relative">
       <div className="max-w-300 mx-auto w-full">
-        {/* Filters */}
         <div className="flex flex-wrap gap-3 mb-6">
-          {/* Search */}
           <div className="relative flex-1 min-w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
             <input
@@ -171,7 +162,6 @@ const ManagerBookingPage: React.FC = () => {
             />
           </div>
 
-          {/* Status Filter */}
           <div className="relative">
             <select
               value={selectedStatus}
@@ -187,7 +177,6 @@ const ManagerBookingPage: React.FC = () => {
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
           </div>
 
-          {/* Building Filter */}
           <div className="relative">
             <select
               value={selectedBuilding}
@@ -222,14 +211,12 @@ const ManagerBookingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Add Booking Modal */}
       <AddBookingModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddBooking}
       />
 
-      {/* Booking Detail Modal */}
       <BookingDetailModal
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}

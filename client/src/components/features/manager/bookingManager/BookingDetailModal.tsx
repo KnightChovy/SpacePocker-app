@@ -62,7 +62,6 @@ const BookingDetailModal = ({
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
 
         <div className="relative">
-          {/* Header */}
           <div className="flex items-start justify-between px-6 py-5 border-b border-gray-100">
             <div>
               <div className="flex items-center gap-3 mb-1">
@@ -103,7 +102,6 @@ const BookingDetailModal = ({
               </div>
             </div>
 
-            {/* Room */}
             <div className="flex items-start gap-4">
               <div className="size-10 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center">
                 <MapPin className="size-5" />
@@ -121,7 +119,6 @@ const BookingDetailModal = ({
               </div>
             </div>
 
-            {/* Schedule */}
             <div className="flex items-start gap-4">
               <div className="size-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
                 <Calendar className="size-5" />
@@ -140,7 +137,6 @@ const BookingDetailModal = ({
               </div>
             </div>
 
-            {/* Amount */}
             <div className="flex items-start gap-4">
               <div className="size-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
                 <DollarSign className="size-5" />
@@ -156,7 +152,6 @@ const BookingDetailModal = ({
             </div>
           </div>
 
-          {/* Actions */}
           {booking.status !== 'completed' && booking.status !== 'cancelled' && (
             <div className="px-6 py-4 bg-slate-50 border-t border-gray-100 flex items-center justify-end gap-3">
               {booking.status === 'pending' && (

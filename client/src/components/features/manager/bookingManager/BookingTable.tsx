@@ -162,7 +162,6 @@ const BookingTable = ({
         </table>
       </div>
 
-      {/* Footer Pagination Info */}
       <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-white">
         <span className="text-xs text-gray-500">
           Showing{' '}

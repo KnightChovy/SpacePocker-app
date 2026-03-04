@@ -47,7 +47,6 @@ const StatusBadge = ({ status }: { status: ManagerRoom['status'] }) => {
   );
 };
 
-// Room Row Component
 const RoomRow = ({
   room,
   onEdit,
@@ -145,7 +144,6 @@ const RoomRow = ({
   );
 };
 
-// Main Page Component
 const ManagerRoomPage = () => {
   const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
   
@@ -168,7 +166,6 @@ const ManagerRoomPage = () => {
     },
   ];
   
-  // State
   const [rooms, setRooms] = useState<ManagerRoom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -176,7 +173,6 @@ const ManagerRoomPage = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Fetch rooms
   const fetchRooms = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -200,7 +196,6 @@ const ManagerRoomPage = () => {
     fetchRooms();
   }, [fetchRooms]);
 
-  // Handlers
   const handleAddRoom = () => {
     setIsAddModalOpen(true);
   };
@@ -230,7 +225,6 @@ const ManagerRoomPage = () => {
   };
 
   const handleEditRoom = (room: ManagerRoom) => {
-    // TODO: Open edit room modal
     console.log('Edit room:', room);
   };
 
@@ -246,11 +240,9 @@ const ManagerRoomPage = () => {
   };
 
   const handleViewRoom = (room: ManagerRoom) => {
-    // TODO: Navigate to room detail or open modal
     console.log('View room:', room);
   };
 
-  // Filter rooms
   const filteredRooms = rooms.filter(room => {
     const matchesSearch =
       room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -263,7 +255,6 @@ const ManagerRoomPage = () => {
     return matchesSearch && matchesBuilding && matchesStatus;
   });
 
-  // Get unique buildings for filter
   const buildings = [...new Set(rooms.map(room => room.building))];
 
   return (
@@ -282,9 +273,7 @@ const ManagerRoomPage = () => {
       />
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 custom-scrollbar">
       <div className="max-w-300 mx-auto w-full pb-10">
-        {/* Filters */}
         <div className="flex flex-wrap gap-3 mb-6">
-          {/* Search */}
           <div className="relative flex-1 min-w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
             <input
@@ -296,7 +285,6 @@ const ManagerRoomPage = () => {
             />
           </div>
 
-          {/* Building Filter */}
           <div className="relative">
             <select
               value={selectedBuilding}
@@ -314,7 +302,6 @@ const ManagerRoomPage = () => {
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
           </div>
 
-          {/* Status Filter */}
           <div className="relative">
             <select
               value={selectedStatus}
@@ -331,7 +318,6 @@ const ManagerRoomPage = () => {
           </div>
         </div>
 
-        {/* Table */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-soft overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
@@ -382,7 +368,6 @@ const ManagerRoomPage = () => {
           )}
         </div>
 
-        {/* Summary */}
         {!isLoading && filteredRooms.length > 0 && (
           <div className="mt-4 text-sm text-text-gray">
             Showing {filteredRooms.length} of {rooms.length} rooms
@@ -390,7 +375,6 @@ const ManagerRoomPage = () => {
         )}
       </div>
 
-      {/* Add Room Modal */}
       <AddRoomModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

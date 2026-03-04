@@ -14,14 +14,12 @@ const SpaceCard: React.FC<{ space: Space }> = ({ space }) => {
             alt={space.name}
             className="h-full w-full object-cover"
           />
-          {/* Heart icon */}
           <div
             className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/90 flex items-center justify-center text-slate-400 hover:text-red-500 cursor-pointer shadow-sm"
             onClick={e => e.preventDefault()}
           >
             <Heart className="h-5 w-5" />
           </div>
-          {/* Rating overlay */}
           <div className="absolute bottom-4 left-4 flex items-center gap-1  rounded-lg">
             <span className="text-yellow-500">★</span>
             <span className="text-sm text-white drop-shadow-lg">
@@ -40,12 +38,12 @@ const SpaceCard: React.FC<{ space: Space }> = ({ space }) => {
 
           {space.amenities && space.amenities.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-4">
-              {space.amenities.slice(0, 3).map(amenity => (
+              {space.amenities.slice(0, 3).map((amenity, index) => (
                 <span
-                  key={amenity}
+                  key={typeof amenity === 'string' ? amenity : index}
                   className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full"
                 >
-                  {amenity}
+                  {typeof amenity === 'string' ? amenity : amenity.label}
                 </span>
               ))}
               {space.amenities.length > 3 && (

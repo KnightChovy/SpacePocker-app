@@ -45,11 +45,9 @@ const SpaceDetailGallery: React.FC<SpaceDetailGalleryProps> = ({ images }) => {
         ))}
       </div>
 
-      {/* Modal Popup */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4">
           <div className="w-full max-w-7xl h-full flex flex-col">
-            {/* Header */}
             <div className="flex items-center justify-between p-6 text-white">
               <h2 className="text-2xl font-bold">
                 All Photos ({images.length})
@@ -62,7 +60,6 @@ const SpaceDetailGallery: React.FC<SpaceDetailGalleryProps> = ({ images }) => {
               </button>
             </div>
 
-            {/* Grid Images */}
             <div className="flex-1 overflow-y-auto px-6 pb-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {images.map((image, idx) => (

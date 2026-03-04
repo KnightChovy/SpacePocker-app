@@ -14,7 +14,6 @@ const UserLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
-  // Get active item from URL
   const getActiveItemFromPath = () => {
     const path = location.pathname;
     if (path.includes('/dashboard')) return 'dashboard';
