@@ -1,13 +1,21 @@
 import React, { useState } from 'react';
-import Sidebar from '@/components/features/admin/Sidebar';
-import Header from '@/components/features/admin/Header';
+import { useOutletContext } from 'react-router-dom';
+import AppHeader from '@/components/layouts/AppHeader';
 import settingsData from '@/data/admin-settings.json';
 
 const SettingsPage: React.FC = () => {
-  const [activeItem, setActiveItem] = useState<string>('settings');
-  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
 
   const [settings, setSettings] = useState(settingsData.defaultSettings);
+
+  const headerActions = [
+    {
+      id: 'save',
+      icon: <span className="material-symbols-outlined text-[20px]">save</span>,
+      label: 'Save Changes',
+      variant: 'primary' as const,
+    },
+  ];
 
   const handleSettingChange = (
     key: string,
@@ -17,19 +25,21 @@ const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#f8f9fc] overflow-hidden">
-      <Sidebar
-        activeItem={activeItem}
-        setActiveItem={setActiveItem}
-        isOpen={isOpen}
-        setIsOpen={setIsOpen}
+    <>
+      <AppHeader
+        title="System Settings"
+        subtitle="Manage application configuration and preferences."
+        onMenuClick={() => setSidebarOpen(true)}
+        actions={headerActions}
+        profile={{
+          name: 'Admin',
+          subtitle: 'Administrator',
+          avatarUrl: 'https://picsum.photos/seed/marcus/100/100',
+          showDropdown: true,
+        }}
+        iconType="material"
       />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header
-          title="System Settings"
-          subtitle="Manage application configuration and preferences."
-        />
-        <main className="flex-1 overflow-y-auto p-6 lg:p-10 space-y-8">
+      <main className="flex-1 overflow-y-auto p-6 lg:p-10 space-y-8">
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center gap-3">
@@ -317,8 +327,7 @@ const SettingsPage: React.FC = () => {
             </button>
           </div>
         </main>
-      </div>
-    </div>
+    </>
   );
 };
 

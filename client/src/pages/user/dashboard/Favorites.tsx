@@ -1,20 +1,48 @@
+import { useOutletContext } from 'react-router-dom';
+import { USER_INFO } from '@/data/constant';
+import AppHeader from '@/components/layouts/AppHeader';
 import BookingList from '@/components/features/user/favorites/BookingList';
-import { ArrowLeftRight, Shuffle } from 'lucide-react';
+import { ArrowLeftRight, Shuffle, BellRing, Plus } from 'lucide-react';
 
 const Favorites = () => {
+  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
+
+  const headerActions = [
+    {
+      id: 'notifications',
+      icon: <BellRing />,
+      badge: true,
+      variant: 'ghost' as const,
+    },
+    {
+      id: 'new-booking',
+      icon: <Plus className="w-5 h-5" />,
+      label: 'New Booking',
+      variant: 'primary' as const,
+      hideOnMobile: true,
+    },
+  ];
+
   return (
-    <div className="p-4 md:p-8 scroll-smooth">
-      <div className="max-w-7xl mx-auto flex flex-col gap-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 animate-fade-in-up border-b border-border-light dark:border-border-dark pb-6">
-          <div>
-            <h1 className="text-3xl font-black tracking-tight mb-2">
-              Favorites Collection
-            </h1>
-            <p className="text-text-sub-light dark:text-text-sub-dark text-base">
-              You have saved 6 spaces. Select to compare.
-            </p>
-          </div>
-          <div className="flex gap-3">
+    <>
+      <AppHeader
+        title="Favorites Collection"
+        subtitle="You have saved 6 spaces. Select to compare."
+        hideTitle={false}
+        onMenuClick={() => setSidebarOpen(true)}
+        showSearch={false}
+        actions={headerActions}
+        profile={{
+          name: USER_INFO.shortName,
+          subtitle: USER_INFO.plan,
+          avatarUrl: USER_INFO.profileImage,
+          showDropdown: true,
+        }}
+      />
+      <div className="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark p-4 md:p-8 scroll-smooth">
+        <div className="max-w-7xl mx-auto flex flex-col gap-8">
+          <div className="flex flex-col md:flex-row justify-end items-start md:items-end gap-6 animate-fade-in-up border-b border-border-light dark:border-border-dark pb-6">
+            <div className="flex gap-3">
             <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark hover:text-primary transition-all">
               <Shuffle className="h-5 w-5" />
               <span className="text-sm font-bold hidden sm:inline">Filter</span>
@@ -27,8 +55,9 @@ const Favorites = () => {
         </div>
 
         <BookingList />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

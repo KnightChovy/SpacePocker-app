@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import { Bell, MessageSquare, Calendar } from 'lucide-react';
+import AppHeader from '@/components/layouts/AppHeader';
 import { StatCard } from '@/components/common/StatCard';
 import { RevenueChart } from '@/components/features/manager/analytics/RevenueChart';
 import { UsageHeatmap } from '@/components/features/manager/analytics/UsageHeatmap';
@@ -7,20 +10,43 @@ import { statsData } from '@/data/constantManager';
 import type { TimeRange } from '@/types/types';
 
 export const AnalyticsPage: React.FC = () => {
+  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
   const [range, setRange] = useState<TimeRange>('30days');
 
+  const headerActions = [
+    {
+      id: 'date-range',
+      icon: <Calendar className="h-5 w-5" />,
+      label: '30 Days',
+      variant: 'ghost' as const,
+    },
+    {
+      id: 'notifications',
+      icon: <Bell className="h-5 w-5" />,
+      badge: true,
+    },
+    {
+      id: 'messages',
+      icon: <MessageSquare className="h-5 w-5" />,
+    },
+  ];
+
   return (
-    <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 custom-scrollbar">
+    <>
+      <AppHeader
+        title="Analytics & Reporting"
+        subtitle="Detailed insights into revenue, occupancy, and room performance."
+        onMenuClick={() => setSidebarOpen(true)}
+        actions={headerActions}
+        profile={{
+          name: 'Alex Morgan',
+          subtitle: 'Manager',
+          avatarUrl: 'https://picsum.photos/id/64/100/100',
+          showDropdown: true,
+        }}
+      />
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 custom-scrollbar">
       <div className="max-w-350 mx-auto w-full">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-text-dark tracking-tight">
-              Analytics & Reporting
-            </h2>
-            <p className="text-text-gray mt-1">
-              Detailed insights into revenue, occupancy, and room performance.
-            </p>
-          </div>
           <div className="flex items-center bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
             <button
               onClick={() => setRange('30days')}
@@ -68,6 +94,6 @@ export const AnalyticsPage: React.FC = () => {
           <TopRoomsTable />
         </div>
       </div>
-    </div>
+    </>
   );
 };

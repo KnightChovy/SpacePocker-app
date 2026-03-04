@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import Sidebar from '@/components/features/admin/Sidebar';
-import Header from '@/components/features/admin/Header';
+import { useOutletContext } from 'react-router-dom';
+import AppHeader from '@/components/layouts/AppHeader';
 import securityData from '../../data/admin-security.json';
 
 interface SecurityLog {
@@ -14,8 +14,22 @@ interface SecurityLog {
 }
 
 const SecurityPage: React.FC = () => {
-  const [activeItem, setActiveItem] = useState<string>('security');
-  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
+
+  const headerActions = [
+    {
+      id: 'refresh',
+      icon: <span className="material-symbols-outlined text-[20px]">refresh</span>,
+      label: 'Refresh',
+      variant: 'ghost' as const,
+    },
+    {
+      id: 'export',
+      icon: <span className="material-symbols-outlined text-[20px]">file_download</span>,
+      label: 'Export Logs',
+      variant: 'primary' as const,
+    },
+  ];
 
   const [securityLogs] = useState<SecurityLog[]>(
     securityData.securityLogs.map(log => ({
@@ -53,19 +67,21 @@ const SecurityPage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#f8f9fc] overflow-hidden">
-      <Sidebar
-        activeItem={activeItem}
-        setActiveItem={setActiveItem}
-        isOpen={isOpen}
-        setIsOpen={setIsOpen}
+    <>
+      <AppHeader
+        title="Security & Logs"
+        subtitle="Monitor system security events and user activities."
+        onMenuClick={() => setSidebarOpen(true)}
+        actions={headerActions}
+        profile={{
+          name: 'Admin',
+          subtitle: 'Administrator',
+          avatarUrl: 'https://picsum.photos/seed/marcus/100/100',
+          showDropdown: true,
+        }}
+        iconType="material"
       />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header
-          title="Security & Logs"
-          subtitle="Monitor system security events and user activities."
-        />
-        <main className="flex-1 overflow-y-auto p-6 lg:p-10 space-y-8">
+      <main className="flex-1 overflow-y-auto p-6 lg:p-10 space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, idx) => (
               <div
@@ -301,8 +317,7 @@ const SecurityPage: React.FC = () => {
             </div>
           </div>
         </main>
-      </div>
-    </div>
+    </>
   );
 };
 

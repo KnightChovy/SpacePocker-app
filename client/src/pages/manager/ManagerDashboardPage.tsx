@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Calendar, ChevronDown } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
+import { Calendar, ChevronDown, Bell, MessageSquare } from 'lucide-react';
 import type {
   StatItem,
   ChartDataItem,
@@ -7,6 +8,7 @@ import type {
   Activity,
 } from '@/types/types';
 import { dashboardService } from '@/services/dashboardService';
+import AppHeader from '@/components/layouts/AppHeader';
 import { StatsGrid } from '@/components/features/manager/dashboardManager/StartsGrid';
 import { RevenueOverview } from '@/components/features/manager/dashboardManager/RevenueOverview';
 import { RoomTypeDistribution } from '@/components/features/manager/dashboardManager/RoomTypeDistribution';
@@ -14,6 +16,7 @@ import { QuickActions } from '@/components/features/manager/dashboardManager/Qui
 import { RecentActivity } from '@/components/features/manager/dashboardManager/RecentActivity';
 
 const ManagerDashboardPage = () => {
+  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
   const [stats, setStats] = useState<StatItem[]>([]);
   const [revenueData, setRevenueData] = useState<ChartDataItem[]>([]);
   const [roomTypeDistribution, setRoomTypeDistribution] = useState<
@@ -21,6 +24,18 @@ const ManagerDashboardPage = () => {
   >([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const headerActions = [
+    {
+      id: 'notifications',
+      icon: <Bell className="h-5 w-5" />,
+      badge: true,
+    },
+    {
+      id: 'messages',
+      icon: <MessageSquare className="h-5 w-5" />,
+    },
+  ];
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -50,14 +65,43 @@ const ManagerDashboardPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-slate-500">Loading dashboard...</div>
-      </div>
+      <>
+        <AppHeader
+          title="Dashboard"
+          onMenuClick={() => setSidebarOpen(true)}
+          showSearch={true}
+          searchPlaceholder="Search bookings..."
+          actions={headerActions}
+          profile={{
+            name: 'Alex Morgan',
+            subtitle: 'Manager',
+            avatarUrl: 'https://picsum.photos/id/64/100/100',
+            showDropdown: true,
+          }}
+        />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-slate-500">Loading dashboard...</div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 custom-scrollbar relative">
+    <>
+      <AppHeader
+        title="Dashboard"
+        onMenuClick={() => setSidebarOpen(true)}
+        showSearch={true}
+        searchPlaceholder="Search bookings..."
+        actions={headerActions}
+        profile={{
+          name: 'Alex Morgan',
+          subtitle: 'Manager',
+          avatarUrl: 'https://picsum.photos/id/64/100/100',
+          showDropdown: true,
+        }}
+      />
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 custom-scrollbar relative">
       <div className="max-w-350 mx-auto w-full pb-10">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
           <div>
@@ -90,6 +134,7 @@ const ManagerDashboardPage = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

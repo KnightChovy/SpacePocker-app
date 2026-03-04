@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import Sidebar from '@/components/features/admin/Sidebar';
-import Header from '@/components/features/admin/Header';
+import { useOutletContext } from 'react-router-dom';
+import AppHeader from '@/components/layouts/AppHeader';
 import StatsSection from '@/components/features/admin/StatsSection';
 import InventoryTable from '@/components/features/admin/InventoryTable';
 import type { Space, InventoryStats } from '@/types/admin-types';
@@ -18,13 +18,28 @@ const MOCK_SPACES: Space[] = spacesData.spaces.map(space => ({
 }));
 
 const SpacesPage: React.FC = () => {
+  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('All Categories');
   const [pendingOnly, setPendingOnly] = useState(false);
   const [aiInsight, setAiInsight] = useState<string>('');
   const [loadingInsight, setLoadingInsight] = useState(false);
-  const [activeItem, setActiveItem] = useState('spaces'); // Set active item for sidebar
-  const [isOpen, setIsOpen] = useState(false); // Sidebar open state for mobile
+
+  const headerActions = [
+    {
+      id: 'filter',
+      icon: <span className="material-symbols-outlined text-[18px]">filter_list</span>,
+      label: pendingOnly ? 'Pending Only' : 'All Spaces',
+      variant: (pendingOnly ? 'primary' : 'ghost') as 'primary' | 'ghost',
+      onClick: () => setPendingOnly(!pendingOnly),
+    },
+    {
+      id: 'add-space',
+      icon: <span className="material-symbols-outlined text-[20px]">add</span>,
+      label: 'Add Space',
+      variant: 'primary' as const,
+    },
+  ];
 
   const stats: InventoryStats = useMemo(() => {
     return {
@@ -61,26 +76,26 @@ const SpacesPage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background-light">
-      <Sidebar
-        activeItem={activeItem}
-        setActiveItem={setActiveItem}
-        isOpen={isOpen}
-        setIsOpen={setIsOpen}
+    <>
+      <AppHeader
+        title="Space Inventory"
+        subtitle="Manage and monitor all spaces in your platform."
+        onMenuClick={() => setSidebarOpen(true)}
+        showSearch={true}
+        searchPlaceholder="Search spaces..."
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        actions={headerActions}
+        profile={{
+          name: 'Admin',
+          subtitle: 'Administrator',
+          avatarUrl: 'https://picsum.photos/seed/marcus/100/100',
+          showDropdown: true,
+        }}
+        iconType="material"
       />
-
-      <div className="flex-1 flex flex-col h-full relative overflow-hidden">
-        <Header
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          pendingOnly={pendingOnly}
-          setPendingOnly={setPendingOnly}
-          title="Spaces Inventory"
-          subtitle="Manage and monitor all spaces in your platform."
-        />
-
-        <main className="flex-1 overflow-y-auto pt-22 pb-8 px-6 md:px-8">
-          <div className="max-w-7xl mx-auto flex flex-col gap-6">
+      <main className="flex-1 overflow-y-auto p-6 lg:p-10">
+        <div className="max-w-7xl mx-auto space-y-6">
             <div className="bg-indigo-600/5 border border-indigo-200 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="size-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
@@ -126,9 +141,8 @@ const SpacesPage: React.FC = () => {
               </a>
             </p>
           </footer>
-        </main>
-      </div>
-    </div>
+      </main>
+    </>
   );
 };
 

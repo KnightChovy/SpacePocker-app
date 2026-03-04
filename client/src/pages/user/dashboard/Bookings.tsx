@@ -1,26 +1,54 @@
 import { useState } from 'react';
-import { Search } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
+import { Search, BellRing, Plus } from 'lucide-react';
+import { USER_INFO } from '@/data/constant';
+import AppHeader from '@/components/layouts/AppHeader';
 import FilterButton from '@/components/features/user/bookings/FilterButton';
 import PaginationButton from '@/components/features/user/bookings/PaginationButton';
 import BookingList from '@/components/features/user/bookings/BookingList';
 
 const Bookings = () => {
+  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
   const [activeTab, setActiveTab] = useState<'Active' | 'Past' | 'Cancelled'>(
     'Past'
   );
 
-  return (
-    <div className="p-4 md:p-8 scroll-smooth">
-      <div className="max-w-5xl mx-auto flex flex-col gap-8">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-black tracking-tight">My Bookings</h1>
-          <p className="text-text-sub-light dark:text-text-sub-dark text-base">
-            View and manage your current and past space reservations.
-          </p>
-        </div>
+  const headerActions = [
+    {
+      id: 'notifications',
+      icon: <BellRing />,
+      badge: true,
+      variant: 'ghost' as const,
+    },
+    {
+      id: 'new-booking',
+      icon: <Plus className="w-5 h-5" />,
+      label: 'New Booking',
+      variant: 'primary' as const,
+      hideOnMobile: true,
+    },
+  ];
 
-        <div className="flex flex-col gap-6">
-          <div className="border-b border-border-light dark:border-border-dark">
+  return (
+    <>
+      <AppHeader
+        title="My Bookings"
+        subtitle="View and manage your current and past space reservations."
+        hideTitle={false}
+        onMenuClick={() => setSidebarOpen(true)}
+        showSearch={false}
+        actions={headerActions}
+        profile={{
+          name: USER_INFO.shortName,
+          subtitle: USER_INFO.plan,
+          avatarUrl: USER_INFO.profileImage,
+          showDropdown: true,
+        }}
+      />
+      <div className="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark p-4 md:p-8 scroll-smooth">
+        <div className="max-w-5xl mx-auto flex flex-col gap-8">
+          <div className="flex flex-col gap-6">
+            <div className="border-b border-border-light dark:border-border-dark">
             <nav className="flex gap-8">
               {(['Active', 'Past', 'Cancelled'] as const).map(tab => (
                 <button
@@ -72,6 +100,7 @@ const Bookings = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

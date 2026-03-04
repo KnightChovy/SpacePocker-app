@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import { Bell, MessageSquare } from 'lucide-react';
+import AppHeader from '@/components/layouts/AppHeader';
 import ScheduleFilterPanel from '@/components/features/manager/scheduleManager/ScheduleFilterPanel';
 import ScheduleTimeline from '@/components/features/manager/scheduleManager/ScheduleTimeline';
 import { scheduleService } from '@/services/scheduleService';
 import type { Building } from '@/types/types';
 
 const ManagerSchedulePage = () => {
+  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date()
   );
@@ -13,6 +17,18 @@ const ManagerSchedulePage = () => {
     'Whiteboard',
   ]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const headerActions = [
+    {
+      id: 'notifications',
+      icon: <Bell className="h-5 w-5" />,
+      badge: true,
+    },
+    {
+      id: 'messages',
+      icon: <MessageSquare className="h-5 w-5" />,
+    },
+  ];
 
   // Fetch buildings on mount
   useEffect(() => {
@@ -47,14 +63,39 @@ const ManagerSchedulePage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <div className="text-slate-500">Loading schedule...</div>
-      </div>
+      <>
+        <AppHeader
+          title="Schedule Management"
+          onMenuClick={() => setSidebarOpen(true)}
+          actions={headerActions}
+          profile={{
+            name: 'Alex Morgan',
+            subtitle: 'Manager',
+            avatarUrl: 'https://picsum.photos/id/64/100/100',
+            showDropdown: true,
+          }}
+        />
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-slate-500">Loading schedule...</div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="flex flex-1 overflow-hidden p-4 lg:p-6 gap-6 h-full">
+    <>
+      <AppHeader
+        title="Schedule Management"
+        onMenuClick={() => setSidebarOpen(true)}
+        actions={headerActions}
+        profile={{
+          name: 'Alex Morgan',
+          subtitle: 'Manager',
+          avatarUrl: 'https://picsum.photos/id/64/100/100',
+          showDropdown: true,
+        }}
+      />
+      <div className="flex flex-1 overflow-hidden p-4 lg:p-6 gap-6 h-full">
       <ScheduleFilterPanel
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
@@ -68,6 +109,7 @@ const ManagerSchedulePage = () => {
         onDateChange={setSelectedDate}
       />
     </div>
+    </>
   );
 };
 

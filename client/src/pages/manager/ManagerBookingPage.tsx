@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Building2, ChevronDown } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
+import { Plus, Search, Building2, ChevronDown, Bell, MessageSquare } from 'lucide-react';
+import AppHeader from '@/components/layouts/AppHeader';
 import BookingTable from '../../components/features/manager/bookingManager/BookingTable';
 import AddBookingModal from '../../components/features/manager/bookingManager/AddBookingModal';
 import BookingDetailModal from '../../components/features/manager/bookingManager/BookingDetailModal';
@@ -7,6 +9,27 @@ import { bookingService } from '../../services/bookingService';
 import type { Booking, BookingStatus } from '../../types/types';
 
 const ManagerBookingPage: React.FC = () => {
+  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
+  
+  const headerActions = [
+    {
+      id: 'new-booking',
+      icon: <Plus className="h-5 w-5" />,
+      label: 'New Booking',
+      variant: 'primary' as const,
+      onClick: () => setIsAddModalOpen(true),
+    },
+    {
+      id: 'notifications',
+      icon: <Bell className="h-5 w-5" />,
+      badge: true,
+    },
+    {
+      id: 'messages',
+      icon: <MessageSquare className="h-5 w-5" />,
+    },
+  ];
+  
   // State
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -119,27 +142,21 @@ const ManagerBookingPage: React.FC = () => {
   const buildings = [...new Set(bookings.map(b => b.room.building))];
 
   return (
-    <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 custom-scrollbar relative">
+    <>
+      <AppHeader
+        title="Bookings Management"
+        subtitle="Monitor reservation status, schedules, and billing details."
+        onMenuClick={() => setSidebarOpen(true)}
+        actions={headerActions}
+        profile={{
+          name: 'Alex Morgan',
+          subtitle: 'Manager',
+          avatarUrl: 'https://picsum.photos/id/64/100/100',
+          showDropdown: true,
+        }}
+      />
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 custom-scrollbar relative">
       <div className="max-w-300 mx-auto w-full">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-              Bookings Management
-            </h2>
-            <p className="text-slate-500 mt-1">
-              Monitor reservation status, schedules, and billing details.
-            </p>
-          </div>
-
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-sm"
-          >
-            <Plus className="size-5" />
-            New Booking
-          </button>
-        </div>
-
         {/* Filters */}
         <div className="flex flex-wrap gap-3 mb-6">
           {/* Search */}
@@ -220,6 +237,7 @@ const ManagerBookingPage: React.FC = () => {
         onUpdateStatus={handleUpdateStatus}
       />
     </div>
+    </>
   );
 };
 

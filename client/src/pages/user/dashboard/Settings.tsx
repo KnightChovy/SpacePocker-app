@@ -1,26 +1,52 @@
 import React from 'react';
+import { useOutletContext } from 'react-router-dom';
+import { USER_INFO } from '@/data/constant';
+import AppHeader from '@/components/layouts/AppHeader';
 import NotificationRow from '@/components/features/user/settings/NotificationRow';
 import PersonalInfoSection from '@/components/features/user/settings/PersonalInfoSection';
 import AccountSecuritySection from '@/components/features/user/settings/AccountSecuritySection';
-import { Save } from 'lucide-react';
+import { Save, BellRing, Plus } from 'lucide-react';
 
 const Settings: React.FC = () => {
+  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
+
+  const headerActions = [
+    {
+      id: 'notifications',
+      icon: <BellRing />,
+      badge: true,
+      variant: 'ghost' as const,
+    },
+    {
+      id: 'new-booking',
+      icon: <Plus className="w-5 h-5" />,
+      label: 'New Booking',
+      variant: 'primary' as const,
+      hideOnMobile: true,
+    },
+  ];
+
   return (
-    <div className="p-4 md:p-8 scroll-smooth pb-24 relative">
-      <div className="max-w-4xl mx-auto flex flex-col gap-8">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight mb-2">
-            Profile Settings
-          </h1>
-          <p className="text-text-sub-light dark:text-text-sub-dark text-base">
-            Manage your personal information, security preferences and
-            notifications.
-          </p>
-        </div>
+    <>
+      <AppHeader
+        title="Profile Settings"
+        subtitle="Manage your personal information, security preferences and notifications."
+        hideTitle={false}
+        onMenuClick={() => setSidebarOpen(true)}
+        showSearch={false}
+        actions={headerActions}
+        profile={{
+          name: USER_INFO.shortName,
+          subtitle: USER_INFO.plan,
+          avatarUrl: USER_INFO.profileImage,
+          showDropdown: true,
+        }}
+      />
+      <div className="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark p-4 md:p-8 scroll-smooth pb-24 relative">
+        <div className="max-w-4xl mx-auto flex flex-col gap-8">
+          <PersonalInfoSection />
 
-        <PersonalInfoSection />
-
-        <AccountSecuritySection />
+          <AccountSecuritySection />
 
         <section className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark shadow-sm">
           <div className="p-6 border-b border-border-light dark:border-border-dark">
@@ -49,15 +75,16 @@ const Settings: React.FC = () => {
             />
           </div>
         </section>
-      </div>
 
-      <div className="fixed bottom-6 right-8 z-50">
-        <button className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-xl shadow-lg shadow-primary/40 hover:scale-105 active:scale-95 transition-all duration-300 font-bold">
-          <Save className="h-5 w-5" />
-          Save Changes
-        </button>
+        <div className="fixed bottom-6 right-8 z-50">
+          <button className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-xl shadow-lg shadow-primary/40 hover:scale-105 active:scale-95 transition-all duration-300 font-bold">
+            <Save className="h-5 w-5" />
+            Save Changes
+          </button>
+        </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -1,12 +1,47 @@
-import { USER_STATS, SPACESUSER } from '@/data/constant';
-import { Calendar } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
+import { USER_STATS, SPACESUSER, USER_INFO } from '@/data/constant';
+import { Calendar, BellRing, Plus } from 'lucide-react';
+import AppHeader from '@/components/layouts/AppHeader';
 import StatCard from '@/components/features/user/dashboard/StatCard';
 import QuickActionButton from '@/components/features/user/dashboard/QuickActionButton';
 import BookingList from '@/components/features/user/dashboard/BookingList';
 
 const Dashboard = () => {
+  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
+
+  const headerActions = [
+    {
+      id: 'notifications',
+      icon: <BellRing />,
+      badge: true,
+      variant: 'ghost' as const,
+    },
+    {
+      id: 'new-booking',
+      icon: <Plus className="w-5 h-5" />,
+      label: 'New Booking',
+      variant: 'primary' as const,
+      hideOnMobile: true,
+    },
+  ];
+
   return (
-    <div className="p-4 md:p-8 scroll-smooth">
+    <>
+      <AppHeader
+        title="Dashboard"
+        hideTitle={false}
+        onMenuClick={() => setSidebarOpen(true)}
+        showSearch={true}
+        searchPlaceholder="Search for spaces, bookings..."
+        actions={headerActions}
+        profile={{
+          name: USER_INFO.shortName,
+          subtitle: USER_INFO.plan,
+          avatarUrl: USER_INFO.profileImage,
+          showDropdown: true,
+        }}
+      />
+      <div className="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark p-4 md:p-8 scroll-smooth">
       <div className="max-w-7xl mx-auto flex flex-col gap-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
           <div>
@@ -116,7 +151,8 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
