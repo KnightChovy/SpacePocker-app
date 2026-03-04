@@ -18,18 +18,28 @@ const iconMap = {
 };
 
 const DashboardPage: React.FC = () => {
-  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
+  const { setSidebarOpen } = useOutletContext<{
+    setSidebarOpen: (open: boolean) => void;
+  }>();
 
   const headerActions = [
     {
       id: 'date-range',
-      icon: <span className="material-symbols-outlined text-[20px]">calendar_today</span>,
+      icon: (
+        <span className="material-symbols-outlined text-[20px]">
+          calendar_today
+        </span>
+      ),
       label: 'Last 30 Days',
       variant: 'ghost' as const,
     },
     {
       id: 'export',
-      icon: <span className="material-symbols-outlined text-[20px]">file_download</span>,
+      icon: (
+        <span className="material-symbols-outlined text-[20px]">
+          file_download
+        </span>
+      ),
       label: 'Export',
       variant: 'primary' as const,
     },

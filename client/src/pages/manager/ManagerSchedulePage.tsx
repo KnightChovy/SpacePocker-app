@@ -8,7 +8,9 @@ import { scheduleService } from '@/services/scheduleService';
 import type { Building } from '@/types/types';
 
 const ManagerSchedulePage = () => {
-  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
+  const { setSidebarOpen } = useOutletContext<{
+    setSidebarOpen: (open: boolean) => void;
+  }>();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date()
   );
@@ -95,19 +97,19 @@ const ManagerSchedulePage = () => {
         }}
       />
       <div className="flex flex-1 overflow-hidden p-4 lg:p-6 gap-6 h-full">
-      <ScheduleFilterPanel
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
-        buildings={buildings}
-        onBuildingChange={handleBuildingChange}
-        selectedAmenities={selectedAmenities}
-        onAmenityChange={handleAmenityChange}
-      />
-      <ScheduleTimeline
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
-      />
-    </div>
+        <ScheduleFilterPanel
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+          buildings={buildings}
+          onBuildingChange={handleBuildingChange}
+          selectedAmenities={selectedAmenities}
+          onAmenityChange={handleAmenityChange}
+        />
+        <ScheduleTimeline
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+        />
+      </div>
     </>
   );
 };

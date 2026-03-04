@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Plus, Search, Building2, ChevronDown, Bell, MessageSquare } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  Building2,
+  ChevronDown,
+  Bell,
+  MessageSquare,
+} from 'lucide-react';
 import AppHeader from '@/components/layouts/AppHeader';
 import BookingTable from '../../components/features/manager/bookingManager/BookingTable';
 import AddBookingModal from '../../components/features/manager/bookingManager/AddBookingModal';
@@ -9,8 +16,10 @@ import { bookingService } from '../../services/bookingService';
 import type { Booking, BookingStatus } from '../../types/types';
 
 const ManagerBookingPage: React.FC = () => {
-  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
-  
+  const { setSidebarOpen } = useOutletContext<{
+    setSidebarOpen: (open: boolean) => void;
+  }>();
+
   const headerActions = [
     {
       id: 'new-booking',
@@ -29,7 +38,7 @@ const ManagerBookingPage: React.FC = () => {
       icon: <MessageSquare className="h-5 w-5" />,
     },
   ];
-  
+
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -149,81 +158,81 @@ const ManagerBookingPage: React.FC = () => {
         }}
       />
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 custom-scrollbar relative">
-      <div className="max-w-300 mx-auto w-full">
-        <div className="flex flex-wrap gap-3 mb-6">
-          <div className="relative flex-1 min-w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search bookings..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            />
-          </div>
-
-          <div className="relative">
-            <select
-              value={selectedStatus}
-              onChange={e => setSelectedStatus(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
-            >
-              <option value="all">All Statuses</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
-          </div>
-
-          <div className="relative">
-            <select
-              value={selectedBuilding}
-              onChange={e => setSelectedBuilding(e.target.value)}
-              className="appearance-none pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
-            >
-              <option value="all">All Buildings</option>
-              {buildings.map(building => (
-                <option key={building} value={building}>
-                  {building}
-                </option>
-              ))}
-            </select>
-            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
-          </div>
-        </div>
-
-        <div className="pb-20">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin size-8 border-3 border-primary border-t-transparent rounded-full" />
+        <div className="max-w-300 mx-auto w-full">
+          <div className="flex flex-wrap gap-3 mb-6">
+            <div className="relative flex-1 min-w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search bookings..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              />
             </div>
-          ) : (
-            <BookingTable
-              bookings={bookings}
-              onView={handleViewBooking}
-              onEdit={handleEditBooking}
-              onCancel={handleCancelBooking}
-            />
-          )}
+
+            <div className="relative">
+              <select
+                value={selectedStatus}
+                onChange={e => setSelectedStatus(e.target.value)}
+                className="appearance-none pl-3 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
+              >
+                <option value="all">All Statuses</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            </div>
+
+            <div className="relative">
+              <select
+                value={selectedBuilding}
+                onChange={e => setSelectedBuilding(e.target.value)}
+                className="appearance-none pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
+              >
+                <option value="all">All Buildings</option>
+                {buildings.map(building => (
+                  <option key={building} value={building}>
+                    {building}
+                  </option>
+                ))}
+              </select>
+              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          <div className="pb-20">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="animate-spin size-8 border-3 border-primary border-t-transparent rounded-full" />
+              </div>
+            ) : (
+              <BookingTable
+                bookings={bookings}
+                onView={handleViewBooking}
+                onEdit={handleEditBooking}
+                onCancel={handleCancelBooking}
+              />
+            )}
+          </div>
         </div>
+
+        <AddBookingModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onAdd={handleAddBooking}
+        />
+
+        <BookingDetailModal
+          isOpen={isDetailModalOpen}
+          onClose={() => setIsDetailModalOpen(false)}
+          booking={selectedBooking}
+          onUpdateStatus={handleUpdateStatus}
+        />
       </div>
-
-      <AddBookingModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onAdd={handleAddBooking}
-      />
-
-      <BookingDetailModal
-        isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
-        booking={selectedBooking}
-        onUpdateStatus={handleUpdateStatus}
-      />
-    </div>
     </>
   );
 };

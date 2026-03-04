@@ -36,7 +36,9 @@ const MOCK_TRANSACTIONS: PaymentTransaction[] = financialData.transactions.map(
 );
 
 const FinancialPage: React.FC = () => {
-  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
+  const { setSidebarOpen } = useOutletContext<{
+    setSidebarOpen: (open: boolean) => void;
+  }>();
   const [aiInsight, setAiInsight] = useState<string>(
     'Generating AI summary...'
   );
@@ -44,13 +46,21 @@ const FinancialPage: React.FC = () => {
   const headerActions = [
     {
       id: 'date-range',
-      icon: <span className="material-symbols-outlined text-[20px]">calendar_today</span>,
+      icon: (
+        <span className="material-symbols-outlined text-[20px]">
+          calendar_today
+        </span>
+      ),
       label: 'Last 30 Days',
       variant: 'ghost' as const,
     },
     {
       id: 'export',
-      icon: <span className="material-symbols-outlined text-[20px]">file_download</span>,
+      icon: (
+        <span className="material-symbols-outlined text-[20px]">
+          file_download
+        </span>
+      ),
       label: 'Export Report',
       variant: 'primary' as const,
     },
@@ -105,8 +115,7 @@ const FinancialPage: React.FC = () => {
 
           <footer className="mt-8 text-center text-xs text-gray-400 dark:text-gray-500 pb-4">
             <p>
-              © {new Date().getFullYear()} SPACEPOCKER Inc. All rights
-              reserved.{' '}
+              © {new Date().getFullYear()} SPACEPOCKER Inc. All rights reserved.{' '}
               <a className="hover:text-indigo-500 ml-2" href="#">
                 Financial Policy
               </a>

@@ -12,14 +12,20 @@ const INITIAL_USERS: User[] = usersData.users.map(user => ({
 }));
 
 const UsersPage: React.FC = () => {
-  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
+  const { setSidebarOpen } = useOutletContext<{
+    setSidebarOpen: (open: boolean) => void;
+  }>();
   const [searchQuery, setSearchQuery] = useState('');
   const [users] = useState<User[]>(INITIAL_USERS);
 
   const headerActions = [
     {
       id: 'add-user',
-      icon: <span className="material-symbols-outlined text-[20px]">person_add</span>,
+      icon: (
+        <span className="material-symbols-outlined text-[20px]">
+          person_add
+        </span>
+      ),
       label: 'Add User',
       variant: 'primary' as const,
     },
@@ -188,8 +194,7 @@ const UsersPage: React.FC = () => {
 
           <footer className="mt-8 text-center text-xs text-text-secondary-light pb-4">
             <p>
-              © {new Date().getFullYear()} SPACEPOCKER Inc. All rights
-              reserved.{' '}
+              © {new Date().getFullYear()} SPACEPOCKER Inc. All rights reserved.{' '}
               <a
                 className="hover:text-primary ml-2 underline underline-offset-4"
                 href="#"

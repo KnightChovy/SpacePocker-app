@@ -10,7 +10,9 @@ import { statsData } from '@/data/constantManager';
 import type { TimeRange } from '@/types/types';
 
 export const AnalyticsPage: React.FC = () => {
-  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
+  const { setSidebarOpen } = useOutletContext<{
+    setSidebarOpen: (open: boolean) => void;
+  }>();
   const [range, setRange] = useState<TimeRange>('30days');
 
   const headerActions = [
@@ -46,7 +48,7 @@ export const AnalyticsPage: React.FC = () => {
         }}
       />
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 custom-scrollbar">
-      <div className="max-w-350 mx-auto w-full">
+        <div className="max-w-350 mx-auto w-full">
           <div className="flex items-center bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
             <button
               onClick={() => setRange('30days')}

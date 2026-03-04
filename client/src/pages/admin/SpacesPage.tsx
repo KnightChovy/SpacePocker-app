@@ -18,7 +18,9 @@ const MOCK_SPACES: Space[] = spacesData.spaces.map(space => ({
 }));
 
 const SpacesPage: React.FC = () => {
-  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
+  const { setSidebarOpen } = useOutletContext<{
+    setSidebarOpen: (open: boolean) => void;
+  }>();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('All Categories');
   const [pendingOnly, setPendingOnly] = useState(false);
@@ -28,7 +30,11 @@ const SpacesPage: React.FC = () => {
   const headerActions = [
     {
       id: 'filter',
-      icon: <span className="material-symbols-outlined text-[18px]">filter_list</span>,
+      icon: (
+        <span className="material-symbols-outlined text-[18px]">
+          filter_list
+        </span>
+      ),
       label: pendingOnly ? 'Pending Only' : 'All Spaces',
       variant: (pendingOnly ? 'primary' : 'ghost') as 'primary' | 'ghost',
       onClick: () => setPendingOnly(!pendingOnly),
@@ -96,51 +102,49 @@ const SpacesPage: React.FC = () => {
       />
       <main className="flex-1 overflow-y-auto p-6 lg:p-10">
         <div className="max-w-7xl mx-auto space-y-6">
-            <div className="bg-indigo-600/5 border border-indigo-200 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="size-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
-                  <span className="material-symbols-outlined">
-                    auto_awesome
-                  </span>
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-indigo-900">
-                    AI Inventory Analyst
-                  </h4>
-                  <p className="text-xs text-indigo-700/80">
-                    {aiInsight ||
-                      'Generate professional insights based on your current inventory filters.'}
-                  </p>
-                </div>
+          <div className="bg-indigo-600/5 border border-indigo-200 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="size-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+                <span className="material-symbols-outlined">auto_awesome</span>
               </div>
-              <button
-                onClick={handleGenerateInsight}
-                disabled={loadingInsight}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors shrink-0 disabled:opacity-50"
-              >
-                {loadingInsight ? 'Analyzing...' : 'Generate Insight'}
-              </button>
+              <div>
+                <h4 className="text-sm font-bold text-indigo-900">
+                  AI Inventory Analyst
+                </h4>
+                <p className="text-xs text-indigo-700/80">
+                  {aiInsight ||
+                    'Generate professional insights based on your current inventory filters.'}
+                </p>
+              </div>
             </div>
-
-            <StatsSection stats={stats} />
-
-            <div className="bg-surface-light rounded-2xl shadow-float border border-gray-100 flex flex-col">
-              <InventoryTable
-                spaces={filteredSpaces}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-              />
-            </div>
+            <button
+              onClick={handleGenerateInsight}
+              disabled={loadingInsight}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors shrink-0 disabled:opacity-50"
+            >
+              {loadingInsight ? 'Analyzing...' : 'Generate Insight'}
+            </button>
           </div>
 
-          <footer className="mt-12 text-center text-xs text-text-secondary pb-4">
-            <p>
-              © {new Date().getFullYear()} SPACEPOCKER Inc. All rights reserved.{' '}
-              <a className="hover:text-primary ml-2" href="#">
-                Privacy Policy
-              </a>
-            </p>
-          </footer>
+          <StatsSection stats={stats} />
+
+          <div className="bg-surface-light rounded-2xl shadow-float border border-gray-100 flex flex-col">
+            <InventoryTable
+              spaces={filteredSpaces}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            />
+          </div>
+        </div>
+
+        <footer className="mt-12 text-center text-xs text-text-secondary pb-4">
+          <p>
+            © {new Date().getFullYear()} SPACEPOCKER Inc. All rights reserved.{' '}
+            <a className="hover:text-primary ml-2" href="#">
+              Privacy Policy
+            </a>
+          </p>
+        </footer>
       </main>
     </>
   );

@@ -145,8 +145,10 @@ const RoomRow = ({
 };
 
 const ManagerRoomPage = () => {
-  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
-  
+  const { setSidebarOpen } = useOutletContext<{
+    setSidebarOpen: (open: boolean) => void;
+  }>();
+
   const headerActions = [
     {
       id: 'add-room',
@@ -165,7 +167,7 @@ const ManagerRoomPage = () => {
       icon: <MessageSquare className="h-5 w-5" />,
     },
   ];
-  
+
   const [rooms, setRooms] = useState<ManagerRoom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -272,115 +274,115 @@ const ManagerRoomPage = () => {
         }}
       />
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 custom-scrollbar">
-      <div className="max-w-300 mx-auto w-full pb-10">
-        <div className="flex flex-wrap gap-3 mb-6">
-          <div className="relative flex-1 min-w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search rooms..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            />
-          </div>
-
-          <div className="relative">
-            <select
-              value={selectedBuilding}
-              onChange={e => setSelectedBuilding(e.target.value)}
-              className="appearance-none pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
-            >
-              <option value="all">All Buildings</option>
-              {buildings.map(building => (
-                <option key={building} value={building}>
-                  {building}
-                </option>
-              ))}
-            </select>
-            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
-          </div>
-
-          <div className="relative">
-            <select
-              value={selectedStatus}
-              onChange={e => setSelectedStatus(e.target.value)}
-              className="appearance-none pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
-            >
-              <option value="all">All Status</option>
-              <option value="available">Available</option>
-              <option value="occupied">Occupied</option>
-              <option value="maintenance">Maintenance</option>
-            </select>
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-soft overflow-hidden">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin size-8 border-3 border-primary border-t-transparent rounded-full" />
+        <div className="max-w-300 mx-auto w-full pb-10">
+          <div className="flex flex-wrap gap-3 mb-6">
+            <div className="relative flex-1 min-w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search rooms..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              />
             </div>
-          ) : filteredRooms.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-              <Building2 className="size-12 mb-3" />
-              <p className="text-lg font-medium">No rooms found</p>
-              <p className="text-sm">Try adjusting your filters</p>
-            </div>
-          ) : (
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
-                    Room
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
-                    Capacity
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRooms.map(room => (
-                  <RoomRow
-                    key={room.id}
-                    room={room}
-                    onEdit={handleEditRoom}
-                    onDelete={handleDeleteRoom}
-                    onView={handleViewRoom}
-                  />
+
+            <div className="relative">
+              <select
+                value={selectedBuilding}
+                onChange={e => setSelectedBuilding(e.target.value)}
+                className="appearance-none pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
+              >
+                <option value="all">All Buildings</option>
+                {buildings.map(building => (
+                  <option key={building} value={building}>
+                    {building}
+                  </option>
                 ))}
-              </tbody>
-            </table>
+              </select>
+              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            </div>
+
+            <div className="relative">
+              <select
+                value={selectedStatus}
+                onChange={e => setSelectedStatus(e.target.value)}
+                className="appearance-none pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
+              >
+                <option value="all">All Status</option>
+                <option value="available">Available</option>
+                <option value="occupied">Occupied</option>
+                <option value="maintenance">Maintenance</option>
+              </select>
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-100 shadow-soft overflow-hidden">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="animate-spin size-8 border-3 border-primary border-t-transparent rounded-full" />
+              </div>
+            ) : filteredRooms.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                <Building2 className="size-12 mb-3" />
+                <p className="text-lg font-medium">No rooms found</p>
+                <p className="text-sm">Try adjusting your filters</p>
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100">
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                      Room
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                      Capacity
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                      Price
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredRooms.map(room => (
+                    <RoomRow
+                      key={room.id}
+                      room={room}
+                      onEdit={handleEditRoom}
+                      onDelete={handleDeleteRoom}
+                      onView={handleViewRoom}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {!isLoading && filteredRooms.length > 0 && (
+            <div className="mt-4 text-sm text-text-gray">
+              Showing {filteredRooms.length} of {rooms.length} rooms
+            </div>
           )}
         </div>
 
-        {!isLoading && filteredRooms.length > 0 && (
-          <div className="mt-4 text-sm text-text-gray">
-            Showing {filteredRooms.length} of {rooms.length} rooms
-          </div>
-        )}
+        <AddRoomModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onAdd={handleAddRoomSubmit}
+        />
       </div>
-
-      <AddRoomModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onAdd={handleAddRoomSubmit}
-      />
-    </div>
     </>
   );
 };

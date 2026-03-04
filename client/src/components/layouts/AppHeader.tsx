@@ -1,9 +1,5 @@
 import { type ReactNode } from 'react';
-import {
-  Menu,
-  Search,
-  ChevronDown,
-} from 'lucide-react';
+import { Menu, Search, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 

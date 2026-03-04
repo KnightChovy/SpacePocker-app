@@ -4,7 +4,9 @@ import AppHeader from '@/components/layouts/AppHeader';
 import { Landmark, BellRing, Plus } from 'lucide-react';
 
 const Billings = () => {
-  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
+  const { setSidebarOpen } = useOutletContext<{
+    setSidebarOpen: (open: boolean) => void;
+  }>();
 
   const headerActions = [
     {

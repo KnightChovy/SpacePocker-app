@@ -50,7 +50,10 @@ interface AppSidebarProps {
   activeLinkClassName?: string;
 }
 
-function getDefaultLinkClasses(isActive: boolean, activeLinkClassName?: string) {
+function getDefaultLinkClasses(
+  isActive: boolean,
+  activeLinkClassName?: string
+) {
   const baseClass =
     'flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-sm font-medium';
 

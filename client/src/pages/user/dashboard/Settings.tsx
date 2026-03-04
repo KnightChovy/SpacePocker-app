@@ -8,7 +8,9 @@ import AccountSecuritySection from '@/components/features/user/settings/AccountS
 import { Save, BellRing, Plus } from 'lucide-react';
 
 const Settings: React.FC = () => {
-  const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: (open: boolean) => void }>();
+  const { setSidebarOpen } = useOutletContext<{
+    setSidebarOpen: (open: boolean) => void;
+  }>();
 
   const headerActions = [
     {
@@ -48,40 +50,40 @@ const Settings: React.FC = () => {
 
           <AccountSecuritySection />
 
-        <section className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark shadow-sm">
-          <div className="p-6 border-b border-border-light dark:border-border-dark">
-            <h2 className="text-lg font-bold">Notifications</h2>
-            <p className="text-sm text-text-sub-light dark:text-text-sub-dark mt-1">
-              Choose what we can contact you about.
-            </p>
-          </div>
-          <div className="p-6 md:p-8 flex flex-col gap-6">
-            <NotificationRow
-              title="Booking Reminders"
-              desc="Receive notifications for upcoming bookings."
-              options={['Email', 'SMS']}
-              checked={['Email', 'SMS']}
-            />
-            <NotificationRow
-              title="Promotions and Offers"
-              desc="Receive emails about new features and special offers."
-              options={['Email']}
-            />
-            <NotificationRow
-              title="Security Alerts"
-              desc="Get notified about suspicious logins."
-              options={['Always On']}
-              disabled
-            />
-          </div>
-        </section>
+          <section className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark shadow-sm">
+            <div className="p-6 border-b border-border-light dark:border-border-dark">
+              <h2 className="text-lg font-bold">Notifications</h2>
+              <p className="text-sm text-text-sub-light dark:text-text-sub-dark mt-1">
+                Choose what we can contact you about.
+              </p>
+            </div>
+            <div className="p-6 md:p-8 flex flex-col gap-6">
+              <NotificationRow
+                title="Booking Reminders"
+                desc="Receive notifications for upcoming bookings."
+                options={['Email', 'SMS']}
+                checked={['Email', 'SMS']}
+              />
+              <NotificationRow
+                title="Promotions and Offers"
+                desc="Receive emails about new features and special offers."
+                options={['Email']}
+              />
+              <NotificationRow
+                title="Security Alerts"
+                desc="Get notified about suspicious logins."
+                options={['Always On']}
+                disabled
+              />
+            </div>
+          </section>
 
-        <div className="fixed bottom-6 right-8 z-50">
-          <button className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-xl shadow-lg shadow-primary/40 hover:scale-105 active:scale-95 transition-all duration-300 font-bold">
-            <Save className="h-5 w-5" />
-            Save Changes
-          </button>
-        </div>
+          <div className="fixed bottom-6 right-8 z-50">
+            <button className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-xl shadow-lg shadow-primary/40 hover:scale-105 active:scale-95 transition-all duration-300 font-bold">
+              <Save className="h-5 w-5" />
+              Save Changes
+            </button>
+          </div>
         </div>
       </div>
     </>
