@@ -28,7 +28,6 @@ const SpaceDetailInfo: React.FC<SpaceDetailInfoProps> = ({
         </div>
       )}
 
-      {/* Description */}
       <section>
         <h3 className="text-xl font-bold text-gray-900 mb-4">
           About this space

@@ -33,7 +33,6 @@ export default function ScheduleTimeline({
   const [bookings, setBookings] = useState<ScheduleBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch rooms and bookings
   useEffect(() => {
     const fetchScheduleData = async () => {
       try {
@@ -128,7 +127,6 @@ export default function ScheduleTimeline({
 
   return (
     <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-border-light relative overflow-hidden">
-      {/* Toolbar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b border-border-light gap-4">
         <div className="flex items-center gap-4">
           <div className="flex bg-background-light p-1 rounded-xl border border-border-light">
@@ -174,7 +172,6 @@ export default function ScheduleTimeline({
         </button>
       </div>
 
-      {/* Grid Headers */}
       <div className="flex border-b border-border-light bg-background-light/50">
         <div className="w-48 xl:w-60 p-3 shrink-0 border-r border-border-light flex items-center gap-2">
           <Filter className="h-4 w-4 text-slate-400" />
@@ -200,10 +197,8 @@ export default function ScheduleTimeline({
         </div>
       </div>
 
-      {/* Scrollable Body */}
       <div className="flex-1 overflow-y-auto custom-scrollbar relative">
         <div className="flex min-h-full">
-          {/* Room Names Column */}
           <div className="w-48 xl:w-60 shrink-0 sticky left-0 z-10 bg-white border-r border-border-light">
             {isLoading ? (
               <div className="h-24 p-4 flex items-center justify-center">
@@ -226,7 +221,6 @@ export default function ScheduleTimeline({
             )}
           </div>
 
-          {/* Timeline Surface */}
           <div
             className="flex-1 relative overflow-x-auto no-scrollbar"
             ref={containerRef}
@@ -235,7 +229,6 @@ export default function ScheduleTimeline({
               className="h-full relative"
               style={{ width: TIME_SLOTS.length * SLOT_WIDTH }}
             >
-              {/* Vertical Grid Lines */}
               <div className="absolute inset-0 flex pointer-events-none">
                 {TIME_SLOTS.map((_, i) => (
                   <div
@@ -246,7 +239,6 @@ export default function ScheduleTimeline({
                 ))}
               </div>
 
-              {/* Current Time Indicator */}
               <div
                 className="absolute top-0 bottom-0 w-px bg-red-500 z-20 pointer-events-none"
                 style={{ left: currentTimeX }}
@@ -254,7 +246,6 @@ export default function ScheduleTimeline({
                 <div className="absolute -top-1.5 -left-1.5 h-3 w-3 bg-red-500 rounded-full" />
               </div>
 
-              {/* Booking Blocks */}
               {rooms.map(room => (
                 <div
                   key={room.id}
@@ -285,7 +276,6 @@ export default function ScheduleTimeline({
                       </div>
                     ))}
 
-                  {/* Empty state hint */}
                   <div className="absolute inset-0 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
                     <button className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/20 backdrop-blur-sm">
                       + Add

@@ -77,7 +77,6 @@ const AddBookingModal = ({ isOpen, onClose, onAdd }: AddBookingModalProps) => {
             onSubmit={handleSubmit}
             className="px-6 pb-6 flex flex-col gap-5"
           >
-            {/* Customer Info */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">

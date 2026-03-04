@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import {
   Plus,
   Search,
@@ -9,9 +10,12 @@ import {
   Edit,
   Trash2,
   Eye,
+  Bell,
+  MessageSquare,
 } from 'lucide-react';
 import type { ManagerRoom } from '@/types/types';
 import { roomService } from '@/services/roomService';
+import AppHeader from '@/components/layouts/AppHeader';
 import AddRoomModal from '@/components/features/manager/roomManager/AddRoomModal';
 
 const StatusBadge = ({ status }: { status: ManagerRoom['status'] }) => {
@@ -43,7 +47,6 @@ const StatusBadge = ({ status }: { status: ManagerRoom['status'] }) => {
   );
 };
 
-// Room Row Component
 const RoomRow = ({
   room,
   onEdit,
@@ -141,9 +144,30 @@ const RoomRow = ({
   );
 };
 
-// Main Page Component
 const ManagerRoomPage = () => {
-  // State
+  const { setSidebarOpen } = useOutletContext<{
+    setSidebarOpen: (open: boolean) => void;
+  }>();
+
+  const headerActions = [
+    {
+      id: 'add-room',
+      icon: <Plus className="h-5 w-5" />,
+      label: 'Add Room',
+      variant: 'primary' as const,
+      onClick: () => setIsAddModalOpen(true),
+    },
+    {
+      id: 'notifications',
+      icon: <Bell className="h-5 w-5" />,
+      badge: true,
+    },
+    {
+      id: 'messages',
+      icon: <MessageSquare className="h-5 w-5" />,
+    },
+  ];
+
   const [rooms, setRooms] = useState<ManagerRoom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -151,7 +175,6 @@ const ManagerRoomPage = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Fetch rooms
   const fetchRooms = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -175,7 +198,6 @@ const ManagerRoomPage = () => {
     fetchRooms();
   }, [fetchRooms]);
 
-  // Handlers
   const handleAddRoom = () => {
     setIsAddModalOpen(true);
   };
@@ -205,7 +227,6 @@ const ManagerRoomPage = () => {
   };
 
   const handleEditRoom = (room: ManagerRoom) => {
-    // TODO: Open edit room modal
     console.log('Edit room:', room);
   };
 
@@ -221,11 +242,9 @@ const ManagerRoomPage = () => {
   };
 
   const handleViewRoom = (room: ManagerRoom) => {
-    // TODO: Navigate to room detail or open modal
     console.log('View room:', room);
   };
 
-  // Filter rooms
   const filteredRooms = rooms.filter(room => {
     const matchesSearch =
       room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -238,146 +257,133 @@ const ManagerRoomPage = () => {
     return matchesSearch && matchesBuilding && matchesStatus;
   });
 
-  // Get unique buildings for filter
   const buildings = [...new Set(rooms.map(room => room.building))];
 
   return (
-    <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 custom-scrollbar">
-      <div className="max-w-300 mx-auto w-full pb-10">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-              Room Management
-            </h2>
-            <p className="text-slate-500 mt-1">
-              Manage inventory, pricing, and availability across all buildings.
-            </p>
-          </div>
-          <button
-            onClick={handleAddRoom}
-            className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-sm"
-          >
-            <Plus className="size-5" />
-            Add Room
-          </button>
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          {/* Search */}
-          <div className="relative flex-1 min-w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search rooms..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            />
-          </div>
-
-          {/* Building Filter */}
-          <div className="relative">
-            <select
-              value={selectedBuilding}
-              onChange={e => setSelectedBuilding(e.target.value)}
-              className="appearance-none pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
-            >
-              <option value="all">All Buildings</option>
-              {buildings.map(building => (
-                <option key={building} value={building}>
-                  {building}
-                </option>
-              ))}
-            </select>
-            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
-          </div>
-
-          {/* Status Filter */}
-          <div className="relative">
-            <select
-              value={selectedStatus}
-              onChange={e => setSelectedStatus(e.target.value)}
-              className="appearance-none pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
-            >
-              <option value="all">All Status</option>
-              <option value="available">Available</option>
-              <option value="occupied">Occupied</option>
-              <option value="maintenance">Maintenance</option>
-            </select>
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-soft overflow-hidden">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin size-8 border-3 border-primary border-t-transparent rounded-full" />
+    <>
+      <AppHeader
+        title="Room Management"
+        subtitle="Manage inventory, pricing, and availability across all buildings."
+        onMenuClick={() => setSidebarOpen(true)}
+        actions={headerActions}
+        profile={{
+          name: 'Alex Morgan',
+          subtitle: 'Manager',
+          avatarUrl: 'https://picsum.photos/id/64/100/100',
+          showDropdown: true,
+        }}
+      />
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 custom-scrollbar">
+        <div className="max-w-300 mx-auto w-full pb-10">
+          <div className="flex flex-wrap gap-3 mb-6">
+            <div className="relative flex-1 min-w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search rooms..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              />
             </div>
-          ) : filteredRooms.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-              <Building2 className="size-12 mb-3" />
-              <p className="text-lg font-medium">No rooms found</p>
-              <p className="text-sm">Try adjusting your filters</p>
-            </div>
-          ) : (
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
-                    Room
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
-                    Capacity
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRooms.map(room => (
-                  <RoomRow
-                    key={room.id}
-                    room={room}
-                    onEdit={handleEditRoom}
-                    onDelete={handleDeleteRoom}
-                    onView={handleViewRoom}
-                  />
+
+            <div className="relative">
+              <select
+                value={selectedBuilding}
+                onChange={e => setSelectedBuilding(e.target.value)}
+                className="appearance-none pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
+              >
+                <option value="all">All Buildings</option>
+                {buildings.map(building => (
+                  <option key={building} value={building}>
+                    {building}
+                  </option>
                 ))}
-              </tbody>
-            </table>
+              </select>
+              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            </div>
+
+            <div className="relative">
+              <select
+                value={selectedStatus}
+                onChange={e => setSelectedStatus(e.target.value)}
+                className="appearance-none pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
+              >
+                <option value="all">All Status</option>
+                <option value="available">Available</option>
+                <option value="occupied">Occupied</option>
+                <option value="maintenance">Maintenance</option>
+              </select>
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-100 shadow-soft overflow-hidden">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="animate-spin size-8 border-3 border-primary border-t-transparent rounded-full" />
+              </div>
+            ) : filteredRooms.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                <Building2 className="size-12 mb-3" />
+                <p className="text-lg font-medium">No rooms found</p>
+                <p className="text-sm">Try adjusting your filters</p>
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100">
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                      Room
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                      Capacity
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                      Price
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredRooms.map(room => (
+                    <RoomRow
+                      key={room.id}
+                      room={room}
+                      onEdit={handleEditRoom}
+                      onDelete={handleDeleteRoom}
+                      onView={handleViewRoom}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {!isLoading && filteredRooms.length > 0 && (
+            <div className="mt-4 text-sm text-text-gray">
+              Showing {filteredRooms.length} of {rooms.length} rooms
+            </div>
           )}
         </div>
 
-        {/* Summary */}
-        {!isLoading && filteredRooms.length > 0 && (
-          <div className="mt-4 text-sm text-text-gray">
-            Showing {filteredRooms.length} of {rooms.length} rooms
-          </div>
-        )}
+        <AddRoomModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onAdd={handleAddRoomSubmit}
+        />
       </div>
-
-      {/* Add Room Modal */}
-      <AddRoomModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onAdd={handleAddRoomSubmit}
-      />
-    </div>
+    </>
   );
 };
 

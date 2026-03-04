@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Building2, ChevronDown } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
+import {
+  Plus,
+  Search,
+  Building2,
+  ChevronDown,
+  Bell,
+  MessageSquare,
+} from 'lucide-react';
+import AppHeader from '@/components/layouts/AppHeader';
 import BookingTable from '../../components/features/manager/bookingManager/BookingTable';
 import AddBookingModal from '../../components/features/manager/bookingManager/AddBookingModal';
 import BookingDetailModal from '../../components/features/manager/bookingManager/BookingDetailModal';
@@ -7,19 +16,39 @@ import { bookingService } from '../../services/bookingService';
 import type { Booking, BookingStatus } from '../../types/types';
 
 const ManagerBookingPage: React.FC = () => {
-  // State
+  const { setSidebarOpen } = useOutletContext<{
+    setSidebarOpen: (open: boolean) => void;
+  }>();
+
+  const headerActions = [
+    {
+      id: 'new-booking',
+      icon: <Plus className="h-5 w-5" />,
+      label: 'New Booking',
+      variant: 'primary' as const,
+      onClick: () => setIsAddModalOpen(true),
+    },
+    {
+      id: 'notifications',
+      icon: <Bell className="h-5 w-5" />,
+      badge: true,
+    },
+    {
+      id: 'messages',
+      icon: <MessageSquare className="h-5 w-5" />,
+    },
+  ];
+
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
 
-  // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  // Fetch bookings
   const fetchBookings = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -43,7 +72,6 @@ const ManagerBookingPage: React.FC = () => {
     fetchBookings();
   }, [fetchBookings]);
 
-  // Handlers
   const handleAddBooking = async (data: {
     customerName: string;
     customerDepartment: string;
@@ -54,7 +82,6 @@ const ManagerBookingPage: React.FC = () => {
     amount: string;
   }) => {
     try {
-      // Get room info (in real app, this would come from a room service)
       const roomMap: Record<string, { name: string; building: string }> = {
         r1: { name: 'Lab 305', building: 'Science Building' },
         r2: { name: 'Studio 4', building: 'Arts Center' },
@@ -90,7 +117,6 @@ const ManagerBookingPage: React.FC = () => {
   };
 
   const handleEditBooking = (booking: Booking) => {
-    // TODO: Implement edit modal
     console.log('Edit booking:', booking);
   };
 
@@ -115,111 +141,99 @@ const ManagerBookingPage: React.FC = () => {
     }
   };
 
-  // Get unique buildings for filter
   const buildings = [...new Set(bookings.map(b => b.room.building))];
 
   return (
-    <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 custom-scrollbar relative">
-      <div className="max-w-300 mx-auto w-full">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-              Bookings Management
-            </h2>
-            <p className="text-slate-500 mt-1">
-              Monitor reservation status, schedules, and billing details.
-            </p>
-          </div>
-
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-sm"
-          >
-            <Plus className="size-5" />
-            New Booking
-          </button>
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          {/* Search */}
-          <div className="relative flex-1 min-w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search bookings..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            />
-          </div>
-
-          {/* Status Filter */}
-          <div className="relative">
-            <select
-              value={selectedStatus}
-              onChange={e => setSelectedStatus(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
-            >
-              <option value="all">All Statuses</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
-          </div>
-
-          {/* Building Filter */}
-          <div className="relative">
-            <select
-              value={selectedBuilding}
-              onChange={e => setSelectedBuilding(e.target.value)}
-              className="appearance-none pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
-            >
-              <option value="all">All Buildings</option>
-              {buildings.map(building => (
-                <option key={building} value={building}>
-                  {building}
-                </option>
-              ))}
-            </select>
-            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
-          </div>
-        </div>
-
-        <div className="pb-20">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin size-8 border-3 border-primary border-t-transparent rounded-full" />
+    <>
+      <AppHeader
+        title="Bookings Management"
+        subtitle="Monitor reservation status, schedules, and billing details."
+        onMenuClick={() => setSidebarOpen(true)}
+        actions={headerActions}
+        profile={{
+          name: 'Alex Morgan',
+          subtitle: 'Manager',
+          avatarUrl: 'https://picsum.photos/id/64/100/100',
+          showDropdown: true,
+        }}
+      />
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 custom-scrollbar relative">
+        <div className="max-w-300 mx-auto w-full">
+          <div className="flex flex-wrap gap-3 mb-6">
+            <div className="relative flex-1 min-w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search bookings..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              />
             </div>
-          ) : (
-            <BookingTable
-              bookings={bookings}
-              onView={handleViewBooking}
-              onEdit={handleEditBooking}
-              onCancel={handleCancelBooking}
-            />
-          )}
+
+            <div className="relative">
+              <select
+                value={selectedStatus}
+                onChange={e => setSelectedStatus(e.target.value)}
+                className="appearance-none pl-3 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
+              >
+                <option value="all">All Statuses</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            </div>
+
+            <div className="relative">
+              <select
+                value={selectedBuilding}
+                onChange={e => setSelectedBuilding(e.target.value)}
+                className="appearance-none pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
+              >
+                <option value="all">All Buildings</option>
+                {buildings.map(building => (
+                  <option key={building} value={building}>
+                    {building}
+                  </option>
+                ))}
+              </select>
+              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          <div className="pb-20">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="animate-spin size-8 border-3 border-primary border-t-transparent rounded-full" />
+              </div>
+            ) : (
+              <BookingTable
+                bookings={bookings}
+                onView={handleViewBooking}
+                onEdit={handleEditBooking}
+                onCancel={handleCancelBooking}
+              />
+            )}
+          </div>
         </div>
+
+        <AddBookingModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onAdd={handleAddBooking}
+        />
+
+        <BookingDetailModal
+          isOpen={isDetailModalOpen}
+          onClose={() => setIsDetailModalOpen(false)}
+          booking={selectedBooking}
+          onUpdateStatus={handleUpdateStatus}
+        />
       </div>
-
-      {/* Add Booking Modal */}
-      <AddBookingModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onAdd={handleAddBooking}
-      />
-
-      {/* Booking Detail Modal */}
-      <BookingDetailModal
-        isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
-        booking={selectedBooking}
-        onUpdateStatus={handleUpdateStatus}
-      />
-    </div>
+    </>
   );
 };
 

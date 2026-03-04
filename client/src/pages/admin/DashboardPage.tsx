@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { DollarSign, Building2, UserPlus, Server } from 'lucide-react';
-import Sidebar from '@/components/features/admin/Sidebar';
-import Header from '@/components/features/admin/Header';
+import AppHeader from '@/components/layouts/AppHeader';
 import StatCard from '@/components/features/admin/StatCard';
 import TransactionChart from '@/components/features/admin/TransactionChart';
 import UserAcquisitionChart from '@/components/features/admin/UserAcquisitionChart';
@@ -18,8 +18,33 @@ const iconMap = {
 };
 
 const DashboardPage: React.FC = () => {
-  const [activeItem, setActiveItem] = useState<string>('dashboard');
-  const [isOpen, setIsOpen] = useState<boolean>(true);
+  const { setSidebarOpen } = useOutletContext<{
+    setSidebarOpen: (open: boolean) => void;
+  }>();
+
+  const headerActions = [
+    {
+      id: 'date-range',
+      icon: (
+        <span className="material-symbols-outlined text-[20px]">
+          calendar_today
+        </span>
+      ),
+      label: 'Last 30 Days',
+      variant: 'ghost' as const,
+    },
+    {
+      id: 'export',
+      icon: (
+        <span className="material-symbols-outlined text-[20px]">
+          file_download
+        </span>
+      ),
+      label: 'Export',
+      variant: 'primary' as const,
+    },
+  ];
+
   const [stats] = useState<Stat[]>(
     dashboardData.stats.map(stat => ({
       ...stat,
@@ -43,16 +68,24 @@ const DashboardPage: React.FC = () => {
   );
 
   return (
-    <div className="flex h-screen bg-[#f8f9fc] overflow-hidden">
-      <Sidebar
-        activeItem={activeItem}
-        setActiveItem={setActiveItem}
-        isOpen={isOpen}
-        setIsOpen={setIsOpen}
+    <>
+      <AppHeader
+        title="Analytics Overview"
+        subtitle="Real-time insights for SPACEPOCKER performance."
+        onMenuClick={() => setSidebarOpen(true)}
+        showSearch={true}
+        searchPlaceholder="Search analytics..."
+        actions={headerActions}
+        profile={{
+          name: 'Admin',
+          subtitle: 'Administrator',
+          avatarUrl: 'https://picsum.photos/seed/marcus/100/100',
+          showDropdown: true,
+        }}
+        iconType="material"
       />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-6 lg:p-10 space-y-8">
+      <main className="flex-1 overflow-y-auto p-6 lg:p-10">
+        <div className="max-w-7xl mx-auto space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, idx) => (
               <StatCard key={idx} {...stat} />
@@ -70,9 +103,9 @@ const DashboardPage: React.FC = () => {
           </div>
 
           <TransactionTable transactions={transactions} />
-        </main>
-      </div>
-    </div>
+        </div>
+      </main>
+    </>
   );
 };
 
