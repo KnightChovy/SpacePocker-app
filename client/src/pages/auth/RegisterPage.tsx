@@ -2,14 +2,9 @@ import { ArrowRight, Mail, Lock } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation } from '@tanstack/react-query';
-import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
 import logoGoogle from '/logoGoogle.jpg';
 import { Button } from '@/components/ui/button';
 import LeftSide from '@/components/auth/LeftSide';
-import { authAPI } from '@/apis/auth.api';
-import { useAuthStore } from '@/stores/auth.store';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 
@@ -32,9 +27,6 @@ const registerSchema = z
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 const RegisterPage = () => {
-  const navigate = useNavigate();
-  const setAccessToken = useAuthStore(state => state.setAccessToken);
-
   const {
     register,
     handleSubmit,
@@ -44,30 +36,8 @@ const RegisterPage = () => {
     mode: 'onBlur',
   });
 
-  const registerMutation = useMutation({
-    mutationFn: authAPI.register,
-    onSuccess: data => {
-      toast.success('Registration successful! Welcome aboard! 🎉');
-
-      if (data.accessToken) {
-        setAccessToken(data.accessToken);
-      }
-
-      setTimeout(() => {
-        navigate('/auth-login');
-      }, 1500);
-    },
-    onError: (error: any) => {
-      const errorMessage =
-        error.response?.data?.message ||
-        'Registration failed. Please try again.';
-      toast.error(errorMessage);
-    },
-  });
-
-  const onSubmit = async (data: RegisterFormData) => {
-    const { ...registerData } = data;
-    registerMutation.mutate(registerData);
+  const onSubmit = async () => {
+    // registerMutation.mutate(registerData);
   };
 
   return (
@@ -201,15 +171,10 @@ const RegisterPage = () => {
 
             <Button
               type="submit"
-              disabled={isSubmitting || registerMutation.isPending}
+              disabled={isSubmitting}
               className="mt-1 w-full h-14 rounded-xl bg-linear-to-r from-[#6366F1] to-[#8B5CF6] text-white font-bold text-lg shadow-[0_10px_20px_-10px_rgba(99,102,241,0.5)] hover:shadow-[0_20px_25px_-12px_rgba(99,102,241,0.6)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>
-                {registerMutation.isPending
-                  ? 'Creating Account...'
-                  : 'Get Started'}
-              </span>
-              {!registerMutation.isPending && <ArrowRight size={20} />}
+              {<ArrowRight size={20} />}
             </Button>
 
             <p className="text-center text-[#4d4c9a] text-base font-medium">

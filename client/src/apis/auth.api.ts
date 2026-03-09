@@ -1,47 +1,58 @@
-import fetcher from './fetcher';
+import axiosInstance from '@/lib/axios';
 
-export interface RegisterRequest {
-  email: string;
-  password: string;
-}
+export const login = async (email: string, password: string) => {
+  try {
+    const response = await axiosInstance.post('/login', {
+      email,
+      password,
+    });
+    return response.data.metadata;
+  } catch (error) {
+    console.error('Login error:', error);
+  }
+};
 
-export interface RegisterResponse {
-  id: string;
-  email: string;
-  createdAt: string;
-  accessToken?: string;
-}
+export const signup = async (
+  email: string,
+  password: string,
+  name: string,
+  phone: string
+) => {
+  try {
+    const response = await axiosInstance.post('/signup', {
+      email,
+      password,
+      name,
+      phone,
+    });
+    return response.data.metadata;
+  } catch (error) {
+    console.error('Registration error:', error);
+  }
+};
 
-export interface AuthError {
-  message: string;
-  error?: string;
-}
+export const logout = async (userId: string) => {
+  try {
+    const response = await axiosInstance.post('/logout', { userId });
+    return response.data.metadata;
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+};
 
-export const authAPI = {
-  register: async (data: RegisterRequest): Promise<RegisterResponse> => {
-    const response = await fetcher.post<RegisterResponse>('/Auth', data);
-    return response.data;
-  },
-
-  login: async (data: RegisterRequest) => {
-    try {
-      const response = await fetcher.get<RegisterResponse[]>('/Auth');
-
-      const user = response.data.find(u => u.email === data.email);
-
-      if (!user) {
-        throw new Error('Invalid email or password');
-      }
-
-      const accessToken = `mock-token-${user.id}-${Date.now()}`;
-
-      return {
-        user,
-        accessToken,
-      };
-    } catch (error) {
-      console.log('Login error:', error);
-      throw new Error('Login failed. Please try again.');
-    }
-  },
+export const refreshToken = async (
+  refreshToken: string,
+  userId: string,
+  email: string
+) => {
+  try {
+    const response = await axiosInstance.post('/refresh-token', {
+      refreshToken,
+      userId,
+      email,
+    });
+    return response.data.metadata;
+  } catch (error) {
+    console.error('Refresh token error:', error);
+  }
 };
