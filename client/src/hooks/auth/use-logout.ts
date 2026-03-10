@@ -1,4 +1,4 @@
-import { logout } from '@/apis/auth.api';
+import { authAPI } from '@/apis/auth.api';
 import { useAuthStore } from '@/stores/auth.store';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
@@ -7,11 +7,11 @@ export const useLogout = () => {
   const { clearAccessToken, clearRefreshToken, clearUser } = useAuthStore();
   return useMutation({
     mutationFn: async (data: { userId: string }) => {
-      const response = await logout(data.userId);
+      const response = await authAPI.logout(data.userId);
       clearAccessToken();
       clearRefreshToken();
       clearUser();
-      return response.deleted;
+      return response;
     },
     onSuccess: () => {
       toast.success('Logout successful!');

@@ -1,15 +1,19 @@
-import { ArrowRight, Mail, Lock } from 'lucide-react';
+import { ArrowRight, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useNavigate } from 'react-router-dom';
 import logoGoogle from '/logoGoogle.jpg';
 import { Button } from '@/components/ui/button';
 import LeftSide from '@/components/auth/LeftSide';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { useSignup } from '@/hooks/auth/use-signup';
 
 const registerSchema = z
   .object({
+    name: z.string().min(1, 'Name is required'),
     email: z.string().min(1, 'Email is required').email('Invalid email format'),
     password: z
       .string()
@@ -27,6 +31,10 @@ const registerSchema = z
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
+  const signupMutation = useSignup();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -36,8 +44,12 @@ const RegisterPage = () => {
     mode: 'onBlur',
   });
 
-  const onSubmit = async () => {
-    // registerMutation.mutate(registerData);
+  const onSubmit = async (data: RegisterFormData) => {
+    signupMutation.mutate(data, {
+      onSuccess: () => {
+        setTimeout(() => navigate('/'), 1000);
+      },
+    });
   };
 
   return (
@@ -75,6 +87,37 @@ const RegisterPage = () => {
             onSubmit={handleSubmit(onSubmit)}
           >
             <div className="space-y-5">
+              <div className="relative flex flex-col gap-2">
+                <Label
+                  htmlFor="name"
+                  className="text-[#0e0d1b] text-base font-semibold"
+                >
+                  Full Name
+                </Label>
+                <div className="relative flex items-center">
+                  <User
+                    size={24}
+                    className="absolute left-4 text-[#5c5ba8] pointer-events-none"
+                  />
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Your full name"
+                    className={`w-full h-14 pl-14 pr-5 text-lg rounded-xl border-2 transition-all duration-300 ${
+                      errors.name
+                        ? 'border-red-500 focus:border-red-500'
+                        : 'border-[#e5e7eb] focus:border-[#6366F1]'
+                    }`}
+                    {...register('name')}
+                  />
+                </div>
+                {errors.name && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
+
               <div className="relative flex flex-col gap-2">
                 <Label
                   htmlFor="email"
@@ -120,15 +163,23 @@ const RegisterPage = () => {
                   />
                   <Input
                     id="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="Min. 8 characters"
-                    className={`w-full h-14 pl-14 pr-5 text-lg rounded-xl border-2 transition-all duration-300 ${
+                    className={`w-full h-14 pl-14 pr-14 text-lg rounded-xl border-2 transition-all duration-300 ${
                       errors.password
                         ? 'border-red-500 focus:border-red-500'
                         : 'border-[#e5e7eb] focus:border-[#6366F1]'
                     }`}
                     {...register('password')}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(prev => !prev)}
+                    className="absolute right-4 text-[#5c5ba8] hover:text-[#6366F1] transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff size={22} /> : <Eye size={22} />}
+                  </button>
                 </div>
                 {errors.password && (
                   <p className="text-red-500 text-sm mt-1">
@@ -151,15 +202,27 @@ const RegisterPage = () => {
                   />
                   <Input
                     id="confirmPassword"
-                    type="password"
+                    type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Re-enter your password"
-                    className={`w-full h-14 pl-14 pr-5 text-lg rounded-xl border-2 transition-all duration-300 ${
+                    className={`w-full h-14 pl-14 pr-14 text-lg rounded-xl border-2 transition-all duration-300 ${
                       errors.confirmPassword
                         ? 'border-red-500 focus:border-red-500'
                         : 'border-[#e5e7eb] focus:border-[#6366F1]'
                     }`}
                     {...register('confirmPassword')}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(prev => !prev)}
+                    className="absolute right-4 text-[#5c5ba8] hover:text-[#6366F1] transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff size={22} />
+                    ) : (
+                      <Eye size={22} />
+                    )}
+                  </button>
                 </div>
                 {errors.confirmPassword && (
                   <p className="text-red-500 text-sm mt-1">
@@ -171,10 +234,17 @@ const RegisterPage = () => {
 
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || signupMutation.isPending}
               className="mt-1 w-full h-14 rounded-xl bg-linear-to-r from-[#6366F1] to-[#8B5CF6] text-white font-bold text-lg shadow-[0_10px_20px_-10px_rgba(99,102,241,0.5)] hover:shadow-[0_20px_25px_-12px_rgba(99,102,241,0.6)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {<ArrowRight size={20} />}
+              {signupMutation.isPending ? (
+                'Creating account...'
+              ) : (
+                <>
+                  <span>Create Account</span>
+                  <ArrowRight size={20} />
+                </>
+              )}
             </Button>
 
             <p className="text-center text-[#4d4c9a] text-base font-medium">

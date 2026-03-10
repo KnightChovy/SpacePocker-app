@@ -6,14 +6,14 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { AxiosError } from 'axios';
 import logoGoogle from '/logoGoogle.jpg';
-import { LogIn, Mail, Lock } from 'lucide-react';
+import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import LeftSide from '@/components/auth/LeftSide';
 import { authAPI, type AuthError } from '@/apis/auth.api';
 import { useAuthStore } from '@/stores/auth.store';
-import { useUserStore } from '@/stores/user.store';
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email format'),
@@ -24,8 +24,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const setAccessToken = useAuthStore(state => state.setAccessToken);
-  const setUserEmail = useUserStore(state => state.setEmail);
+  const { setAccessToken, setRefreshToken, setUser } = useAuthStore();
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -40,12 +40,9 @@ const LoginPage = () => {
     mutationFn: authAPI.login,
     onSuccess: data => {
       toast.success('Login successful! Welcome back! 🎉');
-
-      if (data.accessToken) {
-        setUserEmail(data.user.email);
-        setAccessToken(data.accessToken);
-      }
-
+      setAccessToken(data.tokens.accessToken);
+      setRefreshToken(data.tokens.refreshToken);
+      setUser(data.user);
       setTimeout(() => {
         navigate('/');
       }, 1000);
@@ -152,15 +149,23 @@ const LoginPage = () => {
                   />
                   <Input
                     id="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="Enter your password"
-                    className={`w-full h-14 pl-14 pr-5 text-lg rounded-xl border-2 transition-all duration-300 ${
+                    className={`w-full h-14 pl-14 pr-14 text-lg rounded-xl border-2 transition-all duration-300 ${
                       errors.password
                         ? 'border-red-500 focus:border-red-500'
                         : 'border-[#e5e7eb] focus:border-[#6366F1]'
                     }`}
                     {...register('password')}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(prev => !prev)}
+                    className="absolute right-4 text-[#5c5ba8] hover:text-[#6366F1] transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff size={22} /> : <Eye size={22} />}
+                  </button>
                 </div>
                 {errors.password && (
                   <p className="text-red-500 text-sm mt-1">

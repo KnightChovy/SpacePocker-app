@@ -1,6 +1,7 @@
-import { signup } from '@/apis/auth.api';
+import { authAPI } from '@/apis/auth.api';
 import { useAuthStore } from '@/stores/auth.store';
 import { useMutation } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { toast } from 'react-toastify';
 
 export const useSignup = () => {
@@ -10,14 +11,9 @@ export const useSignup = () => {
       email: string;
       password: string;
       name: string;
-      phone: string;
+      phone?: string;
     }) => {
-      const response = await signup(
-        data.email,
-        data.password,
-        data.name,
-        data.phone
-      );
+      const response = await authAPI.signup(data);
       setAccessToken(response.tokens.accessToken);
       setRefreshToken(response.tokens.refreshToken);
       setUser(response.user);
@@ -28,7 +24,10 @@ export const useSignup = () => {
     },
     onError: error => {
       console.error('Signup error:', error);
-      toast.error('Signup failed. Please try again.');
+      const message = isAxiosError(error)
+        ? (error.response?.data?.message ?? 'Signup failed. Please try again.')
+        : 'Signup failed. Please try again.';
+      toast.error(message);
     },
   });
 };

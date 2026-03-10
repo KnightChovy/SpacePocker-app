@@ -1,58 +1,61 @@
 import axiosInstance from '@/lib/axios';
 
-export const login = async (email: string, password: string) => {
-  try {
-    const response = await axiosInstance.post('/login', {
-      email,
-      password,
-    });
-    return response.data.metadata;
-  } catch (error) {
-    console.error('Login error:', error);
-  }
+export interface AuthError {
+  message: string;
+  status?: number;
+}
+
+const login = async ({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}) => {
+  const response = await axiosInstance.post('/login', { email, password });
+  return response.data.metadata;
 };
 
-export const signup = async (
-  email: string,
-  password: string,
-  name: string,
-  phone: string
-) => {
-  try {
-    const response = await axiosInstance.post('/signup', {
-      email,
-      password,
-      name,
-      phone,
-    });
-    return response.data.metadata;
-  } catch (error) {
-    console.error('Registration error:', error);
-  }
+const signup = async ({
+  email,
+  password,
+  name,
+  phone,
+}: {
+  email: string;
+  password: string;
+  name: string;
+  phone?: string;
+}) => {
+  const response = await axiosInstance.post('/signup', {
+    email,
+    password,
+    name,
+    phone,
+  });
+  return response.data.metadata;
 };
 
-export const logout = async (userId: string) => {
-  try {
-    const response = await axiosInstance.post('/logout', { userId });
-    return response.data.metadata;
-  } catch (error) {
-    console.error('Logout error:', error);
-  }
+const logout = async (userId: string) => {
+  const response = await axiosInstance.post('/logout', { userId });
+  return response.data.metadata;
 };
 
-export const refreshToken = async (
-  refreshToken: string,
-  userId: string,
-  email: string
-) => {
-  try {
-    const response = await axiosInstance.post('/refresh-token', {
-      refreshToken,
-      userId,
-      email,
-    });
-    return response.data.metadata;
-  } catch (error) {
-    console.error('Refresh token error:', error);
-  }
+const refreshToken = async ({
+  refreshToken,
+  userId,
+  email,
+}: {
+  refreshToken: string;
+  userId: string;
+  email: string;
+}) => {
+  const response = await axiosInstance.post('/refresh-token', {
+    refreshToken,
+    userId,
+    email,
+  });
+  return response.data.metadata;
 };
+
+export const authAPI = { login, signup, logout, refreshToken };
