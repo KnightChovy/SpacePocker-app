@@ -151,13 +151,6 @@ const ManagerRoomPage = () => {
 
   const headerActions = [
     {
-      id: 'add-room',
-      icon: <Plus className="h-5 w-5" />,
-      label: 'Add Room',
-      variant: 'primary' as const,
-      onClick: () => setIsAddModalOpen(true),
-    },
-    {
       id: 'notifications',
       icon: <Bell className="h-5 w-5" />,
       badge: true,
@@ -318,6 +311,15 @@ const ManagerRoomPage = () => {
               <Filter className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
             </div>
+
+            {/* Add Room button in filter bar */}
+            <button
+              onClick={handleAddRoom}
+              className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 shadow-sm shadow-primary/20 transition-all active:scale-95 ml-auto"
+            >
+              <Plus className="size-4" />
+              Add Room
+            </button>
           </div>
 
           <div className="bg-white rounded-xl border border-gray-100 shadow-soft overflow-hidden">

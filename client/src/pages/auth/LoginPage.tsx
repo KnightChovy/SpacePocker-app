@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import LeftSide from '@/components/auth/LeftSide';
-import { authAPI, type AuthError } from '@/apis/auth.api';
+import { authAPI, type AuthError, type LoginRequest } from '@/apis/auth.api';
 import { useAuthStore } from '@/stores/auth.store';
 import { useUserStore } from '@/stores/user.store';
 
@@ -20,11 +20,12 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type LoginFormData = LoginRequest;
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const setAccessToken = useAuthStore(state => state.setAccessToken);
+  const setUserId = useAuthStore(state => state.setUserId);
   const setUserEmail = useUserStore(state => state.setEmail);
 
   const {
@@ -41,10 +42,9 @@ const LoginPage = () => {
     onSuccess: data => {
       toast.success('Login successful! Welcome back! 🎉');
 
-      if (data.accessToken) {
-        setUserEmail(data.user.email);
-        setAccessToken(data.accessToken);
-      }
+      setUserId(data.user.id);
+      setAccessToken(data.tokens.accessToken);
+      setUserEmail(data.user.email);
 
       setTimeout(() => {
         navigate('/');

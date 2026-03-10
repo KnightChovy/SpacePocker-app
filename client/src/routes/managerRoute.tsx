@@ -1,6 +1,7 @@
 import ManagerLayout from '@/components/layouts/ManagerLayout';
 import { AnalyticsPage } from '@/pages/manager/AnalyticsPage';
 import ManagerBookingPage from '@/pages/manager/ManagerBookingPage';
+import ManagerBuildingPage from '@/pages/manager/ManagerBuildingPage';
 import ManagerDashboardPage from '@/pages/manager/ManagerDashboardPage';
 import ManagerRoomPage from '@/pages/manager/ManagerRoomPage';
 import ManagerSchedulePage from '@/pages/manager/ManagerSchedulePage';
@@ -14,6 +15,7 @@ const ManagerRoute = () => {
         <Route path="schedule" element={<ManagerSchedulePage />} />
         <Route path="rooms" element={<ManagerRoomPage />} />
         <Route path="bookings" element={<ManagerBookingPage />} />
+        <Route path="buildings" element={<ManagerBuildingPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
       </Route>
     </Routes>

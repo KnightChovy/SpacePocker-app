@@ -26,7 +26,6 @@ export interface BookingFilterParams {
   limit?: number;
 }
 
-// Create/Update data
 export interface CreateBookingData {
   customerId: string;
   customerName: string;
@@ -46,8 +45,6 @@ export interface UpdateBookingData extends Partial<CreateBookingData> {
 }
 
 export const bookingService = {
-  // TODO: Replace mock data with actual API calls
-  // Example: return axiosInstance.get('/api/manager/bookings', { params }).then(res => res.data);
 
   getAllBookings: async (params?: BookingFilterParams): Promise<Booking[]> => {
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -83,14 +80,12 @@ export const bookingService = {
 
   getBookingById: async (id: string): Promise<Booking | undefined> => {
     await new Promise(resolve => setTimeout(resolve, 300));
-    // TODO: return axiosInstance.get(`/api/manager/bookings/${id}`).then(res => res.data);
 
     return bookingsStore.find(booking => booking.id === id);
   },
 
   createBooking: async (data: CreateBookingData): Promise<Booking> => {
     await new Promise(resolve => setTimeout(resolve, 500));
-    // TODO: return axiosInstance.post('/api/manager/bookings', data).then(res => res.data);
 
     const newBooking: Booking = {
       id: Date.now().toString(),
@@ -123,7 +118,6 @@ export const bookingService = {
 
   updateBooking: async (data: UpdateBookingData): Promise<Booking> => {
     await new Promise(resolve => setTimeout(resolve, 500));
-    // TODO: return axiosInstance.put(`/api/manager/bookings/${data.id}`, data).then(res => res.data);
 
     const index = bookingsStore.findIndex(booking => booking.id === data.id);
     if (index === -1) {
@@ -159,7 +153,6 @@ export const bookingService = {
     status: BookingStatus
   ): Promise<Booking> => {
     await new Promise(resolve => setTimeout(resolve, 500));
-    // TODO: return axiosInstance.patch(`/api/manager/bookings/${id}/status`, { status }).then(res => res.data);
 
     const index = bookingsStore.findIndex(booking => booking.id === id);
     if (index === -1) {
@@ -177,7 +170,6 @@ export const bookingService = {
 
   cancelBooking: async (id: string): Promise<void> => {
     await new Promise(resolve => setTimeout(resolve, 500));
-    // TODO: return axiosInstance.delete(`/api/manager/bookings/${id}`).then(res => res.data);
 
     const index = bookingsStore.findIndex(booking => booking.id === id);
     if (index === -1) {
@@ -200,7 +192,6 @@ export const bookingService = {
     cancelled: number;
   }> => {
     await new Promise(resolve => setTimeout(resolve, 300));
-    // TODO: return axiosInstance.get('/api/manager/bookings/stats').then(res => res.data);
 
     return {
       total: bookingsStore.length,

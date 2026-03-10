@@ -9,13 +9,13 @@ class BuildingService {
     async createBuilding(data) {
         const { buildingName, address, description, campus, managerId } = data;
         if (!buildingName || !address) {
-            throw new error_response_1.BadRequestError('Name and address are required');
+            throw new error_response_1.BadRequestError("Name and address are required");
         }
         if (!campus) {
-            throw new error_response_1.BadRequestError('Campus is required');
+            throw new error_response_1.BadRequestError("Campus is required");
         }
         if (!managerId) {
-            throw new error_response_1.BadRequestError('Manager ID is required');
+            throw new error_response_1.BadRequestError("Manager ID is required");
         }
         const createBuilding = await this.buildingRepository.create({
             buildingName,
@@ -28,11 +28,11 @@ class BuildingService {
     }
     async getBuildingById(id) {
         if (!id) {
-            throw new error_response_1.BadRequestError('Building ID is required!');
+            throw new error_response_1.BadRequestError("Building ID is required!");
         }
         const building = await this.buildingRepository.findById(id);
         if (!building) {
-            throw new error_response_1.NotFoundError('Building not found!');
+            throw new error_response_1.NotFoundError("Building not found!");
         }
         return {
             building,
@@ -41,23 +41,23 @@ class BuildingService {
     async getAllBuildings(query) {
         const { search, campus, sortBy, sortOrder, limit, offset } = query;
         const filter = {};
-        if (search && typeof search === 'string') {
+        if (search && typeof search === "string") {
             filter.buildingName = {
                 contains: search,
-                mode: 'insensitive',
+                mode: "insensitive",
             };
         }
-        if (campus && typeof campus === 'string') {
+        if (campus && typeof campus === "string") {
             filter.campus = campus;
         }
         let orderBy = undefined;
         if (sortBy) {
-            const validSortFields = ['buildingName', 'campus', 'createdAt'];
-            const validSortOrders = ['asc', 'desc'];
+            const validSortFields = ["buildingName", "campus", "createdAt"];
+            const validSortOrders = ["asc", "desc"];
             if (validSortFields.includes(sortBy)) {
                 const order = validSortOrders.includes(sortOrder?.toLowerCase())
                     ? sortOrder.toLowerCase()
-                    : 'asc';
+                    : "asc";
                 orderBy = { [sortBy]: order };
             }
         }
@@ -87,11 +87,11 @@ class BuildingService {
     }
     async updateBuilding(id, data) {
         if (!id) {
-            throw new error_response_1.BadRequestError('Building ID is required!');
+            throw new error_response_1.BadRequestError("Building ID is required!");
         }
         const foundId = await this.buildingRepository.findById(id);
         if (!foundId) {
-            throw new error_response_1.NotFoundError('Building not found!');
+            throw new error_response_1.NotFoundError("Building not found!");
         }
         const updateData = {};
         if (data.buildingName) {
@@ -116,15 +116,15 @@ class BuildingService {
     }
     async deleteBuilding(id) {
         if (!id) {
-            throw new error_response_1.BadRequestError('Building ID is required!!');
+            throw new error_response_1.BadRequestError("Building ID is required!!");
         }
         const deleteBuilding = await this.buildingRepository.findById(id);
         if (!deleteBuilding) {
-            throw new error_response_1.NotFoundError('Building not found!');
+            throw new error_response_1.NotFoundError("Building not found!");
         }
         await this.buildingRepository.delete(id);
         return {
-            message: 'Building delete successfully!',
+            message: "Building delete successfully!",
         };
     }
 }

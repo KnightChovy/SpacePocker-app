@@ -1,15 +1,13 @@
-import fetcher from './fetcher';
+import axiosInstance from '@/lib/axios';
 
-export interface RegisterRequest {
+export interface LoginRequest {
   email: string;
   password: string;
 }
 
-export interface RegisterResponse {
-  id: string;
-  email: string;
-  createdAt: string;
-  accessToken?: string;
+export interface LoginResponseData {
+  user: { id: string; name: string; email: string };
+  tokens: { accessToken: string; refreshToken: string };
 }
 
 export interface AuthError {
@@ -18,30 +16,11 @@ export interface AuthError {
 }
 
 export const authAPI = {
-  register: async (data: RegisterRequest): Promise<RegisterResponse> => {
-    const response = await fetcher.post<RegisterResponse>('/Auth', data);
-    return response.data;
-  },
-
-  login: async (data: RegisterRequest) => {
-    try {
-      const response = await fetcher.get<RegisterResponse[]>('/Auth');
-
-      const user = response.data.find(u => u.email === data.email);
-
-      if (!user) {
-        throw new Error('Invalid email or password');
-      }
-
-      const accessToken = `mock-token-${user.id}-${Date.now()}`;
-
-      return {
-        user,
-        accessToken,
-      };
-    } catch (error) {
-      console.log('Login error:', error);
-      throw new Error('Login failed. Please try again.');
-    }
+  login: async (data: LoginRequest): Promise<LoginResponseData> => {
+    const res = await axiosInstance.post<{
+      message: string;
+      metadata: LoginResponseData;
+    }>('/login', data);
+    return res.data.metadata;
   },
 };

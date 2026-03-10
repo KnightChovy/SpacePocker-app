@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Users,
   BarChart3,
+  Building2,
   Settings,
   HelpCircle,
   Zap,
@@ -40,6 +41,12 @@ export default function ManagerLayout() {
           label: 'Bookings',
           path: '/manager/bookings',
           icon: <BarChart3 className="h-5 w-5" />,
+        },
+        {
+          id: 'buildings',
+          label: 'Buildings',
+          path: '/manager/buildings',
+          icon: <Building2 className="h-5 w-5" />,
         },
         {
           id: 'analytics',
