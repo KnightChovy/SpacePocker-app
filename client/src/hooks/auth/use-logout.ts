@@ -6,8 +6,8 @@ import { toast } from 'react-toastify';
 export const useLogout = () => {
   const { clearAccessToken, clearRefreshToken, clearUser } = useAuthStore();
   return useMutation({
-    mutationFn: async (data: { userId: string }) => {
-      const response = await authAPI.logout(data.userId);
+    mutationFn: async ( userId: string ) => {
+      const response = await authAPI.logout(userId);
       clearAccessToken();
       clearRefreshToken();
       clearUser();

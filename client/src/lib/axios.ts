@@ -10,9 +10,10 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use(config => {
-  const token = useAuthStore.getState().accessToken;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const { accessToken, user } = useAuthStore.getState();
+  if (accessToken) {
+    config.headers.Authorization = `${accessToken}`;
+    config.headers['x-client-id'] = user?.id || '';
   }
   return config;
 });

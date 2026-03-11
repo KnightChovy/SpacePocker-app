@@ -23,8 +23,8 @@ class KeyTokenRepository {
     findByUserId(userId) {
         return prisma_1.prisma.key.findUnique({ where: { userId } });
     }
-    deleteByUserId(userId) {
-        return prisma_1.prisma.key.delete({ where: { userId } });
+    deleteTokenByUserId(userId) {
+        return prisma_1.prisma.key.deleteMany({ where: { userId } });
     }
     updateRefreshToken(data) {
         return prisma_1.prisma.key.update({

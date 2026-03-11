@@ -20,11 +20,11 @@ const Navbar: React.FC = () => {
   const { user } = useAuthStore();
 
   const logoutMutation = useLogout();
-  
+
   const handleLogout = () => {
     const userId = user?.id;
     if (!userId) return;
-    logoutMutation.mutate({ userId });
+    logoutMutation.mutate(userId);
   };
 
   const getInitials = (name: string) => {
