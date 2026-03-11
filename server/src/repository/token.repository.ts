@@ -29,8 +29,8 @@ export class KeyTokenRepository implements IKeyTokenRepository {
     return prisma.key.findUnique({ where: { userId } });
   }
 
-  deleteByUserId(userId: string) {
-    return prisma.key.delete({ where: { userId } });
+  deleteTokenByUserId(userId: string) {
+    return prisma.key.deleteMany({ where: { userId } });
   }
 
   updateRefreshToken(data: {
