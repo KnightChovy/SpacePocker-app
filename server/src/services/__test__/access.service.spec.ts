@@ -199,7 +199,7 @@ describe("AccessService", () => {
     it("should call deleteTokenByUserId", async () => {
       keyRepo.deleteTokenByUserId.mockResolvedValue(true);
 
-      const result = await accessService.logout("u1");
+      const result = await accessService.logout({ userId: "u1" });
 
       expect(keyRepo.deleteTokenByUserId).toHaveBeenCalledWith("u1");
       expect(result).toBe(true);
