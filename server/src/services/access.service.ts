@@ -1,10 +1,11 @@
 import bcrypt from "bcrypt";
-import { BadRequestError } from "../core/error.response";
+import { AuthFailureError, BadRequestError } from "../core/error.response";
 import crypto from "crypto";
 import { createTokenPair } from "../auth/authUtils";
 import KeyTokenService from "../services/keyToken.service";
 import { IUserRepository } from "../interface/user.repository.interface";
 import { IKeyTokenRepository } from "../interface/keyToken.repository.interface";
+import { NextFunction } from "express";
 
 export default class AccessService {
   constructor(
@@ -146,3 +147,15 @@ export default class AccessService {
     };
   }
 }
+
+export const authorizeRoles = (...roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const userRole = req.user?.role;
+
+    if (!roles.includes(userRole)) {
+      throw new AuthFailureError("You are not allowed to access this resource");
+    }
+
+    next();
+  };
+};
