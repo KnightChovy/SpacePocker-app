@@ -99,7 +99,7 @@ export default class AccessService {
   }
 
   async logout(userId: string) {
-    return this.keyRepo.deleteByUserId(userId);
+    return this.keyRepo.deleteTokenByUserId(userId);
   }
 
   async handleRefreshToken(data: {
@@ -113,7 +113,7 @@ export default class AccessService {
     if (!key) throw new BadRequestError("Invalid refresh token");
 
     if (key.refreshTokensUsed.includes(refreshToken)) {
-      await this.keyRepo.deleteByUserId(userId);
+      await this.keyRepo.deleteTokenByUserId(userId);
       throw new BadRequestError("Something wrong happened. Please login again");
     }
 
@@ -147,15 +147,3 @@ export default class AccessService {
     };
   }
 }
-
-export const authorizeRoles = (...roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const userRole = req.user?.role;
-
-    if (!roles.includes(userRole)) {
-      throw new AuthFailureError("You are not allowed to access this resource");
-    }
-
-    next();
-  };
-};
