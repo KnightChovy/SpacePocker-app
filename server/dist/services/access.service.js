@@ -29,7 +29,12 @@ class AccessService {
         const tokens = await (0, authUtils_1.createTokenPair)({ userId: foundUser.id, email: foundUser.email, role: foundUser.role }, publicKey, privateKey);
         await this.keyTokenService.createKeyToken(foundUser.id, publicKey, privateKey, tokens.refreshToken);
         return {
-            user: { id: foundUser.id, name: foundUser.name, email: foundUser.email },
+            user: {
+                id: foundUser.id,
+                name: foundUser.name,
+                email: foundUser.email,
+                role: foundUser.role,
+            },
             tokens,
         };
     }
@@ -58,11 +63,12 @@ class AccessService {
                 name: newUser.name,
                 email: newUser.email,
                 phone: newUser.phoneNumber,
+                role: newUser.role,
             },
             tokens,
         };
     }
-    async logout(userId) {
+    async logout({ userId }) {
         return this.keyRepo.deleteTokenByUserId(userId);
     }
     async handleRefreshToken(data) {
