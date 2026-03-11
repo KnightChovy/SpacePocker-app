@@ -64,7 +64,7 @@ export default class BookingRequestService {
     if (!room) {
       throw new NotFoundError(`Room with id not found`);
     }
-    if (!room.isAvailable) {
+    if (room.status !== 'AVAILABLE') {
       throw new BadRequestError(
         `Room '${room.name}' is currently not available for booking`,
       );

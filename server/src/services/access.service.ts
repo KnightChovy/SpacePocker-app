@@ -1,16 +1,17 @@
 import bcrypt from "bcrypt";
-import { BadRequestError } from "../core/error.response";
+import { AuthFailureError, BadRequestError } from "../core/error.response";
 import crypto from "crypto";
 import { createTokenPair } from "../auth/authUtils";
 import KeyTokenService from "../services/keyToken.service";
 import { IUserRepository } from "../interface/user.repository.interface";
 import { IKeyTokenRepository } from "../interface/keyToken.repository.interface";
+import { NextFunction } from "express";
 
 export default class AccessService {
   constructor(
     private userRepo: IUserRepository,
     private keyRepo: IKeyTokenRepository,
-    private keyTokenService: KeyTokenService
+    private keyTokenService: KeyTokenService,
   ) {}
 
   async login(data: { email: string; password: string }) {
@@ -29,16 +30,16 @@ export default class AccessService {
     });
 
     const tokens = await createTokenPair(
-      { userId: foundUser.id, email: foundUser.email },
+      { userId: foundUser.id, email: foundUser.email, role: foundUser.role },
       publicKey,
-      privateKey
+      privateKey,
     );
 
     await this.keyTokenService.createKeyToken(
       foundUser.id,
       publicKey,
       privateKey,
-      tokens.refreshToken
+      tokens.refreshToken,
     );
 
     return {
@@ -74,16 +75,16 @@ export default class AccessService {
     });
 
     const tokens = await createTokenPair(
-      { userId: newUser.id, email: newUser.email },
+      { userId: newUser.id, email: newUser.email, role: newUser.role },
       publicKey,
-      privateKey
+      privateKey,
     );
 
     await this.keyTokenService.createKeyToken(
       newUser.id,
       publicKey,
       privateKey,
-      tokens.refreshToken
+      tokens.refreshToken,
     );
 
     return {
@@ -124,9 +125,9 @@ export default class AccessService {
     if (!foundUser) throw new BadRequestError("User not registered");
 
     const tokens = await createTokenPair(
-      { userId: foundUser.id, email: foundUser.email },
+      { userId: foundUser.id, email: foundUser.email, role: foundUser.role },
       key.publicKey,
-      key.privateKey
+      key.privateKey,
     );
 
     await this.keyRepo.updateRefreshToken({
@@ -136,8 +137,25 @@ export default class AccessService {
     });
 
     return {
-      user: { id: foundUser.id, name: foundUser.name, email: foundUser.email },
+      user: {
+        id: foundUser.id,
+        name: foundUser.name,
+        email: foundUser.email,
+        role: foundUser.role,
+      },
       tokens,
     };
   }
 }
+
+export const authorizeRoles = (...roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const userRole = req.user?.role;
+
+    if (!roles.includes(userRole)) {
+      throw new AuthFailureError("You are not allowed to access this resource");
+    }
+
+    next();
+  };
+};
