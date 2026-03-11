@@ -12,7 +12,7 @@ export const useLogin = () => {
       setAccessToken(response.tokens.accessToken);
       setRefreshToken(response.tokens.refreshToken);
       setUser(response.user);
-      return true;
+      return response.user;
     },
     onSuccess: () => {
       toast.success('Login successful!');

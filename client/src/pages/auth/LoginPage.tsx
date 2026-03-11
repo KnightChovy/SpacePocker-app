@@ -1,10 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation } from '@tanstack/react-query';
-import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import { AxiosError } from 'axios';
 import logoGoogle from '/logoGoogle.jpg';
 import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
@@ -12,8 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import LeftSide from '@/components/auth/LeftSide';
-import { authAPI, type AuthError } from '@/apis/auth.api';
-import { useAuthStore } from '@/stores/auth.store';
+import { useLogin } from '@/hooks/auth/use-login';
+import type { USER_DATA } from '@/types/auth-type';
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email format'),
@@ -24,7 +21,6 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { setAccessToken, setRefreshToken, setUser } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -36,31 +32,28 @@ const LoginPage = () => {
     mode: 'onBlur',
   });
 
-  const loginMutation = useMutation({
-    mutationFn: authAPI.login,
-    onSuccess: data => {
-      toast.success('Login successful! Welcome back! 🎉');
-      setAccessToken(data.tokens.accessToken);
-      setRefreshToken(data.tokens.refreshToken);
-      setUser(data.user);
-      setTimeout(() => {
-        navigate('/');
-      }, 1000);
-    },
-    onError: (error: unknown) => {
-      if (error instanceof AxiosError) {
-        const errorMessage =
-          (error.response?.data as AuthError)?.message ||
-          'Login failed. Please check your credentials.';
-        toast.error(errorMessage);
-      } else {
-        toast.error('Login failed. Please check your credentials.');
-      }
-    },
-  });
+  const loginMutation = useLogin();
 
   const onSubmit = async (data: LoginFormData) => {
-    loginMutation.mutate(data);
+    loginMutation
+      .mutate(data, {
+        onSuccess: (user: USER_DATA) => {
+          setTimeout(() => {
+            switch (user.role) {
+              case 'ADMIN':
+                navigate('/admin/dashboard');
+                break;
+              case 'MANAGER':
+                navigate('/manager/dashboard');
+                break;
+              case 'USER':
+              default:
+                navigate('/');
+                break;
+            }
+          }, 1000);
+        },
+      })
   };
 
   return (
