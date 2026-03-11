@@ -1,26 +1,61 @@
 import axiosInstance from '@/lib/axios';
 
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface LoginResponseData {
-  user: { id: string; name: string; email: string };
-  tokens: { accessToken: string; refreshToken: string };
-}
-
 export interface AuthError {
   message: string;
-  error?: string;
+  status?: number;
 }
 
-export const authAPI = {
-  login: async (data: LoginRequest): Promise<LoginResponseData> => {
-    const res = await axiosInstance.post<{
-      message: string;
-      metadata: LoginResponseData;
-    }>('/login', data);
-    return res.data.metadata;
-  },
+const login = async ({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}) => {
+  const response = await axiosInstance.post('/login', { email, password });
+  return response.data.metadata;
 };
+
+const signup = async ({
+  email,
+  password,
+  name,
+  phone,
+}: {
+  email: string;
+  password: string;
+  name: string;
+  phone?: string;
+}) => {
+  const response = await axiosInstance.post('/signup', {
+    email,
+    password,
+    name,
+    phone,
+  });
+  return response.data.metadata;
+};
+
+const logout = async (userId: string) => {
+  const response = await axiosInstance.post('/logout', { userId });
+  return response.data.metadata;
+};
+
+const refreshToken = async ({
+  refreshToken,
+  userId,
+  email,
+}: {
+  refreshToken: string;
+  userId: string;
+  email: string;
+}) => {
+  const response = await axiosInstance.post('/refresh-token', {
+    refreshToken,
+    userId,
+    email,
+  });
+  return response.data.metadata;
+};
+
+export const authAPI = { login, signup, logout, refreshToken };
