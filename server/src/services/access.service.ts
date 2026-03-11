@@ -43,7 +43,12 @@ export default class AccessService {
     );
 
     return {
-      user: { id: foundUser.id, name: foundUser.name, email: foundUser.email },
+      user: {
+        id: foundUser.id,
+        name: foundUser.name,
+        email: foundUser.email,
+        role: foundUser.role,
+      },
       tokens,
     };
   }
@@ -93,12 +98,13 @@ export default class AccessService {
         name: newUser.name,
         email: newUser.email,
         phone: newUser.phoneNumber,
+        role: newUser.role,
       },
       tokens,
     };
   }
 
-  async logout(userId: string) {
+  async logout({ userId }: { userId: string }) {
     return this.keyRepo.deleteTokenByUserId(userId);
   }
 
