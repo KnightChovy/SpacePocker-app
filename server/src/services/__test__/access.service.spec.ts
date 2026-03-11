@@ -35,7 +35,7 @@ describe("AccessService", () => {
 
     keyRepo = {
       findByUserId: jest.fn(),
-      deleteByUserId: jest.fn(),
+      deleteTokenByUserId: jest.fn(),
       updateRefreshToken: jest.fn(),
     };
 
@@ -56,7 +56,7 @@ describe("AccessService", () => {
       userRepo.findByEmail.mockResolvedValue(null);
 
       await expect(
-        accessService.login({ email: "a@gmail.com", password: "123" })
+        accessService.login({ email: "a@gmail.com", password: "123" }),
       ).rejects.toBeInstanceOf(BadRequestError);
 
       expect(userRepo.findByEmail).toHaveBeenCalledWith("a@gmail.com");
@@ -73,7 +73,7 @@ describe("AccessService", () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(
-        accessService.login({ email: "a@gmail.com", password: "wrong" })
+        accessService.login({ email: "a@gmail.com", password: "wrong" }),
       ).rejects.toBeInstanceOf(BadRequestError);
 
       expect(bcrypt.compare).toHaveBeenCalledWith("wrong", "hashed");
@@ -115,7 +115,7 @@ describe("AccessService", () => {
         "u1",
         "PUBLIC_KEY",
         "PRIVATE_KEY",
-        "REFRESH_TOKEN"
+        "REFRESH_TOKEN",
       );
     });
   });
@@ -135,7 +135,7 @@ describe("AccessService", () => {
           email: "a@gmail.com",
           password: "123",
           name: "A",
-        })
+        }),
       ).rejects.toBeInstanceOf(BadRequestError);
 
       expect(userRepo.findByEmail).toHaveBeenCalledWith("a@gmail.com");
@@ -196,12 +196,12 @@ describe("AccessService", () => {
   // LOGOUT
   // ===========================
   describe("logout()", () => {
-    it("should call deleteByUserId", async () => {
-      keyRepo.deleteByUserId.mockResolvedValue(true);
+    it("should call deleteTokenByUserId", async () => {
+      keyRepo.deleteTokenByUserId.mockResolvedValue(true);
 
       const result = await accessService.logout("u1");
 
-      expect(keyRepo.deleteByUserId).toHaveBeenCalledWith("u1");
+      expect(keyRepo.deleteTokenByUserId).toHaveBeenCalledWith("u1");
       expect(result).toBe(true);
     });
   });
@@ -218,7 +218,7 @@ describe("AccessService", () => {
           refreshToken: "RT",
           userId: "u1",
           email: "a@gmail.com",
-        })
+        }),
       ).rejects.toBeInstanceOf(BadRequestError);
 
       expect(keyRepo.findByUserId).toHaveBeenCalledWith("u1");
@@ -235,10 +235,10 @@ describe("AccessService", () => {
           refreshToken: "RT_USED",
           userId: "u1",
           email: "a@gmail.com",
-        })
+        }),
       ).rejects.toBeInstanceOf(BadRequestError);
 
-      expect(keyRepo.deleteByUserId).toHaveBeenCalledWith("u1");
+      expect(keyRepo.deleteTokenByUserId).toHaveBeenCalledWith("u1");
     });
 
     it("should throw if refreshToken mismatch", async () => {
@@ -252,7 +252,7 @@ describe("AccessService", () => {
           refreshToken: "RT_OTHER",
           userId: "u1",
           email: "a@gmail.com",
-        })
+        }),
       ).rejects.toBeInstanceOf(BadRequestError);
     });
 
