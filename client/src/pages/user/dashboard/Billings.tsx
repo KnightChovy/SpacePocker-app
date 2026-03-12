@@ -1,12 +1,14 @@
 import { useOutletContext } from 'react-router-dom';
-import { USER_INFO } from '@/data/constant';
 import AppHeader from '@/components/layouts/AppHeader';
 import { Landmark, BellRing, Plus } from 'lucide-react';
+import { useAuthStore } from '@/stores/auth.store';
+import { getAvatarUrl } from '@/lib/utils';
 
 const Billings = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const user = useAuthStore(state => state.user);
 
   const headerActions = [
     {
@@ -34,9 +36,9 @@ const Billings = () => {
         showSearch={false}
         actions={headerActions}
         profile={{
-          name: USER_INFO.shortName,
-          subtitle: USER_INFO.plan,
-          avatarUrl: USER_INFO.profileImage,
+          name: user?.name || 'User',
+          subtitle: user?.role || 'USER',
+          avatarUrl: getAvatarUrl(user?.name, 'User'),
           showDropdown: true,
         }}
       />

@@ -12,6 +12,7 @@ import {
 } from './ui/dropdown-menu';
 import { User, LogOut, LayoutDashboard, Bell } from 'lucide-react';
 import { useLogout } from '@/hooks/auth/use-logout';
+import { getAvatarUrl } from '@/lib/utils';
 
 const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -150,13 +151,17 @@ const Navbar: React.FC = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={`h-10 w-10 rounded-full flex items-center justify-center font-semibold text-sm transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                  className={`h-10 w-10 rounded-full flex items-center justify-center overflow-hidden transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 border-2 ${
                     scrolled
-                      ? 'bg-primary text-white focus:ring-primary'
-                      : 'bg-white text-primary focus:ring-white'
+                      ? 'focus:ring-primary border-primary/20'
+                      : 'focus:ring-white border-white/30'
                   }`}
                 >
-                  {user?.name ? getInitials(user.name) : 'U'}
+                  <img
+                    src={getAvatarUrl(user?.name)}
+                    alt={user?.name || 'User'}
+                    className="h-full w-full object-cover"
+                  />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">

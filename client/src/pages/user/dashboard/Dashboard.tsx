@@ -1,15 +1,18 @@
 import { useOutletContext } from 'react-router-dom';
-import { USER_STATS, SPACESUSER, USER_INFO } from '@/data/constant';
+import { USER_STATS, SPACESUSER } from '@/data/constant';
 import { Calendar, BellRing, Plus } from 'lucide-react';
 import AppHeader from '@/components/layouts/AppHeader';
 import StatCard from '@/components/features/user/dashboard/StatCard';
 import QuickActionButton from '@/components/features/user/dashboard/QuickActionButton';
 import BookingList from '@/components/features/user/dashboard/BookingList';
+import { useAuthStore } from '@/stores/auth.store';
+import { getAvatarUrl } from '@/lib/utils';
 
 const Dashboard = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const user = useAuthStore(state => state.user);
 
   const headerActions = [
     {
@@ -37,9 +40,9 @@ const Dashboard = () => {
         searchPlaceholder="Search for spaces, bookings..."
         actions={headerActions}
         profile={{
-          name: USER_INFO.shortName,
-          subtitle: USER_INFO.plan,
-          avatarUrl: USER_INFO.profileImage,
+          name: user?.name || 'User',
+          subtitle: user?.role || 'USER',
+          avatarUrl: getAvatarUrl(user?.name, 'User'),
           showDropdown: true,
         }}
       />
@@ -48,7 +51,7 @@ const Dashboard = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-black tracking-tight text-text-main-light dark:text-text-main-dark mb-2">
-                Welcome back, Alex{' '}
+                Welcome back, {user?.name?.split(' ')[0] || 'User'}{' '}
                 <span className="inline-block animate-bounce">👋</span>
               </h1>
               <p className="text-text-sub-light dark:text-text-sub-dark text-base">
