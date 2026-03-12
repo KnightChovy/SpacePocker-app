@@ -54,7 +54,9 @@ const SettingsPage: React.FC = () => {
             <div className="flex items-center gap-6">
               <div
                 className="h-20 w-20 rounded-full bg-cover bg-center border-4 border-white shadow-lg"
-                style={{ backgroundImage: `url('${getAvatarUrl(user?.name, 'Admin')}')` }}
+                style={{
+                  backgroundImage: `url('${getAvatarUrl(user?.name, 'Admin')}')`,
+                }}
               ></div>
               <div className="flex-1">
                 <h3 className="text-2xl font-bold text-white">

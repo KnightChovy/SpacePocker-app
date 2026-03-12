@@ -35,25 +35,24 @@ const LoginPage = () => {
   const loginMutation = useLogin();
 
   const onSubmit = async (data: LoginFormData) => {
-    loginMutation
-      .mutate(data, {
-        onSuccess: (user: USER_DATA) => {
-          setTimeout(() => {
-            switch (user.role) {
-              case 'ADMIN':
-                navigate('/admin/dashboard');
-                break;
-              case 'MANAGER':
-                navigate('/manager/dashboard');
-                break;
-              case 'USER':
-              default:
-                navigate('/');
-                break;
-            }
-          }, 1000);
-        },
-      })
+    loginMutation.mutate(data, {
+      onSuccess: (user: USER_DATA) => {
+        setTimeout(() => {
+          switch (user.role) {
+            case 'ADMIN':
+              navigate('/admin/dashboard');
+              break;
+            case 'MANAGER':
+              navigate('/manager/dashboard');
+              break;
+            case 'USER':
+            default:
+              navigate('/');
+              break;
+          }
+        }, 1000);
+      },
+    });
   };
 
   return (
