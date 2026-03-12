@@ -56,7 +56,7 @@ const Navbar: React.FC = () => {
       case 'ADMIN':
         return '/admin/settings';
       case 'MANAGER':
-        return '/manager/dashboard';
+        return '/manager/profile';
       case 'USER':
       default:
         return '/user/settings';

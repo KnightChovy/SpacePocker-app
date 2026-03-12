@@ -4,6 +4,8 @@ import ManagerBookingPage from '@/pages/manager/ManagerBookingPage';
 import ManagerDashboardPage from '@/pages/manager/ManagerDashboardPage';
 import ManagerRoomPage from '@/pages/manager/ManagerRoomPage';
 import ManagerSchedulePage from '@/pages/manager/ManagerSchedulePage';
+import ManagerSettingsPage from '@/pages/manager/ManagerSettingsPage';
+import ManagerProfilePage from '@/pages/manager/ManagerProfilePage';
 import { Route, Routes } from 'react-router-dom';
 
 const ManagerRoute = () => {
@@ -15,6 +17,8 @@ const ManagerRoute = () => {
         <Route path="rooms" element={<ManagerRoomPage />} />
         <Route path="bookings" element={<ManagerBookingPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
+        <Route path="profile" element={<ManagerProfilePage />} />
+        <Route path="settings" element={<ManagerSettingsPage />} />
       </Route>
     </Routes>
   );
