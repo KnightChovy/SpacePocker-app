@@ -60,7 +60,7 @@
 
 /**
  * @openapi
- * /api/v1/auth/signup:
+ * /v1/api/signup:
  *   post:
  *     summary: Register new user
  *     tags: [Auth]
@@ -101,7 +101,7 @@
 
 /**
  * @openapi
- * /api/v1/auth/login:
+ * /v1/api/login:
  *   post:
  *     summary: Login
  *     tags: [Auth]
@@ -136,7 +136,7 @@
 
 /**
  * @openapi
- * /api/v1/auth/logout:
+ * /v1/api/logout:
  *   post:
  *     summary: Logout
  *     tags: [Auth]
@@ -175,7 +175,7 @@
 
 /**
  * @openapi
- * /api/v1/auth/refresh-token:
+ * /v1/api/refresh-token:
  *   post:
  *     summary: Refresh access token
  *     tags: [Auth]

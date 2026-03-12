@@ -6,7 +6,7 @@ import {
   NotFoundError,
 } from "../core/error.response";
 import { prisma } from "../lib/prisma";
-import { Request } from "express";
+import { NextFunction, Request } from "express";
 const HEADER = {
   API_KEY: "x-api-key",
   CLIENT_ID: "x-client-id",
@@ -29,9 +29,9 @@ export const authentication = asyncHandler(async (req: Request, res, next) => {
     try {
       const decodeUser = JWT.verify(
         refreshToken,
-        keyStore.publicKey
+        keyStore.publicKey,
       ) as JWT.JwtPayload;
-      console.log("Decoded user from access token:", decodeUser);
+      console.log("Decoded user from refresh token:", decodeUser);
       if (String(userId) !== String(decodeUser.userId)) {
         throw new AuthFailureError("Invalid user");
       }
@@ -50,7 +50,7 @@ export const authentication = asyncHandler(async (req: Request, res, next) => {
   try {
     const decodeUser = JWT.verify(
       accessToken,
-      keyStore.publicKey
+      keyStore.publicKey,
     ) as JWT.JwtPayload;
     if (String(userId) !== String(decodeUser.userId)) {
       throw new AuthFailureError("Invalid user");
@@ -66,7 +66,7 @@ export const authentication = asyncHandler(async (req: Request, res, next) => {
 export const createTokenPair = async (
   payload: object,
   publicKey: string,
-  privateKey: string
+  privateKey: string,
 ) => {
   try {
     //access token
@@ -89,4 +89,15 @@ export const createTokenPair = async (
     console.log("error createTokenPair: ", error);
     throw error;
   }
+};
+
+export const authorizeRoles = (...roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const userRole = req.user?.role;
+
+    if (!roles.includes(userRole)) {
+      throw new AuthFailureError("You are not allowed to access this resource");
+    }
+    next();
+  };
 };

@@ -1,16 +1,17 @@
 import bcrypt from "bcrypt";
-import { BadRequestError } from "../core/error.response";
+import { AuthFailureError, BadRequestError } from "../core/error.response";
 import crypto from "crypto";
 import { createTokenPair } from "../auth/authUtils";
 import KeyTokenService from "../services/keyToken.service";
 import { IUserRepository } from "../interface/user.repository.interface";
 import { IKeyTokenRepository } from "../interface/keyToken.repository.interface";
+import { NextFunction } from "express";
 
 export default class AccessService {
   constructor(
     private userRepo: IUserRepository,
     private keyRepo: IKeyTokenRepository,
-    private keyTokenService: KeyTokenService
+    private keyTokenService: KeyTokenService,
   ) {}
 
   async login(data: { email: string; password: string }) {
@@ -29,20 +30,26 @@ export default class AccessService {
     });
 
     const tokens = await createTokenPair(
-      { userId: foundUser.id, email: foundUser.email },
+      { userId: foundUser.id, email: foundUser.email, role: foundUser.role },
       publicKey,
-      privateKey
+      privateKey,
     );
 
     await this.keyTokenService.createKeyToken(
       foundUser.id,
       publicKey,
       privateKey,
-      tokens.refreshToken
+      tokens.refreshToken,
     );
 
     return {
-      user: { id: foundUser.id, name: foundUser.name, email: foundUser.email },
+      user: {
+        id: foundUser.id,
+        name: foundUser.name,
+        email: foundUser.email,
+        role: foundUser.role,
+        phone: foundUser.phoneNumber,
+      },
       tokens,
     };
   }
@@ -74,16 +81,16 @@ export default class AccessService {
     });
 
     const tokens = await createTokenPair(
-      { userId: newUser.id, email: newUser.email },
+      { userId: newUser.id, email: newUser.email, role: newUser.role },
       publicKey,
-      privateKey
+      privateKey,
     );
 
     await this.keyTokenService.createKeyToken(
       newUser.id,
       publicKey,
       privateKey,
-      tokens.refreshToken
+      tokens.refreshToken,
     );
 
     return {
@@ -92,13 +99,14 @@ export default class AccessService {
         name: newUser.name,
         email: newUser.email,
         phone: newUser.phoneNumber,
+        role: newUser.role,
       },
       tokens,
     };
   }
 
-  async logout(userId: string) {
-    return this.keyRepo.deleteByUserId(userId);
+  async logout({ userId }: { userId: string }) {
+    return this.keyRepo.deleteTokenByUserId(userId);
   }
 
   async handleRefreshToken(data: {
@@ -112,7 +120,7 @@ export default class AccessService {
     if (!key) throw new BadRequestError("Invalid refresh token");
 
     if (key.refreshTokensUsed.includes(refreshToken)) {
-      await this.keyRepo.deleteByUserId(userId);
+      await this.keyRepo.deleteTokenByUserId(userId);
       throw new BadRequestError("Something wrong happened. Please login again");
     }
 
@@ -124,9 +132,9 @@ export default class AccessService {
     if (!foundUser) throw new BadRequestError("User not registered");
 
     const tokens = await createTokenPair(
-      { userId: foundUser.id, email: foundUser.email },
+      { userId: foundUser.id, email: foundUser.email, role: foundUser.role },
       key.publicKey,
-      key.privateKey
+      key.privateKey,
     );
 
     await this.keyRepo.updateRefreshToken({
@@ -136,7 +144,13 @@ export default class AccessService {
     });
 
     return {
-      user: { id: foundUser.id, name: foundUser.name, email: foundUser.email },
+      user: {
+        id: foundUser.id,
+        name: foundUser.name,
+        email: foundUser.email,
+        role: foundUser.role,
+        phone: foundUser.phoneNumber,
+      },
       tokens,
     };
   }

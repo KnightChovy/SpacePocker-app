@@ -1,47 +1,61 @@
-import fetcher from './fetcher';
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-}
-
-export interface RegisterResponse {
-  id: string;
-  email: string;
-  createdAt: string;
-  accessToken?: string;
-}
+import axiosInstance from '@/lib/axios';
 
 export interface AuthError {
   message: string;
-  error?: string;
+  status?: number;
 }
 
-export const authAPI = {
-  register: async (data: RegisterRequest): Promise<RegisterResponse> => {
-    const response = await fetcher.post<RegisterResponse>('/Auth', data);
-    return response.data;
-  },
-
-  login: async (data: RegisterRequest) => {
-    try {
-      const response = await fetcher.get<RegisterResponse[]>('/Auth');
-
-      const user = response.data.find(u => u.email === data.email);
-
-      if (!user) {
-        throw new Error('Invalid email or password');
-      }
-
-      const accessToken = `mock-token-${user.id}-${Date.now()}`;
-
-      return {
-        user,
-        accessToken,
-      };
-    } catch (error) {
-      console.log('Login error:', error);
-      throw new Error('Login failed. Please try again.');
-    }
-  },
+const login = async ({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}) => {
+  const response = await axiosInstance.post('/login', { email, password });
+  return response.data.metadata;
 };
+
+const signup = async ({
+  email,
+  password,
+  name,
+  phone,
+}: {
+  email: string;
+  password: string;
+  name: string;
+  phone?: string;
+}) => {
+  const response = await axiosInstance.post('/signup', {
+    email,
+    password,
+    name,
+    phone,
+  });
+  return response.data.metadata;
+};
+
+const logout = async (userId: string) => {
+  const response = await axiosInstance.post('/logout', { userId });
+  return response.data.metadata;
+};
+
+const refreshToken = async ({
+  refreshToken,
+  userId,
+  email,
+}: {
+  refreshToken: string;
+  userId: string;
+  email: string;
+}) => {
+  const response = await axiosInstance.post('/refresh-token', {
+    refreshToken,
+    userId,
+    email,
+  });
+  return response.data.metadata;
+};
+
+export const authAPI = { login, signup, logout, refreshToken };

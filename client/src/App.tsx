@@ -8,6 +8,9 @@ import LandingPage from './pages/LandingPage';
 import SpaceDetailPage from './pages/user/space/SpaceDetailPage';
 import SpacesPage from './pages/user/space/SpacesPage';
 import UserRoute from './routes/userRoute';
+import AdminRoute from './routes/adminRoute';
+import ManagerRoute from './routes/managerRoute';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 function App() {
   return (
@@ -30,7 +33,31 @@ function App() {
         <Route path="/auth-login" element={<LoginPage />} />
         <Route path="/spaces" element={<SpacesPage />} />
         <Route path="/spaces/detail/:id" element={<SpaceDetailPage />} />
-        <Route path="/user/*" element={<UserRoute />} />
+
+        <Route
+          path="/manager/*"
+          element={
+            <ProtectedRoute allowedRoles={['MANAGER']}>
+              <ManagerRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/*"
+          element={
+            <ProtectedRoute allowedRoles={['USER']}>
+              <UserRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AdminRoute />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </>
   );

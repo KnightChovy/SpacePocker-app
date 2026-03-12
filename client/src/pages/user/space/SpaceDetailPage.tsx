@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import SpaceDetailGallery from '@/components/space/spaceDetail/SpaceDetailGalley';
-import SpaceDetailInfo from '@/components/space/spaceDetail/SpaceDetailInfor';
-import SpaceDetailAmenities from '@/components/space/spaceDetail/SpaceDetailAmenities';
-import SpaceDetailLocation from '@/components/space/spaceDetail/SpaceDetailLocation';
-import SpaceDetailReviews from '@/components/space/spaceDetail/SpaceDetailReview';
-import SpaceDetailBooking from '@/components/space/spaceDetail/SpaceDetaillBooking';
+import SpaceDetailGallery from '@/components/features/space/spaceDetail/SpaceDetailGalley';
+import SpaceDetailInfo from '@/components/features/space/spaceDetail/SpaceDetailInfor';
+import SpaceDetailAmenities from '@/components/features/space/spaceDetail/SpaceDetailAmenities';
+import SpaceDetailLocation from '@/components/features/space/spaceDetail/SpaceDetailLocation';
+import SpaceDetailReviews from '@/components/features/space/spaceDetail/SpaceDetailReview';
+import SpaceDetailBooking from '@/components/features/space/spaceDetail/SpaceDetaillBooking';
 import { fetchSpaceDetail } from '@/services/spaceService';
 import type { Space } from '@/types/types';
 import { ChevronLeft, Heart, MapPin, Share } from 'lucide-react';
@@ -73,7 +73,6 @@ const SpaceDetailPage: React.FC = () => {
           <span>Back to Spaces</span>
         </button>
 
-        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight mb-2">

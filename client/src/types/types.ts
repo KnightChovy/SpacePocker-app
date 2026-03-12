@@ -98,3 +98,201 @@ export interface BookingResponse {
   };
   message: string;
 }
+
+// ==========================================
+// MANAGER TYPES - Shared Types
+// ==========================================
+
+// Status Types
+export type RoomStatus = 'available' | 'occupied' | 'maintenance' | 'booked';
+export type BookingStatus = 'confirmed' | 'pending' | 'completed' | 'cancelled';
+export type BookingType = 'primary' | 'teal' | 'amber' | 'maintenance';
+export type ActivityType =
+  | 'booking'
+  | 'maintenance'
+  | 'inquiry'
+  | 'cancellation';
+export type StatType = 'revenue' | 'bookings' | 'occupancy' | 'inquiries';
+
+// Status Label Maps
+export const RoomStatusLabel: Record<RoomStatus, string> = {
+  available: 'Available',
+  occupied: 'Occupied',
+  maintenance: 'Maintenance',
+  booked: 'Booked',
+};
+
+export const BookingStatusLabel: Record<BookingStatus, string> = {
+  confirmed: 'Confirmed',
+  pending: 'Pending',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+};
+
+// ==========================================
+// ROOM TYPES - Unified Room Interface
+// ==========================================
+
+// Base Room - core fields shared by all room types
+export interface BaseRoom {
+  id: string;
+  name: string;
+  type: string;
+  capacity: number;
+}
+
+// Room - full room for management (extends BaseRoom)
+export interface Room extends BaseRoom {
+  building: string;
+  status: RoomStatus;
+  pricePerHour: number;
+  imageUrl: string;
+  amenities?: string[];
+  description?: string;
+  category?: string;
+  location?: string;
+}
+
+// Aliases for backward compatibility
+export type ScheduleRoom = BaseRoom;
+export type ManagerRoom = Room;
+
+// ==========================================
+// BOOKING TYPES - Unified Booking Interface
+// ==========================================
+
+// Customer info for bookings
+export interface Customer {
+  id: string;
+  name: string;
+  avatar?: string;
+  initials?: string;
+  department?: string;
+}
+
+// Schedule Booking - for timeline display
+export interface ScheduleBooking {
+  id: string;
+  roomId: string;
+  title: string;
+  subtitle?: string;
+  startTime: string;
+  endTime: string;
+  type: BookingType;
+  icon?: string;
+}
+
+// Booking - full booking for management
+export interface Booking {
+  id: string;
+  bookingNumber: string;
+  customer: Customer;
+  room: Pick<Room, 'id' | 'name' | 'building'>;
+  scheduleDate: string;
+  startTime: string;
+  endTime: string;
+  amount: number;
+  status: BookingStatus;
+}
+
+// ==========================================
+// BUILDING & NAVIGATION
+// ==========================================
+
+export interface Building {
+  id: string;
+  name: string;
+  count: number;
+  checked?: boolean;
+}
+
+export interface NavItem {
+  id: string;
+  label: string;
+  icon: string;
+  path?: string;
+  active?: boolean;
+}
+
+// ==========================================
+// DASHBOARD TYPES
+// ==========================================
+
+export interface StatItem {
+  label: string;
+  value: string | number;
+  trend?: number;
+  subtext?: string;
+  type: StatType;
+}
+
+export interface Activity {
+  id: string;
+  user: Pick<User, 'name' | 'avatar'>;
+  action: string;
+  target: string;
+  timestamp: string;
+  detail?: string;
+  type: ActivityType;
+}
+
+export interface ChartDataItem {
+  name: string;
+  value: number;
+}
+
+export interface BookingDistribution {
+  roomType: string;
+  booked: number;
+  available: number;
+}
+
+// USER TYPES
+export interface User {
+  id: string;
+  name: string;
+  email?: string;
+  role: string;
+  avatar?: string;
+  avatarUrl?: string;
+}
+
+export type Manager = Pick<User, 'name' | 'role' | 'avatar'>;
+export type BookingRoom = Pick<Room, 'id' | 'name' | 'building'>;
+
+export interface StatSummary {
+  label: string;
+  value: string | number;
+  change: number;
+  icon: string;
+  trend: 'up' | 'down' | 'flat';
+  color: string;
+}
+
+export interface RevenueDataPoint {
+  month: string;
+  revenue: number;
+  target: number;
+}
+
+export interface RoomPerformance {
+  id: string;
+  name: string;
+  location: string;
+  revenue: number;
+  occupancy: number;
+  imageUrl: string;
+}
+
+export interface UsageHeatmapData {
+  time: string;
+  mon: number;
+  tue: number;
+  wed: number;
+  thu: number;
+  fri: number;
+  sat: number;
+  sun: number;
+}
+
+export type TimeRange = '30days' | 'quarter' | 'year';
