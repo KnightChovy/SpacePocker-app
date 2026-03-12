@@ -20,7 +20,7 @@ export const useRefreshToken = () => {
       setAccessToken(response.tokens.accessToken);
       setRefreshToken(response.tokens.refreshToken);
       setUser(response.user);
-      return true;
+      return response.tokens.accessToken;
     },
     onError: error => {
       console.error('Refresh token error:', error);
