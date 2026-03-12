@@ -14,11 +14,14 @@ import { RevenueOverview } from '@/components/features/manager/dashboardManager/
 import { RoomTypeDistribution } from '@/components/features/manager/dashboardManager/RoomTypeDistribution';
 import { QuickActions } from '@/components/features/manager/dashboardManager/QuickActions';
 import { RecentActivity } from '@/components/features/manager/dashboardManager/RecentActivity';
+import { useAuthStore } from '@/stores/auth.store';
+import { getAvatarUrl } from '@/lib/utils';
 
 const ManagerDashboardPage = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const user = useAuthStore(state => state.user);
   const [stats, setStats] = useState<StatItem[]>([]);
   const [revenueData, setRevenueData] = useState<ChartDataItem[]>([]);
   const [roomTypeDistribution, setRoomTypeDistribution] = useState<
@@ -97,9 +100,9 @@ const ManagerDashboardPage = () => {
         searchPlaceholder="Search bookings..."
         actions={headerActions}
         profile={{
-          name: 'Alex Morgan',
-          subtitle: 'Manager',
-          avatarUrl: 'https://picsum.photos/id/64/100/100',
+          name: user?.name || 'Manager',
+          subtitle: user?.role || 'MANAGER',
+          avatarUrl: getAvatarUrl(user?.name, 'Manager'),
           showDropdown: true,
         }}
       />
@@ -111,7 +114,8 @@ const ManagerDashboardPage = () => {
                 Dashboard Overview
               </h2>
               <p className="text-slate-500 mt-1">
-                Welcome back, Alex. Here's what's happening today.
+                Welcome back, {user?.name?.split(' ')[0] || 'Manager'}. Here's
+                what's happening today.
               </p>
             </div>
             <button className="flex items-center gap-2 text-sm text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors">

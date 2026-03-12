@@ -10,6 +10,7 @@ import SpacesPage from './pages/user/space/SpacesPage';
 import UserRoute from './routes/userRoute';
 import AdminRoute from './routes/adminRoute';
 import ManagerRoute from './routes/managerRoute';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 function App() {
   return (
@@ -33,9 +34,30 @@ function App() {
         <Route path="/spaces" element={<SpacesPage />} />
         <Route path="/spaces/detail/:id" element={<SpaceDetailPage />} />
 
-        <Route path="/manager/*" element={<ManagerRoute />} />
-        <Route path="/user/*" element={<UserRoute />} />
-        <Route path="/admin/*" element={<AdminRoute />} />
+        <Route
+          path="/manager/*"
+          element={
+            <ProtectedRoute allowedRoles={['MANAGER']}>
+              <ManagerRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/*"
+          element={
+            <ProtectedRoute allowedRoles={['USER']}>
+              <UserRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AdminRoute />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </>
   );

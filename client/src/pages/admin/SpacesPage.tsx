@@ -5,6 +5,8 @@ import StatsSection from '@/components/features/admin/StatsSection';
 import InventoryTable from '@/components/features/admin/InventoryTable';
 import type { Space, InventoryStats } from '@/types/admin-types';
 import spacesData from '@/data/admin-spaces.json';
+import { useAuthStore } from '@/stores/auth.store';
+import { getAvatarUrl } from '@/lib/utils';
 
 const MOCK_SPACES: Space[] = spacesData.spaces.map(space => ({
   ...space,
@@ -21,6 +23,7 @@ const SpacesPage: React.FC = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const user = useAuthStore(state => state.user);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('All Categories');
   const [pendingOnly, setPendingOnly] = useState(false);
@@ -93,9 +96,9 @@ const SpacesPage: React.FC = () => {
         onSearchChange={setSearchQuery}
         actions={headerActions}
         profile={{
-          name: 'Admin',
-          subtitle: 'Administrator',
-          avatarUrl: 'https://picsum.photos/seed/marcus/100/100',
+          name: user?.name || 'Admin',
+          subtitle: user?.role || 'ADMIN',
+          avatarUrl: getAvatarUrl(user?.name, 'Admin'),
           showDropdown: true,
         }}
         iconType="material"

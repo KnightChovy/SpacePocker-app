@@ -29,7 +29,12 @@ class AccessService {
         const tokens = await (0, authUtils_1.createTokenPair)({ userId: foundUser.id, email: foundUser.email, role: foundUser.role }, publicKey, privateKey);
         await this.keyTokenService.createKeyToken(foundUser.id, publicKey, privateKey, tokens.refreshToken);
         return {
-            user: { id: foundUser.id, name: foundUser.name, email: foundUser.email },
+            user: {
+                id: foundUser.id,
+                name: foundUser.name,
+                email: foundUser.email,
+                role: foundUser.role,
+            },
             tokens,
         };
     }
@@ -58,12 +63,13 @@ class AccessService {
                 name: newUser.name,
                 email: newUser.email,
                 phone: newUser.phoneNumber,
+                role: newUser.role,
             },
             tokens,
         };
     }
-    async logout(userId) {
-        return this.keyRepo.deleteByUserId(userId);
+    async logout({ userId }) {
+        return this.keyRepo.deleteTokenByUserId(userId);
     }
     async handleRefreshToken(data) {
         const { refreshToken, userId } = data;
@@ -71,7 +77,7 @@ class AccessService {
         if (!key)
             throw new error_response_1.BadRequestError("Invalid refresh token");
         if (key.refreshTokensUsed.includes(refreshToken)) {
-            await this.keyRepo.deleteByUserId(userId);
+            await this.keyRepo.deleteTokenByUserId(userId);
             throw new error_response_1.BadRequestError("Something wrong happened. Please login again");
         }
         if (key.refreshToken !== refreshToken) {

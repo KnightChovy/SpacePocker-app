@@ -70,6 +70,12 @@ describe("BookingRequestService", () => {
     };
     mockRoomRepo = {
       findById: jest.fn(),
+      create: jest.fn(),
+      findAll: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+      findByRoomCode: jest.fn(),
     };
     mockBookingRepo = {
       findOverlappingApprovedBookings: jest.fn(),
@@ -296,13 +302,13 @@ describe("BookingRequestService", () => {
         mockBookingRequestRepo.findOverlappingPendingRequests.mockResolvedValue(
           [
             {
-              id: "br-existing",
-              userId: "u-001",
-              roomId: "r-001",
-              startTime: new Date("2026-02-10T09:00:00Z"),
-              endTime: new Date("2026-02-10T11:00:00Z"),
-              purpose: "Existing request",
-              status: "PENDING" as const,
+              id: 'br-existing',
+              userId: 'u-001',
+              roomId: 'r-001',
+              startTime: new Date('2026-02-10T09:00:00Z'),
+              endTime: new Date('2026-02-10T11:00:00Z'),
+              purpose: 'Existing request',
+              status: 'PENDING' as const,
               approvedBy: null,
               createdAt: new Date(),
             },

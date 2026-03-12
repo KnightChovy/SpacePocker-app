@@ -5,7 +5,7 @@ import settingsData from '@/data/admin-settings.json';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
 
-const SettingsPage: React.FC = () => {
+const ManagerSettingsPage: React.FC = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
@@ -40,33 +40,33 @@ const SettingsPage: React.FC = () => {
         onMenuClick={() => setSidebarOpen(true)}
         actions={headerActions}
         profile={{
-          name: user?.name || 'Admin',
-          subtitle: user?.role || 'ADMIN',
-          avatarUrl: getAvatarUrl(user?.name, 'Admin'),
+          name: user?.name || 'Manager',
+          subtitle: user?.role || 'MANAGER',
+          avatarUrl: getAvatarUrl(user?.name, 'Manager'),
           showDropdown: true,
         }}
         iconType="material"
       />
       <main className="flex-1 overflow-y-auto p-6 lg:p-10 space-y-8">
-        {/* Admin Profile Section */}
+        {/* Manager Profile Section */}
         <div className="bg-linear-to-br from-indigo-500 to-purple-600 rounded-3xl border border-indigo-200 shadow-lg overflow-hidden">
           <div className="p-8">
             <div className="flex items-center gap-6">
               <div
                 className="h-20 w-20 rounded-full bg-cover bg-center border-4 border-white shadow-lg"
                 style={{
-                  backgroundImage: `url('${getAvatarUrl(user?.name, 'Admin')}')`,
+                  backgroundImage: `url('${getAvatarUrl(user?.name, 'Manager')}')`,
                 }}
               ></div>
               <div className="flex-1">
                 <h3 className="text-2xl font-bold text-white">
-                  {user?.name || 'Administrator'}
+                  {user?.name || 'Manager'}
                 </h3>
                 <p className="text-indigo-100 mt-1 flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">
                     mail
                   </span>
-                  {user?.email || 'admin@spacepocker.com'}
+                  {user?.email || 'manager@spacepocker.com'}
                 </p>
                 <p className="text-indigo-100 mt-1 flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">
@@ -77,7 +77,7 @@ const SettingsPage: React.FC = () => {
               </div>
               <div className="px-5 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
                 <span className="text-sm font-bold text-white uppercase tracking-wider">
-                  {user?.role || 'ADMIN'}
+                  {user?.role || 'MANAGER'}
                 </span>
               </div>
             </div>
@@ -119,7 +119,7 @@ const SettingsPage: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Admin Email
+                  Manager Email
                 </label>
                 <input
                   type="email"
@@ -178,35 +178,15 @@ const SettingsPage: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900">
-                  Platform Controls
+                  Space Management Controls
                 </h3>
                 <p className="text-sm text-gray-500 mt-0.5">
-                  Manage user access and features
+                  Manage space-related settings
                 </p>
               </div>
             </div>
           </div>
           <div className="p-6 space-y-5">
-            <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-              <div>
-                <p className="font-semibold text-gray-900">Maintenance Mode</p>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Temporarily disable site access for maintenance
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.maintenanceMode}
-                  onChange={e =>
-                    handleSettingChange('maintenanceMode', e.target.checked)
-                  }
-                  className="sr-only peer"
-                />
-                <div className="w-14 h-7 bg-gray-200 peer-focus:ring-4 peer-focus:ring-indigo-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-indigo-600"></div>
-              </label>
-            </div>
-
             <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
               <div>
                 <p className="font-semibold text-gray-900">
@@ -282,10 +262,10 @@ const SettingsPage: React.FC = () => {
             <div className="flex items-center justify-between py-3">
               <div>
                 <p className="font-semibold text-gray-900">
-                  Auto-Approve Spaces
+                  Auto-Approve Bookings
                 </p>
                 <p className="text-sm text-gray-500 mt-0.5">
-                  Automatically approve new space listings
+                  Automatically approve booking requests
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -368,4 +348,4 @@ const SettingsPage: React.FC = () => {
   );
 };
 
-export default SettingsPage;
+export default ManagerSettingsPage;

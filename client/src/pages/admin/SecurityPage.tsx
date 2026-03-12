@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import AppHeader from '@/components/layouts/AppHeader';
 import securityData from '../../data/admin-security.json';
+import { useAuthStore } from '@/stores/auth.store';
+import { getAvatarUrl } from '@/lib/utils';
 
 interface SecurityLog {
   id: string;
@@ -17,6 +19,7 @@ const SecurityPage: React.FC = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const user = useAuthStore(state => state.user);
 
   const headerActions = [
     {
@@ -82,9 +85,9 @@ const SecurityPage: React.FC = () => {
         onMenuClick={() => setSidebarOpen(true)}
         actions={headerActions}
         profile={{
-          name: 'Admin',
-          subtitle: 'Administrator',
-          avatarUrl: 'https://picsum.photos/seed/marcus/100/100',
+          name: user?.name || 'Admin',
+          subtitle: user?.role || 'ADMIN',
+          avatarUrl: getAvatarUrl(user?.name, 'Admin'),
           showDropdown: true,
         }}
         iconType="material"

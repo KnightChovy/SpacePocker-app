@@ -8,11 +8,14 @@ import { UsageHeatmap } from '@/components/features/manager/analytics/UsageHeatm
 import { TopRoomsTable } from '@/components/features/manager/analytics/TopRoomTable';
 import { statsData } from '@/data/constantManager';
 import type { TimeRange } from '@/types/types';
+import { useAuthStore } from '@/stores/auth.store';
+import { getAvatarUrl } from '@/lib/utils';
 
 export const AnalyticsPage: React.FC = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const user = useAuthStore(state => state.user);
   const [range, setRange] = useState<TimeRange>('30days');
 
   const headerActions = [
@@ -41,9 +44,9 @@ export const AnalyticsPage: React.FC = () => {
         onMenuClick={() => setSidebarOpen(true)}
         actions={headerActions}
         profile={{
-          name: 'Alex Morgan',
-          subtitle: 'Manager',
-          avatarUrl: 'https://picsum.photos/id/64/100/100',
+          name: user?.name || 'Manager',
+          subtitle: user?.role || 'MANAGER',
+          avatarUrl: getAvatarUrl(user?.name, 'Manager'),
           showDropdown: true,
         }}
       />

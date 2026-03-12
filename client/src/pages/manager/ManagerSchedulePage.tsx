@@ -6,11 +6,14 @@ import ScheduleFilterPanel from '@/components/features/manager/scheduleManager/S
 import ScheduleTimeline from '@/components/features/manager/scheduleManager/ScheduleTimeline';
 import { scheduleService } from '@/services/scheduleService';
 import type { Building } from '@/types/types';
+import { useAuthStore } from '@/stores/auth.store';
+import { getAvatarUrl } from '@/lib/utils';
 
 const ManagerSchedulePage = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const user = useAuthStore(state => state.user);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date()
   );
@@ -70,9 +73,9 @@ const ManagerSchedulePage = () => {
           onMenuClick={() => setSidebarOpen(true)}
           actions={headerActions}
           profile={{
-            name: 'Alex Morgan',
-            subtitle: 'Manager',
-            avatarUrl: 'https://picsum.photos/id/64/100/100',
+            name: user?.name || 'Manager',
+            subtitle: user?.role || 'MANAGER',
+            avatarUrl: getAvatarUrl(user?.name, 'Manager'),
             showDropdown: true,
           }}
         />
@@ -90,9 +93,9 @@ const ManagerSchedulePage = () => {
         onMenuClick={() => setSidebarOpen(true)}
         actions={headerActions}
         profile={{
-          name: 'Alex Morgan',
-          subtitle: 'Manager',
-          avatarUrl: 'https://picsum.photos/id/64/100/100',
+          name: user?.name || 'Manager',
+          subtitle: user?.role || 'MANAGER',
+          avatarUrl: getAvatarUrl(user?.name, 'Manager'),
           showDropdown: true,
         }}
       />
