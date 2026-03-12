@@ -17,6 +17,8 @@ import type { ManagerRoom } from '@/types/types';
 import { roomService } from '@/services/roomService';
 import AppHeader from '@/components/layouts/AppHeader';
 import AddRoomModal from '@/components/features/manager/roomManager/AddRoomModal';
+import { useAuthStore } from '@/stores/auth.store';
+import { getAvatarUrl } from '@/lib/utils';
 
 const StatusBadge = ({ status }: { status: ManagerRoom['status'] }) => {
   const config: Record<string, { bg: string; text: string; label: string }> = {
@@ -148,6 +150,7 @@ const ManagerRoomPage = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const user = useAuthStore(state => state.user);
 
   const headerActions = [
     {
@@ -267,9 +270,9 @@ const ManagerRoomPage = () => {
         onMenuClick={() => setSidebarOpen(true)}
         actions={headerActions}
         profile={{
-          name: 'Alex Morgan',
-          subtitle: 'Manager',
-          avatarUrl: 'https://picsum.photos/id/64/100/100',
+          name: user?.name || 'Manager',
+          subtitle: user?.role || 'MANAGER',
+          avatarUrl: getAvatarUrl(user?.name, 'Manager'),
           showDropdown: true,
         }}
       />
