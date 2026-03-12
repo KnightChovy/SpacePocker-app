@@ -148,14 +148,3 @@ export default class AccessService {
   }
 }
 
-export const authorizeRoles = (...roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const userRole = req.user?.role;
-
-    if (!roles.includes(userRole)) {
-      throw new AuthFailureError("You are not allowed to access this resource");
-    }
-
-    next();
-  };
-};

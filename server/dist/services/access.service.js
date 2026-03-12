@@ -26,7 +26,7 @@ class AccessService {
             publicKeyEncoding: { type: "spki", format: "pem" },
             privateKeyEncoding: { type: "pkcs8", format: "pem" },
         });
-        const tokens = await (0, authUtils_1.createTokenPair)({ userId: foundUser.id, email: foundUser.email }, publicKey, privateKey);
+        const tokens = await (0, authUtils_1.createTokenPair)({ userId: foundUser.id, email: foundUser.email, role: foundUser.role }, publicKey, privateKey);
         await this.keyTokenService.createKeyToken(foundUser.id, publicKey, privateKey, tokens.refreshToken);
         return {
             user: { id: foundUser.id, name: foundUser.name, email: foundUser.email },
@@ -50,7 +50,7 @@ class AccessService {
             publicKeyEncoding: { type: "spki", format: "pem" },
             privateKeyEncoding: { type: "pkcs8", format: "pem" },
         });
-        const tokens = await (0, authUtils_1.createTokenPair)({ userId: newUser.id, email: newUser.email }, publicKey, privateKey);
+        const tokens = await (0, authUtils_1.createTokenPair)({ userId: newUser.id, email: newUser.email, role: newUser.role }, publicKey, privateKey);
         await this.keyTokenService.createKeyToken(newUser.id, publicKey, privateKey, tokens.refreshToken);
         return {
             user: {
@@ -80,14 +80,19 @@ class AccessService {
         const foundUser = await this.userRepo.findById(userId);
         if (!foundUser)
             throw new error_response_1.BadRequestError("User not registered");
-        const tokens = await (0, authUtils_1.createTokenPair)({ userId: foundUser.id, email: foundUser.email }, key.publicKey, key.privateKey);
+        const tokens = await (0, authUtils_1.createTokenPair)({ userId: foundUser.id, email: foundUser.email, role: foundUser.role }, key.publicKey, key.privateKey);
         await this.keyRepo.updateRefreshToken({
             userId,
             refreshToken: tokens.refreshToken,
             refreshTokensUsed: [...key.refreshTokensUsed, refreshToken],
         });
         return {
-            user: { id: foundUser.id, name: foundUser.name, email: foundUser.email },
+            user: {
+                id: foundUser.id,
+                name: foundUser.name,
+                email: foundUser.email,
+                role: foundUser.role,
+            },
             tokens,
         };
     }
