@@ -5,12 +5,14 @@ import 'react-toastify/dist/ReactToastify.css';
 import RegisterPage from './pages/auth/RegisterPage';
 import LoginPage from './pages/auth/LoginPage';
 import LandingPage from './pages/LandingPage';
+import AboutPage from './pages/AboutPage';
 import SpaceDetailPage from './pages/user/space/SpaceDetailPage';
 import SpacesPage from './pages/user/space/SpacesPage';
 import UserRoute from './routes/userRoute';
 import AdminRoute from './routes/adminRoute';
 import ManagerRoute from './routes/managerRoute';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import ScrollToTop from './components/common/ScrollToTop';
 
 function App() {
   return (
@@ -27,8 +29,10 @@ function App() {
         pauseOnHover
         theme="light"
       />
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/auth-register" element={<RegisterPage />} />
         <Route path="/auth-login" element={<LoginPage />} />
         <Route path="/spaces" element={<SpacesPage />} />
