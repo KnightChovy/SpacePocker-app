@@ -8,7 +8,7 @@ export const useDeleteBuilding = () => {
     mutationFn: async (id: string) => {
       const response = await axiosInstance.delete<{
         metadata: { message: string };
-      }>(`/building/${id}`);
+      }>(`/buildings/${id}`);
       return response.data.metadata;
     },
     onSuccess: (_data, id) => {

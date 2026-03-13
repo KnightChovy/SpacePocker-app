@@ -17,7 +17,7 @@ export const useCreateBuilding = () => {
 
       const response = await axiosInstance.post<{
         metadata: { createBuilding: BuildingDetail };
-      }>('/building', payload);
+      }>('/buildings', payload);
       return response.data.metadata.createBuilding;
     },
     onSuccess: () => {

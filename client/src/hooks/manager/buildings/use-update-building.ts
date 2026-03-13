@@ -13,9 +13,9 @@ export const useUpdateBuilding = () => {
       id: string;
       body: UpdateBuildingPayload;
     }) => {
-      const response = await axiosInstance.put<{
+      const response = await axiosInstance.patch<{
         metadata: { updateBuilding: BuildingDetail };
-      }>(`/building/${id}`, body);
+      }>(`/buildings/${id}`, body);
       return response.data.metadata.updateBuilding;
     },
     onSuccess: (_data, { id }) => {
