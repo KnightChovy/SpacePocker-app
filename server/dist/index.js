@@ -17,16 +17,16 @@ const error_response_1 = require("./core/error.response");
 //handling error
 const app = (0, express_1.default)();
 dotenv_1.default.config();
-app.use((0, cors_1.default)({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, helmet_1.default)());
 app.use((0, helmet_1.default)({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
-app.use("/api-docs", swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swagger_1.swaggerSpec));
-app.use((0, morgan_1.default)("common"));
-app.use("", routes_1.default);
+app.use('/api-docs', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swagger_1.swaggerSpec));
+app.use((0, morgan_1.default)('common'));
+app.use('', routes_1.default);
+app.use((0, cors_1.default)());
 // Global Error Handler
 app.use((err, req, res, next) => {
     // Nếu là custom error (có status code)
@@ -37,9 +37,9 @@ app.use((err, req, res, next) => {
         });
     }
     // Default error (500 Internal Server Error)
-    console.error("Unhandled Error:", err);
+    console.error('Unhandled Error:', err);
     return res.status(500).json({
-        message: err.message || "Internal Server Error",
+        message: err.message || 'Internal Server Error',
         status: 500,
     });
 });
