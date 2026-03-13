@@ -42,9 +42,6 @@ export interface DashboardFilterParams {
 }
 
 export const dashboardService = {
-  // TODO: Replace mock data with actual API calls
-  // Example: return axiosInstance.get('/api/manager/stats', { params }).then(res => res.data);
-
   getStats: async (
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _params?: DashboardFilterParams

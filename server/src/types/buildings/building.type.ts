@@ -19,8 +19,8 @@ export interface UpdateBuildingDTO {
 export interface BuildingQueryParams {
   search?: string;
   campus?: string;
-  sortBy?: 'buildingName' | 'campus' | 'createdAt';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "buildingName" | "campus" | "createdAt";
+  sortOrder?: "asc" | "desc";
   limit?: string | number;
   offset?: string | number;
 }

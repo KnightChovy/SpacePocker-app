@@ -11,6 +11,7 @@ import {
 import AppHeader from '@/components/layouts/AppHeader';
 import BookingTable from '../../components/features/manager/bookingManager/BookingTable';
 import AddBookingModal from '../../components/features/manager/bookingManager/AddBookingModal';
+import EditBookingModal from '../../components/features/manager/bookingManager/EditBookingModal';
 import BookingDetailModal from '../../components/features/manager/bookingManager/BookingDetailModal';
 import { bookingService } from '../../services/bookingService';
 import type { Booking, BookingStatus } from '../../types/types';
@@ -24,13 +25,6 @@ const ManagerBookingPage: React.FC = () => {
   const user = useAuthStore(state => state.user);
 
   const headerActions = [
-    {
-      id: 'new-booking',
-      icon: <Plus className="h-5 w-5" />,
-      label: 'New Booking',
-      variant: 'primary' as const,
-      onClick: () => setIsAddModalOpen(true),
-    },
     {
       id: 'notifications',
       icon: <Bell className="h-5 w-5" />,
@@ -49,6 +43,8 @@ const ManagerBookingPage: React.FC = () => {
   const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
@@ -120,7 +116,8 @@ const ManagerBookingPage: React.FC = () => {
   };
 
   const handleEditBooking = (booking: Booking) => {
-    console.log('Edit booking:', booking);
+    setEditingBooking(booking);
+    setIsEditModalOpen(true);
   };
 
   const handleCancelBooking = async (id: string) => {
@@ -205,6 +202,15 @@ const ManagerBookingPage: React.FC = () => {
               <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
             </div>
+
+            {/* New Booking button in filter bar */}
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 shadow-sm shadow-primary/20 transition-all active:scale-95 ml-auto"
+            >
+              <Plus className="size-4" />
+              New Booking
+            </button>
           </div>
 
           <div className="pb-20">
@@ -227,6 +233,16 @@ const ManagerBookingPage: React.FC = () => {
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           onAdd={handleAddBooking}
+        />
+
+        <EditBookingModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingBooking(null);
+          }}
+          booking={editingBooking}
+          onUpdated={fetchBookings}
         />
 
         <BookingDetailModal
