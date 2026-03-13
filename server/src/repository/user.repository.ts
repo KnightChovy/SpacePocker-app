@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { IUserRepository } from "../interface/user.repository.interface";
+import { Role } from "@prisma/client";
 
 export class UserRepository implements IUserRepository {
   findByEmail(email: string) {
@@ -8,6 +9,13 @@ export class UserRepository implements IUserRepository {
 
   findById(id: string) {
     return prisma.user.findUnique({ where: { id } });
+  }
+
+  updateRole(id: string, role: Role) {
+    return prisma.user.update({
+      where: { id },
+      data: { role },
+    });
   }
 
   createUser(data: {

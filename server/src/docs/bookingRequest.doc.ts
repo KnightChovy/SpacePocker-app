@@ -116,6 +116,73 @@
  *           example: "Created"
  *         metadata:
  *           $ref: "#/components/schemas/BookingRequest"
+ *
+ *     Booking:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *           example: "3ff5927a-abd6-4e4c-b7ec-ed2508409ef7"
+ *         userId:
+ *           type: string
+ *           format: uuid
+ *           example: "7e0ce458-85c7-490d-aadc-42579f1177d6"
+ *         roomId:
+ *           type: string
+ *           format: uuid
+ *           example: "r-003"
+ *         startTime:
+ *           type: string
+ *           format: date-time
+ *           example: "2026-02-10T09:00:00.000Z"
+ *         endTime:
+ *           type: string
+ *           format: date-time
+ *           example: "2026-02-10T11:00:00.000Z"
+ *         purpose:
+ *           type: string
+ *           nullable: true
+ *           example: "Team meeting for Q1 planning"
+ *         status:
+ *           type: string
+ *           enum: [PENDING, APPROVED, REJECTED, CANCELLED, COMPLETED]
+ *           example: "APPROVED"
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           example: "2026-02-08T09:00:00.000Z"
+ *
+ *     BookingRequestApproveResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: "Booking request approved successfully"
+ *         reason:
+ *           type: string
+ *           example: "Success"
+ *         metadata:
+ *           type: object
+ *           properties:
+ *             bookingRequest:
+ *               $ref: "#/components/schemas/BookingRequest"
+ *             booking:
+ *               $ref: "#/components/schemas/Booking"
+ *
+ *     BookingRequestListResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: "Get booking requests successfully"
+ *         reason:
+ *           type: string
+ *           example: "Success"
+ *         metadata:
+ *           type: array
+ *           items:
+ *             $ref: "#/components/schemas/BookingRequest"
  */
 
 /**
@@ -231,4 +298,153 @@
  *           application/json:
  *             schema:
  *               $ref: "#/components/schemas/ErrorResponse"
+ */
+
+/**
+ * @openapi
+ * /v1/api/booking-requests:
+ *   get:
+ *     summary: Get booking requests for manager by status
+ *     description: |
+ *       Manager endpoint to review booking requests for rooms they manage.
+ *       Defaults to `PENDING` if status is not provided.
+ *     tags: [Booking Request]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Manager ID (UUID)
+ *       - in: header
+ *         name: authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Access token
+ *       - in: query
+ *         name: status
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [PENDING, APPROVED, REJECTED, CANCELLED, COMPLETED]
+ *           default: PENDING
+ *         description: Filter requests by status
+ *     responses:
+ *       200:
+ *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/BookingRequestListResponse"
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Only MANAGER/ADMIN can access
+ */
+
+/**
+ * @openapi
+ * /v1/api/booking-requests/approve/{id}:
+ *   patch:
+ *     summary: Approve booking request and create booking
+ *     description: |
+ *       Manager approves a pending booking request.
+ *
+ *       **System rules:**
+ *       - Request must be in PENDING status
+ *       - Manager can only approve requests for rooms they manage
+ *       - Conflict check uses overlap rule:
+ *         (startTime < requestedEndTime) AND (endTime > requestedStartTime)
+ *       - Earliest pending request has priority for overlapping slot
+ *       - On success, creates Booking with status APPROVED
+ *     tags: [Booking Request]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Manager ID (UUID)
+ *       - in: header
+ *         name: authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Access token
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Booking request ID
+ *     responses:
+ *       200:
+ *         description: Booking request approved and booking created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/BookingRequestApproveResponse"
+ *       400:
+ *         description: Bad request (invalid state, room unavailable)
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Booking request or room not found
+ *       409:
+ *         description: Conflict (already processed, older request priority, or time overlap)
+ */
+
+/**
+ * @openapi
+ * /v1/api/booking-requests/reject/{id}:
+ *   patch:
+ *     summary: Reject booking request
+ *     description: |
+ *       Manager rejects a pending booking request for rooms they manage.
+ *     tags: [Booking Request]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Manager ID (UUID)
+ *       - in: header
+ *         name: authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Access token
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Booking request ID
+ *     responses:
+ *       200:
+ *         description: Booking request rejected
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/BookingRequestResponse"
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Booking request or room not found
+ *       409:
+ *         description: Conflict (already processed)
  */
