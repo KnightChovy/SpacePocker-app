@@ -15,11 +15,14 @@ import EditBookingModal from '../../components/features/manager/bookingManager/E
 import BookingDetailModal from '../../components/features/manager/bookingManager/BookingDetailModal';
 import { bookingService } from '../../services/bookingService';
 import type { Booking, BookingStatus } from '../../types/types';
+import { useAuthStore } from '@/stores/auth.store';
+import { getAvatarUrl } from '@/lib/utils';
 
 const ManagerBookingPage: React.FC = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const user = useAuthStore(state => state.user);
 
   const headerActions = [
     {
@@ -148,9 +151,9 @@ const ManagerBookingPage: React.FC = () => {
         onMenuClick={() => setSidebarOpen(true)}
         actions={headerActions}
         profile={{
-          name: 'Alex Morgan',
-          subtitle: 'Manager',
-          avatarUrl: 'https://picsum.photos/id/64/100/100',
+          name: user?.name || 'Manager',
+          subtitle: user?.role || 'MANAGER',
+          avatarUrl: getAvatarUrl(user?.name, 'Manager'),
           showDropdown: true,
         }}
       />

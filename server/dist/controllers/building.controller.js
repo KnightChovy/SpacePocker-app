@@ -6,19 +6,19 @@ class BuildingController {
         this.buildingService = buildingService;
         this.createBuilding = async (req, res, next) => {
             new success_response_1.Created({
-                message: 'Building created successfully!',
+                message: 'Building created successfully',
                 metadata: await this.buildingService.createBuilding(req.body),
             }).send(res);
         };
         this.getBuildingById = async (req, res, next) => {
             new success_response_1.OK({
-                message: 'Building retrieved successfully!',
+                message: 'Get building successfully',
                 metadata: await this.buildingService.getBuildingById(req.params.id),
             }).send(res);
         };
         this.getAllBuildings = async (req, res, next) => {
             new success_response_1.OK({
-                message: 'Buildings retrieved successfully!',
+                message: 'Get all buildings successfully',
                 metadata: await this.buildingService.getAllBuildings(req.query),
             }).send(res);
         };

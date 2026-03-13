@@ -10,6 +10,7 @@ import {
   Settings,
   HelpCircle,
   Zap,
+  UserCircle,
 } from 'lucide-react';
 
 export default function ManagerLayout() {
@@ -53,6 +54,12 @@ export default function ManagerLayout() {
           label: 'Analytics',
           path: '/manager/analytics',
           icon: <Settings className="h-5 w-5" />,
+        },
+        {
+          id: 'profile',
+          label: 'Profile',
+          path: '/manager/profile',
+          icon: <UserCircle className="h-5 w-5" />,
         },
       ],
     },

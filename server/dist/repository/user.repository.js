@@ -9,6 +9,12 @@ class UserRepository {
     findById(id) {
         return prisma_1.prisma.user.findUnique({ where: { id } });
     }
+    updateRole(id, role) {
+        return prisma_1.prisma.user.update({
+            where: { id },
+            data: { role },
+        });
+    }
     createUser(data) {
         return prisma_1.prisma.user.create({
             data: {

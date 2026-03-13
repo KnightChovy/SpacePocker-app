@@ -6,6 +6,8 @@ import TransactionList from '@/components/features/admin/TransactionList';
 import type { StatData, PaymentTransaction } from '@/types/admin-types';
 import { TransactionStatus, PayoutStatus } from '@/types/admin-types';
 import financialData from '@/data/admin-financial.json';
+import { useAuthStore } from '@/stores/auth.store';
+import { getAvatarUrl } from '@/lib/utils';
 
 const getAIInsights = async (
   transactions: PaymentTransaction[]
@@ -39,6 +41,7 @@ const FinancialPage: React.FC = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const user = useAuthStore(state => state.user);
   const [aiInsight, setAiInsight] = useState<string>(
     'Generating AI summary...'
   );
@@ -82,9 +85,9 @@ const FinancialPage: React.FC = () => {
         onMenuClick={() => setSidebarOpen(true)}
         actions={headerActions}
         profile={{
-          name: 'Admin',
-          subtitle: 'Administrator',
-          avatarUrl: 'https://picsum.photos/seed/marcus/100/100',
+          name: user?.name || 'Admin',
+          subtitle: user?.role || 'ADMIN',
+          avatarUrl: getAvatarUrl(user?.name, 'Admin'),
           showDropdown: true,
         }}
         iconType="material"

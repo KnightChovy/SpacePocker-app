@@ -9,6 +9,8 @@ import SystemHealth from '@/components/features/admin/SystemHealth';
 import TransactionTable from '@/components/features/admin/TransactionTable';
 import type { Stat, Transaction, LogEntry } from '@/types/admin-types';
 import dashboardData from '@/data/admin-dashboard.json';
+import { useAuthStore } from '@/stores/auth.store';
+import { getAvatarUrl } from '@/lib/utils';
 
 const iconMap = {
   DollarSign,
@@ -21,6 +23,7 @@ const DashboardPage: React.FC = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const user = useAuthStore(state => state.user);
 
   const headerActions = [
     {
@@ -77,9 +80,9 @@ const DashboardPage: React.FC = () => {
         searchPlaceholder="Search analytics..."
         actions={headerActions}
         profile={{
-          name: 'Admin',
-          subtitle: 'Administrator',
-          avatarUrl: 'https://picsum.photos/seed/marcus/100/100',
+          name: user?.name || 'Admin',
+          subtitle: user?.role || 'ADMIN',
+          avatarUrl: getAvatarUrl(user?.name, 'Admin'),
           showDropdown: true,
         }}
         iconType="material"

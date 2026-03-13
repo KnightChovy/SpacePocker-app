@@ -1,8 +1,13 @@
-import { USER_INFO } from '@/data/constant';
 import InputField from './InputField';
 import { Pencil } from 'lucide-react';
+import { getAvatarUrl } from '@/lib/utils';
+import type { USER_DATA } from '@/types/auth-type';
 
-const PersonalInfoSection = () => {
+interface PersonalInfoSectionProps {
+  user: USER_DATA | null;
+}
+
+const PersonalInfoSection = ({ user }: PersonalInfoSectionProps) => {
   return (
     <section className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark shadow-sm overflow-hidden">
       <div className="p-6 border-b border-border-light dark:border-border-dark">
@@ -16,7 +21,7 @@ const PersonalInfoSection = () => {
           <div className="relative">
             <div
               className="h-24 w-24 rounded-full bg-cover bg-center border-2 border-primary/20"
-              style={{ backgroundImage: `url('${USER_INFO.profileImage}')` }}
+              style={{ backgroundImage: `url('${getAvatarUrl(user?.name)}')` }}
             ></div>
             <button className="absolute bottom-0 right-0 bg-primary hover:bg-primary-dark text-white p-1.5 rounded-full border-2 border-surface-light dark:border-surface-dark transition-colors shadow-sm">
               <Pencil className="h-4 w-4 block" />
@@ -44,23 +49,23 @@ const PersonalInfoSection = () => {
           <InputField
             label="Full Name"
             icon="person"
-            defaultValue={USER_INFO.name}
+            defaultValue={user?.name || ''}
           />
           <InputField
             label="Role / Title"
             icon="work"
-            defaultValue={USER_INFO.role}
+            defaultValue={user?.role || ''}
           />
           <InputField
             label="Email Address"
             icon="mail"
-            defaultValue={USER_INFO.email}
+            defaultValue={user?.email || ''}
             type="email"
           />
           <InputField
             label="Phone Number"
             icon="call"
-            defaultValue={USER_INFO.phone}
+            defaultValue={user?.phone || ''}
             type="tel"
           />
         </div>

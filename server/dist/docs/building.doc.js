@@ -21,13 +21,21 @@
  *         address:
  *           type: string
  *           example: "123 Main Street"
- *         description:
- *           type: string
- *           nullable: true
- *           example: "Modern office building"
  *         campus:
  *           type: string
  *           example: "Main Campus"
+ *         latitude:
+ *           type: number
+ *           format: double
+ *           nullable: true
+ *           example: 10.7756587
+ *           description: "Latitude coordinate (between -90 and 90)"
+ *         longitude:
+ *           type: number
+ *           format: double
+ *           nullable: true
+ *           example: 106.7018649
+ *           description: "Longitude coordinate (between -180 and 180)"
  *         managerId:
  *           type: string
  *           example: "mgr-123"
@@ -37,6 +45,63 @@
  *         updatedAt:
  *           type: string
  *           format: date-time
+ *
+ *     CreateBuildingInput:
+ *       type: object
+ *       required:
+ *         - buildingName
+ *         - address
+ *         - campus
+ *         - managerId
+ *       properties:
+ *         buildingName:
+ *           type: string
+ *           example: "Building A"
+ *         address:
+ *           type: string
+ *           example: "123 Main Street"
+ *         campus:
+ *           type: string
+ *           example: "Main Campus"
+ *         managerId:
+ *           type: string
+ *           example: "mgr-123"
+ *         latitude:
+ *           type: number
+ *           format: double
+ *           example: 10.7756587
+ *           description: "Latitude coordinate (between -90 and 90)"
+ *         longitude:
+ *           type: number
+ *           format: double
+ *           example: 106.7018649
+ *           description: "Longitude coordinate (between -180 and 180)"
+ *
+ *     UpdateBuildingInput:
+ *       type: object
+ *       properties:
+ *         buildingName:
+ *           type: string
+ *           example: "Building A Updated"
+ *         address:
+ *           type: string
+ *           example: "456 New Street"
+ *         campus:
+ *           type: string
+ *           example: "North Campus"
+ *         managerId:
+ *           type: string
+ *           example: "mgr-456"
+ *         latitude:
+ *           type: number
+ *           format: double
+ *           example: 10.7756587
+ *           description: "Latitude coordinate (between -90 and 90)"
+ *         longitude:
+ *           type: number
+ *           format: double
+ *           example: 106.7018649
+ *           description: "Longitude coordinate (between -180 and 180)"
  *
  *     BuildingPagination:
  *       type: object
@@ -79,7 +144,7 @@
  *       properties:
  *         message:
  *           type: string
- *           example: "Get all buildings successfully!"
+ *           example: "Get all buildings successfully"
  *         metadata:
  *           type: object
  *           properties:
@@ -97,7 +162,7 @@
  *       properties:
  *         message:
  *           type: string
- *           example: "Building retrieved successfully!"
+ *           example: "Building created successfully"
  *         metadata:
  *           type: object
  *           properties:
@@ -109,6 +174,7 @@
  * /v1/api/buildings:
  *   get:
  *     summary: Get all buildings with pagination, search, and filters
+ *     description: Retrieve a list of all buildings with filtering and pagination options.
  *     tags: [Building]
  *     parameters:
  *       - in: query
@@ -166,69 +232,10 @@
  */
 /**
  * @openapi
- * /v1/api/building:
- *   post:
- *     summary: Create a new building
- *     tags: [Building]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - buildingName
- *               - address
- *               - campus
- *               - managerId
- *             properties:
- *               buildingName:
- *                 type: string
- *                 example: "Building A"
- *               address:
- *                 type: string
- *                 example: "123 Main Street"
- *               description:
- *                 type: string
- *                 example: "Modern office building"
- *               campus:
- *                 type: string
- *                 example: "Main Campus"
- *               managerId:
- *                 type: string
- *                 example: "mgr-123"
- *     responses:
- *       201:
- *         description: Building created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Building created successfully!"
- *                 metadata:
- *                   type: object
- *                   properties:
- *                     createBuilding:
- *                       $ref: "#/components/schemas/Building"
- *       400:
- *         description: Bad request - Missing required fields
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Name and address are required"
- */
-/**
- * @openapi
- * /v1/api/building/{id}:
+ * /v1/api/buildings/{id}:
  *   get:
  *     summary: Get building by ID
+ *     description: Retrieve detailed information about a specific building.
  *     tags: [Building]
  *     parameters:
  *       - in: path
@@ -247,15 +254,87 @@
  *               $ref: "#/components/schemas/BuildingResponse"
  *       400:
  *         description: Building ID is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
  *       404:
  *         description: Building not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
  */
 /**
  * @openapi
- * /v1/api/building/{id}:
- *   put:
- *     summary: Update building
+ * /v1/api/buildings:
+ *   post:
+ *     summary: Create a new building
+ *     description: |
+ *       Create a new building. Requires authentication.
+ *
+ *       **Validation rules:**
+ *       - Building name, address, campus, and managerId are required
+ *       - Latitude must be between -90 and 90
+ *       - Longitude must be between -180 and 180
  *     tags: [Building]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID (UUID)
+ *       - in: header
+ *         name: authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Access token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: "#/components/schemas/CreateBuildingInput"
+ *     responses:
+ *       201:
+ *         description: Building created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/BuildingResponse"
+ *       400:
+ *         description: Bad request - Invalid data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
+ *       401:
+ *         description: Unauthorized - Invalid or expired token
+ *       500:
+ *         description: Internal server error
+ */
+/**
+ * @openapi
+ * /v1/api/buildings/{id}:
+ *   patch:
+ *     summary: Update building information
+ *     description: |
+ *       Update an existing building's information. Requires authentication.
+ *
+ *       **Validation rules:**
+ *       - Building must exist
+ *       - If provided, building name cannot be empty
+ *       - If provided, address cannot be empty
+ *       - If provided, campus cannot be empty
+ *       - If provided, latitude must be between -90 and 90
+ *       - If provided, longitude must be between -180 and 180
+ *     tags: [Building]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -264,55 +343,60 @@
  *           type: string
  *         description: Building ID
  *         example: "abc123-def456"
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID (UUID)
+ *       - in: header
+ *         name: authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Access token
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *                 example: "Building A Updated"
- *               address:
- *                 type: string
- *                 example: "456 New Street"
- *               description:
- *                 type: string
- *                 example: "Updated description"
- *               campus:
- *                 type: string
- *                 example: "North Campus"
- *               managerId:
- *                 type: string
- *                 example: "mgr-456"
+ *             $ref: "#/components/schemas/UpdateBuildingInput"
  *     responses:
  *       200:
  *         description: Building updated successfully
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Update building successfully!"
- *                 metadata:
- *                   type: object
- *                   properties:
- *                     updateBuilding:
- *                       $ref: "#/components/schemas/Building"
+ *               $ref: "#/components/schemas/BuildingResponse"
  *       400:
- *         description: Building ID is required
+ *         description: Invalid request data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
+ *       401:
+ *         description: Unauthorized - Invalid or expired token
  *       404:
  *         description: Building not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
+ *       500:
+ *         description: Internal server error
  */
 /**
  * @openapi
- * /v1/api/building/{id}:
+ * /v1/api/buildings/{id}:
  *   delete:
- *     summary: Delete building
+ *     summary: Delete a building
+ *     description: |
+ *       Delete an existing building. Requires authentication.
+ *
+ *       **Note:** This will cascade delete related records (rooms, amenities, bookings).
  *     tags: [Building]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -321,25 +405,39 @@
  *           type: string
  *         description: Building ID
  *         example: "abc123-def456"
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID (UUID)
+ *       - in: header
+ *         name: authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Access token
  *     responses:
  *       200:
  *         description: Building deleted successfully
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Building deleted successfully"
- *                 metadata:
- *                   type: object
- *                   properties:
- *                     message:
- *                       type: string
- *                       example: "Building delete successfully!"
+ *               $ref: "#/components/schemas/BuildingResponse"
  *       400:
  *         description: Building ID is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
+ *       401:
+ *         description: Unauthorized - Invalid or expired token
  *       404:
  *         description: Building not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
+ *       500:
+ *         description: Internal server error
  */
