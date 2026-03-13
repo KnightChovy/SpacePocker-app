@@ -28,15 +28,6 @@ const Navbar: React.FC = () => {
     logoutMutation.mutate(userId);
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   const getDashboardPath = () => {
     if (!user) return '/';
     switch (user.role) {
@@ -101,8 +92,8 @@ const Navbar: React.FC = () => {
         <div className="hidden md:flex items-center gap-8">
           {[
             { label: 'Find a Space', href: '/spaces' },
-            { label: 'Pricing', href: '#' },
             { label: 'List your Space', href: '/user/bookings' },
+            { label: 'About Us', href: '/about' },
           ].map(item => (
             <a
               key={item.label}
@@ -121,7 +112,7 @@ const Navbar: React.FC = () => {
         {!user ? (
           <div className="flex items-center gap-4">
             <button
-              className={`text-sm font-semibold transition-colors ${
+              className={`text-sm font-semibold transition-colors cursor-pointer ${
                 scrolled
                   ? 'text-slate-600 hover:text-primary'
                   : 'text-white/90 hover:text-white'
@@ -131,7 +122,7 @@ const Navbar: React.FC = () => {
               Log In
             </button>
             <Button
-              className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all active:scale-95 shadow-lg ${
+              className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all active:scale-95 shadow-lg cursor-pointer ${
                 scrolled
                   ? 'bg-primary text-white shadow-primary/20 hover:bg-indigo-700'
                   : 'bg-white text-primary shadow-white/20 hover:bg-white/90'
@@ -151,7 +142,7 @@ const Navbar: React.FC = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={`h-10 w-10 rounded-full flex items-center justify-center overflow-hidden transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 border-2 ${
+                  className={`h-10 w-10 rounded-full flex items-center justify-center overflow-hidden transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 border-2 cursor-pointer ${
                     scrolled
                       ? 'focus:ring-primary border-primary/20'
                       : 'focus:ring-white border-white/30'
