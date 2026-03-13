@@ -29,7 +29,13 @@ class AccessService {
         const tokens = await (0, authUtils_1.createTokenPair)({ userId: foundUser.id, email: foundUser.email }, publicKey, privateKey);
         await this.keyTokenService.createKeyToken(foundUser.id, publicKey, privateKey, tokens.refreshToken);
         return {
-            user: { id: foundUser.id, name: foundUser.name, email: foundUser.email },
+            user: {
+                id: foundUser.id,
+                name: foundUser.name,
+                email: foundUser.email,
+                role: foundUser.role,
+                phone: foundUser.phoneNumber,
+            },
             tokens,
         };
     }
@@ -87,7 +93,13 @@ class AccessService {
             refreshTokensUsed: [...key.refreshTokensUsed, refreshToken],
         });
         return {
-            user: { id: foundUser.id, name: foundUser.name, email: foundUser.email },
+            user: {
+                id: foundUser.id,
+                name: foundUser.name,
+                email: foundUser.email,
+                role: foundUser.role,
+                phone: foundUser.phoneNumber,
+            },
             tokens,
         };
     }

@@ -19,6 +19,7 @@ describe("BookingRequestService", () => {
     name: "Meeting Room A",
     roomCode: "ROOM-A",
     status: "AVAILABLE" as const,
+    images: [],
     buildingId: "b-001",
     managerId: "m-001",
     pricePerHour: 50000,

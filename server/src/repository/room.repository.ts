@@ -72,7 +72,7 @@ export class RoomRepository implements IRoomRepository {
       capacity?: number;
       roomType?: RoomType;
       area?: number;
-      isAvailable?: boolean;
+      status?: import('@prisma/client').RoomStatus;
     },
   ) {
     return prisma.room.update({
