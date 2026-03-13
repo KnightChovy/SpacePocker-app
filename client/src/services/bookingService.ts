@@ -45,7 +45,6 @@ export interface UpdateBookingData extends Partial<CreateBookingData> {
 }
 
 export const bookingService = {
-
   getAllBookings: async (params?: BookingFilterParams): Promise<Booking[]> => {
     await new Promise(resolve => setTimeout(resolve, 500));
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import type { CreateBuildingPayload } from '@/types/types';
 
@@ -20,7 +20,6 @@ const INITIAL: CreateBuildingPayload = {
   buildingName: '',
   address: '',
   campus: '',
-  managerId: '',
 };
 
 const AddBuildingModal = ({
@@ -31,6 +30,21 @@ const AddBuildingModal = ({
   const [form, setForm] = useState<CreateBuildingPayload>(INITIAL);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Prevent scroll khi modal mở
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+      // Reset form khi đóng modal
+      setForm(INITIAL);
+      setError(null);
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   const set = (field: keyof CreateBuildingPayload, value: string) =>
     setForm(prev => ({ ...prev, [field]: value }));
@@ -142,20 +156,6 @@ const AddBuildingModal = ({
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none size-4" />
               </div>
-            </div>
-
-            {/* Manager ID */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                Manager ID <span className="text-red-500">*</span>
-              </label>
-              <input
-                required
-                value={form.managerId}
-                onChange={e => set('managerId', e.target.value)}
-                placeholder="Enter a valid manager UUID"
-                className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 shadow-sm text-slate-800 placeholder-slate-400 transition-all"
-              />
             </div>
 
             <div className="flex justify-end gap-3 pt-1">

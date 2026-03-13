@@ -27,6 +27,18 @@ const EditBuildingModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Prevent scroll khi modal mở
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     if (building) {
       setError(null);
@@ -34,8 +46,12 @@ const EditBuildingModal = ({
         buildingName: building.buildingName,
         address: building.address,
         campus: building.campus,
-        managerId: building.managerId,
+        // Không cho phép edit managerId
       });
+    } else {
+      // Reset form khi đóng modal
+      setForm({});
+      setError(null);
     }
   }, [building]);
 
@@ -151,17 +167,20 @@ const EditBuildingModal = ({
               </div>
             </div>
 
-            {/* Manager ID */}
+            {/* Manager ID - Read Only */}
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                Manager ID <span className="text-red-500">*</span>
+                Manager ID
               </label>
               <input
-                required
-                value={form.managerId ?? ''}
-                onChange={e => set('managerId', e.target.value)}
-                className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 shadow-sm text-slate-800 placeholder-slate-400 transition-all"
+                disabled
+                readOnly
+                value={building.managerId}
+                className="w-full px-4 py-3 bg-slate-100 border border-slate-200/80 rounded-xl text-sm shadow-sm text-slate-600 cursor-not-allowed"
               />
+              <p className="text-xs text-slate-400 mt-1">
+                Manager ID cannot be changed
+              </p>
             </div>
 
             <div className="flex justify-end gap-3 pt-1">

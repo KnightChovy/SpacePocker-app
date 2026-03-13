@@ -225,7 +225,7 @@ export interface CreateBuildingPayload {
   buildingName: string;
   address: string;
   campus: string;
-  managerId: string;
+  managerId?: string;
 }
 
 export interface UpdateBuildingPayload {

@@ -42,7 +42,6 @@ export interface DashboardFilterParams {
 }
 
 export const dashboardService = {
-
   getStats: async (
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _params?: DashboardFilterParams
