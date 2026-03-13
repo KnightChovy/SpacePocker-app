@@ -61,6 +61,7 @@ model Manager {
   buildings        Building[]       @relation("ManagerBuildings")
   rooms            Room[]           @relation("ManagerRooms")
   approvedRequests BookingRequest[] @relation("ApprovedByManager")
+  serviceCategories ServiceCategory[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -107,6 +108,7 @@ model Room {
   bookingRequests BookingRequest[]
   bookings        Booking[]
   feedbacks       Feedback[]
+  serviceCategories RoomServiceCategory[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -215,13 +217,18 @@ model Feedback {
 
 model ServiceCategory {
   id          String   @id @default(uuid())
+  managerId   String
   name        String   @unique
   description String?
 
+  manager Manager @relation(fields: [managerId], references: [id], onDelete: Cascade)
   services Service[]
+  rooms    RoomServiceCategory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([managerId])
 }
 
 model Service {
@@ -236,5 +243,18 @@ model Service {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([categoryId])
+}
+
+model RoomServiceCategory {
+  roomId     String
+  categoryId String
+
+  room     Room            @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  category ServiceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([roomId, categoryId])
   @@index([categoryId])
 }

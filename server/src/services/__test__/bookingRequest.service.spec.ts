@@ -236,7 +236,7 @@ describe("BookingRequestService", () => {
 
         await expect(
           bookingRequestService.createBookingRequest(validData),
-        ).rejects.toThrow(`Room with id '${validData.roomId}' not found`);
+        ).rejects.toThrow("Room with id not found");
 
         expect(mockRoomRepo.findById).toHaveBeenCalledWith(validData.roomId);
       });
@@ -400,7 +400,7 @@ describe("BookingRequestService", () => {
 
       await expect(
         bookingRequestService.getBookingRequestById("non-existent"),
-      ).rejects.toThrow("Booking request with id 'non-existent' not found");
+      ).rejects.toThrow("Booking request with id not found");
     });
   });
 });

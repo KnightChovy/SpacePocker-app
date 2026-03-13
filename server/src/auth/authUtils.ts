@@ -6,7 +6,7 @@ import {
   NotFoundError,
 } from "../core/error.response";
 import { prisma } from "../lib/prisma";
-import { NextFunction, Request } from "express";
+import { NextFunction, Request, Response } from "express";
 const HEADER = {
   API_KEY: "x-api-key",
   CLIENT_ID: "x-client-id",
