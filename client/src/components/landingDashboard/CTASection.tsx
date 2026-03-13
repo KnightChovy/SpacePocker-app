@@ -3,7 +3,7 @@ import { Button } from '../ui/button';
 
 const CTASection = () => {
   const navigate = useNavigate();
-  
+
   return (
     <section className="px-4 pb-24 sm:px-6 lg:px-8">
       <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] shadow-2xl">
@@ -32,13 +32,16 @@ const CTASection = () => {
               classrooms, studios, and meeting rooms.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-              <Button 
-                className="rounded-xl bg-white px-8 py-4 text-base font-bold text-primary shadow-lg transition-transform hover:scale-105 hover:text-white active:scale-95" 
+              <Button
+                className="rounded-xl bg-white px-8 py-4 text-base font-bold text-primary shadow-lg transition-transform hover:scale-105 hover:text-white active:scale-95"
                 onClick={() => navigate('/user/bookings')}
               >
                 List your Space
               </Button>
-              <Button className="rounded-xl border border-white/30 bg-white/10 px-8 py-4 text-base font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/20" onClick={() => navigate('/about')}>
+              <Button
+                className="rounded-xl border border-white/30 bg-white/10 px-8 py-4 text-base font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                onClick={() => navigate('/about')}
+              >
                 Learn How It Works
               </Button>
             </div>
