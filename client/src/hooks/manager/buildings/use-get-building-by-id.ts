@@ -8,7 +8,7 @@ export const useGetBuildingById = (id: string) => {
     queryFn: async () => {
       const response = await axiosInstance.get<{
         metadata: { building: BuildingDetail };
-      }>(`/building/${id}`);
+      }>(`/buildings/${id}`);
       return response.data.metadata.building;
     },
     enabled: !!id,

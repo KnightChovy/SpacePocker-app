@@ -46,7 +46,6 @@ const EditBuildingModal = ({
         buildingName: building.buildingName,
         address: building.address,
         campus: building.campus,
-        // Không cho phép edit managerId
       });
     } else {
       // Reset form khi đóng modal

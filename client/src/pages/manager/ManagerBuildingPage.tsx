@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Bell, MessageSquare } from 'lucide-react';
 import type {
@@ -6,16 +6,17 @@ import type {
   CreateBuildingPayload,
   UpdateBuildingPayload,
   BuildingQueryParams,
-  GetAllBuildingsResponse,
 } from '@/types/types';
-import axiosInstance from '@/lib/axios';
-import { useAuthStore } from '@/stores/auth.store';
 import AppHeader from '@/components/layouts/AppHeader';
 import AddBuildingModal from '@/components/features/manager/buildingManager/AddBuildingModal';
 import EditBuildingModal from '@/components/features/manager/buildingManager/EditBuildingModal';
 import ViewBuildingModal from '@/components/features/manager/buildingManager/ViewBuildingModal';
 import BuildingFilters from '@/components/features/manager/buildingManager/BuildingFilters';
 import BuildingTableView from '@/components/features/manager/buildingManager/BuildingTableView';
+import { useGetBuildings } from '@/hooks/manager/buildings/use-get-buildings';
+import { useCreateBuilding } from '@/hooks/manager/buildings/use-create-building';
+import { useDeleteBuilding } from '@/hooks/manager/buildings/use-delete-building';
+import { useUpdateBuilding } from '@/hooks/manager/buildings/use-update-building';
 
 const LIMIT = 10;
 
@@ -28,10 +29,6 @@ const ManagerBuildingPage = () => {
     { id: 'notifications', icon: <Bell className="h-5 w-5" />, badge: true },
     { id: 'messages', icon: <MessageSquare className="h-5 w-5" /> },
   ];
-
-  const [buildings, setBuildings] = useState<BuildingDetail[]>([]);
-  const [total, setTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCampus, setSelectedCampus] = useState('all');
@@ -48,60 +45,41 @@ const ManagerBuildingPage = () => {
     null
   );
 
-  const fetchBuildings = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await axiosInstance.get<{
-        metadata: GetAllBuildingsResponse;
-      }>('/buildings', {
-        params: {
-          search: searchQuery || undefined,
-          campus: selectedCampus !== 'all' ? selectedCampus : undefined,
-          sortBy,
-          sortOrder,
-          limit: LIMIT,
-          offset: page * LIMIT,
-        },
-      });
-      const result = response.data.metadata;
-      setBuildings(result.buildings);
-      setTotal(result.pagination.total);
-    } catch (err) {
-      console.error('Failed to fetch buildings:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [searchQuery, selectedCampus, sortBy, sortOrder, page]);
+  const queryParams = useMemo<BuildingQueryParams>(
+    () => ({
+      search: searchQuery || undefined,
+      campus: selectedCampus !== 'all' ? selectedCampus : undefined,
+      sortBy,
+      sortOrder,
+      limit: LIMIT,
+      offset: page * LIMIT,
+    }),
+    [searchQuery, selectedCampus, sortBy, sortOrder, page]
+  );
+
+  const {
+    data: buildingsData,
+    isLoading,
+    isFetching,
+  } = useGetBuildings(queryParams);
+
+  const buildings = buildingsData?.buildings ?? [];
+  const total = buildingsData?.pagination.total ?? 0;
+
+  const createBuildingMutation = useCreateBuilding();
+  const updateBuildingMutation = useUpdateBuilding();
+  const deleteBuildingMutation = useDeleteBuilding();
 
   useEffect(() => {
     setPage(0);
   }, [searchQuery, selectedCampus, sortBy, sortOrder]);
 
-  useEffect(() => {
-    fetchBuildings();
-  }, [fetchBuildings]);
-
   const handleAdd = async (payload: CreateBuildingPayload) => {
-    // Tự động lấy managerId từ user đã đăng nhập
-    const currentUser = useAuthStore.getState().user;
-    const body = {
-      ...payload,
-      managerId: payload.managerId || currentUser?.id,
-    };
-    const response = await axiosInstance.post<{
-      metadata: { createBuilding: BuildingDetail };
-    }>('/building', body);
-    const created = response.data.metadata.createBuilding;
-    setBuildings(prev => [created, ...prev]);
-    setTotal(t => t + 1);
+    await createBuildingMutation.mutateAsync(payload);
   };
 
   const handleUpdate = async (id: string, payload: UpdateBuildingPayload) => {
-    const response = await axiosInstance.put<{
-      metadata: { updateBuilding: BuildingDetail };
-    }>(`/building/${id}`, payload);
-    const updated = response.data.metadata.updateBuilding;
-    setBuildings(prev => prev.map(b => (b.id === id ? updated : b)));
+    await updateBuildingMutation.mutateAsync({ id, body: payload });
     setEditingBuilding(null);
   };
 
@@ -109,9 +87,7 @@ const ManagerBuildingPage = () => {
     if (!window.confirm('Are you sure you want to delete this building?'))
       return;
     try {
-      await axiosInstance.delete(`/building/${id}`);
-      setBuildings(prev => prev.filter(b => b.id !== id));
-      setTotal(t => t - 1);
+      await deleteBuildingMutation.mutateAsync(id);
     } catch (err) {
       console.error('Failed to delete building:', err);
     }
@@ -154,7 +130,7 @@ const ManagerBuildingPage = () => {
 
           <BuildingTableView
             buildings={buildings}
-            isLoading={isLoading}
+            isLoading={isLoading || isFetching}
             total={total}
             currentPage={page}
             limit={LIMIT}
