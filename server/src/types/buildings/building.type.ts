@@ -1,17 +1,19 @@
 export interface CreateBuildingDTO {
   buildingName: string;
   address: string;
-  description?: string;
   campus: string;
   managerId: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface UpdateBuildingDTO {
   buildingName?: string;
   address?: string;
-  description?: string;
   campus?: string;
   managerId?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface BuildingQueryParams {

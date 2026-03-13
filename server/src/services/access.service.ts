@@ -43,7 +43,13 @@ export default class AccessService {
     );
 
     return {
-      user: { id: foundUser.id, name: foundUser.name, email: foundUser.email },
+      user: {
+        id: foundUser.id,
+        name: foundUser.name,
+        email: foundUser.email,
+        role: foundUser.role,
+        phone: foundUser.phoneNumber,
+      },
       tokens,
     };
   }
@@ -93,13 +99,14 @@ export default class AccessService {
         name: newUser.name,
         email: newUser.email,
         phone: newUser.phoneNumber,
+        role: newUser.role,
       },
       tokens,
     };
   }
 
-  async logout(userId: string) {
-    return this.keyRepo.deleteByUserId(userId);
+  async logout({ userId }: { userId: string }) {
+    return this.keyRepo.deleteTokenByUserId(userId);
   }
 
   async handleRefreshToken(data: {
@@ -113,7 +120,7 @@ export default class AccessService {
     if (!key) throw new BadRequestError("Invalid refresh token");
 
     if (key.refreshTokensUsed.includes(refreshToken)) {
-      await this.keyRepo.deleteByUserId(userId);
+      await this.keyRepo.deleteTokenByUserId(userId);
       throw new BadRequestError("Something wrong happened. Please login again");
     }
 
@@ -142,6 +149,7 @@ export default class AccessService {
         name: foundUser.name,
         email: foundUser.email,
         role: foundUser.role,
+        phone: foundUser.phoneNumber,
       },
       tokens,
     };

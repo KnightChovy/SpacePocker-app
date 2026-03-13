@@ -4,6 +4,8 @@ import AppHeader from '@/components/layouts/AppHeader';
 import { RoleBadge, StatusBadge } from '@/components/features/admin/Badge';
 import type { User } from '@/types/admin-types';
 import usersData from '@/data/admin-users.json';
+import { useAuthStore } from '@/stores/auth.store';
+import { getAvatarUrl } from '@/lib/utils';
 
 const INITIAL_USERS: User[] = usersData.users.map(user => ({
   ...user,
@@ -15,6 +17,7 @@ const UsersPage: React.FC = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const user = useAuthStore(state => state.user);
   const [searchQuery, setSearchQuery] = useState('');
   const [users] = useState<User[]>(INITIAL_USERS);
 
@@ -52,9 +55,9 @@ const UsersPage: React.FC = () => {
         onSearchChange={setSearchQuery}
         actions={headerActions}
         profile={{
-          name: 'Admin',
-          subtitle: 'Administrator',
-          avatarUrl: 'https://picsum.photos/seed/marcus/100/100',
+          name: user?.name || 'Admin',
+          subtitle: user?.role || 'ADMIN',
+          avatarUrl: getAvatarUrl(user?.name, 'Admin'),
           showDropdown: true,
         }}
         iconType="material"

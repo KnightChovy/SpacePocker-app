@@ -34,7 +34,7 @@ describe("AccessService", () => {
         };
         keyRepo = {
             findByUserId: jest.fn(),
-            deleteByUserId: jest.fn(),
+            deleteTokenByUserId: jest.fn(),
             updateRefreshToken: jest.fn(),
         };
         keyTokenService = {
@@ -154,10 +154,10 @@ describe("AccessService", () => {
     // LOGOUT
     // ===========================
     describe("logout()", () => {
-        it("should call deleteByUserId", async () => {
-            keyRepo.deleteByUserId.mockResolvedValue(true);
-            const result = await accessService.logout("u1");
-            expect(keyRepo.deleteByUserId).toHaveBeenCalledWith("u1");
+        it("should call deleteTokenByUserId", async () => {
+            keyRepo.deleteTokenByUserId.mockResolvedValue(true);
+            const result = await accessService.logout({ userId: "u1" });
+            expect(keyRepo.deleteTokenByUserId).toHaveBeenCalledWith("u1");
             expect(result).toBe(true);
         });
     });
@@ -184,7 +184,7 @@ describe("AccessService", () => {
                 userId: "u1",
                 email: "a@gmail.com",
             })).rejects.toBeInstanceOf(error_response_1.BadRequestError);
-            expect(keyRepo.deleteByUserId).toHaveBeenCalledWith("u1");
+            expect(keyRepo.deleteTokenByUserId).toHaveBeenCalledWith("u1");
         });
         it("should throw if refreshToken mismatch", async () => {
             keyRepo.findByUserId.mockResolvedValue({

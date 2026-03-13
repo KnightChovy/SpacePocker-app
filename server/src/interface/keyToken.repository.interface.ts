@@ -1,6 +1,6 @@
 export interface IKeyTokenRepository {
   findByUserId(userId: string): Promise<any | null>;
-  deleteByUserId(userId: string): Promise<any>;
+  deleteTokenByUserId(userId: string): Promise<any>;
   updateRefreshToken(data: {
     userId: string;
     refreshToken: string;

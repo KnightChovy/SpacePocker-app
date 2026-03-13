@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -100,10 +100,15 @@ function SidebarContent({
     onLinkClick();
   };
 
+  const navigate = useNavigate();
+
   return (
     <ScrollArea className="h-full flex flex-col">
       <div className="flex flex-col h-full p-4">
-        <div className="flex gap-3 px-2 py-4 mb-6">
+        <div
+          className="flex gap-3 px-2 py-4 mb-6 cursor-pointer"
+          onClick={() => navigate('/')}
+        >
           <div
             className={cn(
               'aspect-square rounded-xl h-10 w-10 flex items-center justify-center text-white shadow-lg',
