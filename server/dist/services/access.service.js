@@ -34,6 +34,7 @@ class AccessService {
                 name: foundUser.name,
                 email: foundUser.email,
                 role: foundUser.role,
+                phone: foundUser.phoneNumber,
             },
             tokens,
         };
@@ -98,6 +99,7 @@ class AccessService {
                 name: foundUser.name,
                 email: foundUser.email,
                 role: foundUser.role,
+                phone: foundUser.phoneNumber,
             },
             tokens,
         };

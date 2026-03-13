@@ -5,7 +5,7 @@ import {
   NotFoundError,
   ConflictRequestError,
 } from '../core/error.response';
-import { RoomType } from '@prisma/client';
+import { RoomType, RoomStatus } from '@prisma/client';
 
 export default class RoomService {
   constructor(
@@ -104,7 +104,7 @@ export default class RoomService {
       search,
       buildingId,
       roomType,
-      isAvailable,
+      status,
       minPrice,
       maxPrice,
       minCapacity,
@@ -144,8 +144,11 @@ export default class RoomService {
       }
     }
 
-    if (isAvailable !== undefined) {
-      filter.isAvailable = isAvailable === 'true' || isAvailable === true;
+    if (status && typeof status === 'string') {
+      const validStatuses = ['AVAILABLE', 'UNAVAILABLE', 'PROCESS', 'MAINTAIN'];
+      if (validStatuses.includes(status.toUpperCase())) {
+        filter.status = status.toUpperCase();
+      }
     }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
@@ -224,7 +227,7 @@ export default class RoomService {
         search: search || null,
         buildingId: buildingId || null,
         roomType: roomType || null,
-        isAvailable: isAvailable !== undefined ? filter.isAvailable : null,
+        status: status || null,
         minPrice: minPrice || null,
         maxPrice: maxPrice || null,
         minCapacity: minCapacity || null,
@@ -244,7 +247,7 @@ export default class RoomService {
       capacity?: number;
       roomType?: RoomType;
       area?: number;
-      isAvailable?: boolean;
+      status?: RoomStatus;
     },
   ) {
     if (!roomId) {

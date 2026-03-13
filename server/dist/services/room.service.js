@@ -62,7 +62,7 @@ class RoomService {
         return { room };
     }
     async getAllRooms(query) {
-        const { search, buildingId, roomType, isAvailable, minPrice, maxPrice, minCapacity, sortBy, sortOrder, limit, offset, } = query;
+        const { search, buildingId, roomType, status, minPrice, maxPrice, minCapacity, sortBy, sortOrder, limit, offset, } = query;
         const filter = {};
         if (search && typeof search === 'string') {
             filter.OR = [
@@ -89,8 +89,11 @@ class RoomService {
                 filter.roomType = roomType.toUpperCase();
             }
         }
-        if (isAvailable !== undefined) {
-            filter.isAvailable = isAvailable === 'true' || isAvailable === true;
+        if (status && typeof status === 'string') {
+            const validStatuses = ['AVAILABLE', 'UNAVAILABLE', 'PROCESS', 'MAINTAIN'];
+            if (validStatuses.includes(status.toUpperCase())) {
+                filter.status = status.toUpperCase();
+            }
         }
         if (minPrice !== undefined || maxPrice !== undefined) {
             filter.pricePerHour = {};
@@ -150,7 +153,7 @@ class RoomService {
                 search: search || null,
                 buildingId: buildingId || null,
                 roomType: roomType || null,
-                isAvailable: isAvailable !== undefined ? filter.isAvailable : null,
+                status: status || null,
                 minPrice: minPrice || null,
                 maxPrice: maxPrice || null,
                 minCapacity: minCapacity || null,

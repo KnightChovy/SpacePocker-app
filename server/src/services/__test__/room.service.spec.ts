@@ -29,13 +29,14 @@ describe('RoomService', () => {
     buildingId: 'b-001',
     managerId: 'm-001',
     name: 'Conference Room A',
+    status: 'AVAILABLE' as const,
+    images: [],
     description: 'Large conference room',
     pricePerHour: 50,
     securityDeposit: 100,
     capacity: 20,
     roomType: 'MEETING' as const,
     area: 50.5,
-    isAvailable: true,
     roomCode: 'ROOM-A-001',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -434,28 +435,28 @@ describe('RoomService', () => {
         );
       });
 
-      it('should filter by isAvailable (true)', async () => {
+      it('should filter by status (AVAILABLE)', async () => {
         mockRoomRepo.count.mockResolvedValue(1);
         mockRoomRepo.findAll.mockResolvedValue(mockRooms);
 
-        await roomService.getAllRooms({ isAvailable: 'true' });
+        await roomService.getAllRooms({ status: 'AVAILABLE' });
 
         expect(mockRoomRepo.findAll).toHaveBeenCalledWith(
-          expect.objectContaining({ isAvailable: true }),
+          expect.objectContaining({ status: 'AVAILABLE' }),
           undefined,
           10,
           0,
         );
       });
 
-      it('should filter by isAvailable (false)', async () => {
+      it('should filter by status (MAINTAIN)', async () => {
         mockRoomRepo.count.mockResolvedValue(1);
         mockRoomRepo.findAll.mockResolvedValue(mockRooms);
 
-        await roomService.getAllRooms({ isAvailable: 'false' });
+        await roomService.getAllRooms({ status: 'MAINTAIN' });
 
         expect(mockRoomRepo.findAll).toHaveBeenCalledWith(
-          expect.objectContaining({ isAvailable: false }),
+          expect.objectContaining({ status: 'MAINTAIN' }),
           undefined,
           10,
           0,
@@ -689,7 +690,7 @@ describe('RoomService', () => {
             search: 'Conference',
             buildingId: 'b-001',
             roomType: null,
-            isAvailable: null,
+            status: null,
             minPrice: null,
             maxPrice: null,
             minCapacity: null,
@@ -838,18 +839,18 @@ describe('RoomService', () => {
         );
       });
 
-      it('should update isAvailable status', async () => {
-        const updatedRoom = { ...mockRoom, isAvailable: false };
+      it('should update room status', async () => {
+        const updatedRoom = { ...mockRoom, status: 'MAINTAIN' as const };
         mockRoomRepo.findById.mockResolvedValue(mockRoom);
         mockRoomRepo.update.mockResolvedValue(updatedRoom);
 
         const result = await roomService.updateRoom('r-001', {
-          isAvailable: false,
+          status: 'MAINTAIN',
         });
 
-        expect(result.room.isAvailable).toBe(false);
+        expect(result.room).toEqual(updatedRoom);
         expect(mockRoomRepo.update).toHaveBeenCalledWith('r-001', {
-          isAvailable: false,
+          status: 'MAINTAIN',
         });
       });
     });

@@ -1,4 +1,4 @@
-import { Room, RoomType } from '@prisma/client';
+import { Room, RoomType, RoomStatus } from '@prisma/client';
 
 export interface IRoomRepository {
   findById(roomId: string): Promise<Room | null>;
@@ -30,7 +30,7 @@ export interface IRoomRepository {
       capacity?: number;
       roomType?: RoomType;
       area?: number;
-      isAvailable?: boolean;
+      status?: RoomStatus;
     },
   ): Promise<Room>;
   delete(roomId: string): Promise<Room>;
