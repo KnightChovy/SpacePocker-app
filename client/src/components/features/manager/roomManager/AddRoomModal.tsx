@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { X, ChevronDown } from 'lucide-react';
+import { useGetAmenities } from '@/hooks/admin/amenities/use-get-amenities';
 
 interface RoomFormData {
   name: string;
@@ -11,6 +12,7 @@ interface RoomFormData {
   pricePerHour: string;
   securityDeposit: string;
   roomCode: string;
+  amenityIds: string[];
 }
 
 interface AddRoomModalProps {
@@ -26,6 +28,8 @@ const AddRoomModal = ({
   onAdd,
   buildings,
 }: AddRoomModalProps) => {
+  const { data: amenities, isLoading: isAmenitiesLoading } = useGetAmenities();
+
   const defaultBuildingId = useMemo(() => buildings[0]?.id || '', [buildings]);
   const initialFormState = useMemo<RoomFormData>(
     () => ({
@@ -38,6 +42,7 @@ const AddRoomModal = ({
       pricePerHour: '',
       securityDeposit: '',
       roomCode: '',
+      amenityIds: [],
     }),
     [defaultBuildingId]
   );
@@ -51,6 +56,7 @@ const AddRoomModal = ({
     pricePerHour: '',
     securityDeposit: '',
     roomCode: '',
+    amenityIds: [],
   });
 
   useEffect(() => {
@@ -70,6 +76,18 @@ const AddRoomModal = ({
     onAdd(formData);
   };
 
+  const toggleAmenity = (amenityId: string) => {
+    setFormData(prev => {
+      const exists = prev.amenityIds.includes(amenityId);
+      return {
+        ...prev,
+        amenityIds: exists
+          ? prev.amenityIds.filter(id => id !== amenityId)
+          : [...prev.amenityIds, amenityId],
+      };
+    });
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -79,7 +97,7 @@ const AddRoomModal = ({
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         <div className="absolute inset-0 bg-linear-to-br from-white via-white to-primary/5" />
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-violet-100/40 rounded-full blur-3xl" />
@@ -100,193 +118,239 @@ const AddRoomModal = ({
             </button>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="px-6 pb-6 flex flex-col gap-5"
-          >
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                Room Name
-              </label>
-              <input
-                className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
-                placeholder="e.g. Innovation Hub"
-                type="text"
-                value={formData.name}
-                onChange={e =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                Description
-              </label>
-              <textarea
-                className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm min-h-24 resize-none"
-                placeholder="Large conference room with projector"
-                value={formData.description}
-                onChange={e =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                  Building
-                </label>
-                <div className="relative">
-                  <select
-                    className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 appearance-none cursor-pointer backdrop-blur-sm transition-all duration-200 shadow-sm"
-                    value={formData.buildingId}
+          <form onSubmit={handleSubmit} className="px-6 pb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="flex flex-col gap-5">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                    Room Name
+                  </label>
+                  <input
+                    className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
+                    placeholder="e.g. Innovation Hub"
+                    type="text"
+                    value={formData.name}
                     onChange={e =>
-                      setFormData({ ...formData, buildingId: e.target.value })
+                      setFormData({ ...formData, name: e.target.value })
                     }
                     required
-                  >
-                    {buildings.length === 0 ? (
-                      <option value="" disabled>
-                        No buildings
-                      </option>
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                    Description
+                  </label>
+                  <textarea
+                    className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm min-h-24 resize-none"
+                    placeholder="Large conference room with projector"
+                    value={formData.description}
+                    onChange={e =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                      Building
+                    </label>
+                    <div className="relative">
+                      <select
+                        className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 appearance-none cursor-pointer backdrop-blur-sm transition-all duration-200 shadow-sm"
+                        value={formData.buildingId}
+                        onChange={e =>
+                          setFormData({
+                            ...formData,
+                            buildingId: e.target.value,
+                          })
+                        }
+                        required
+                      >
+                        {buildings.length === 0 ? (
+                          <option value="" disabled>
+                            No buildings
+                          </option>
+                        ) : (
+                          buildings.map(b => (
+                            <option key={b.id} value={b.id}>
+                              {b.name}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none size-4" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                      Room Type
+                    </label>
+                    <div className="relative">
+                      <select
+                        className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 appearance-none cursor-pointer backdrop-blur-sm transition-all duration-200 shadow-sm"
+                        value={formData.roomType}
+                        onChange={e =>
+                          setFormData({
+                            ...formData,
+                            roomType: e.target
+                              .value as RoomFormData['roomType'],
+                          })
+                        }
+                        required
+                      >
+                        <option value="MEETING">Meeting</option>
+                        <option value="CLASSROOM">Classroom</option>
+                        <option value="EVENT">Event</option>
+                        <option value="OTHER">Other</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none size-4" />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                    Amenities
+                  </label>
+                  <div className="max-h-36 overflow-y-auto rounded-xl border border-slate-200/80 bg-white/70 backdrop-blur-sm shadow-sm p-3">
+                    {isAmenitiesLoading ? (
+                      <div className="text-sm text-slate-500">
+                        Loading amenities...
+                      </div>
+                    ) : !amenities || amenities.length === 0 ? (
+                      <div className="text-sm text-slate-500">
+                        No amenities available.
+                      </div>
                     ) : (
-                      buildings.map(b => (
-                        <option key={b.id} value={b.id}>
-                          {b.name}
-                        </option>
-                      ))
+                      <div className="grid grid-cols-2 gap-2">
+                        {amenities.map(a => (
+                          <label
+                            key={a.id}
+                            className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer select-none"
+                          >
+                            <input
+                              type="checkbox"
+                              className="rounded border-slate-300 text-primary focus:ring-primary/20"
+                              checked={formData.amenityIds.includes(a.id)}
+                              onChange={() => toggleAmenity(a.id)}
+                            />
+                            <span className="truncate" title={a.name}>
+                              {a.name}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
                     )}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none size-4" />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                  Room Type
-                </label>
-                <div className="relative">
-                  <select
-                    className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 appearance-none cursor-pointer backdrop-blur-sm transition-all duration-200 shadow-sm"
-                    value={formData.roomType}
+              <div className="flex flex-col gap-5">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                      Capacity
+                    </label>
+                    <input
+                      className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
+                      placeholder="Seats"
+                      type="number"
+                      value={formData.capacity}
+                      onChange={e =>
+                        setFormData({ ...formData, capacity: e.target.value })
+                      }
+                      min={1}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                      Area (m²)
+                    </label>
+                    <input
+                      className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
+                      placeholder="Optional"
+                      type="number"
+                      step="0.1"
+                      value={formData.area}
+                      onChange={e =>
+                        setFormData({ ...formData, area: e.target.value })
+                      }
+                      min={0}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                    Price Per Hour ($)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
+                      $
+                    </span>
+                    <input
+                      className="w-full pl-9 pr-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
+                      placeholder="0.00"
+                      type="number"
+                      step="0.01"
+                      value={formData.pricePerHour}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          pricePerHour: e.target.value,
+                        })
+                      }
+                      min={0}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                    Security Deposit ($)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
+                      $
+                    </span>
+                    <input
+                      className="w-full pl-9 pr-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
+                      placeholder="Optional"
+                      type="number"
+                      step="0.01"
+                      value={formData.securityDeposit}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          securityDeposit: e.target.value,
+                        })
+                      }
+                      min={0}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                    Room Code
+                  </label>
+                  <input
+                    className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
+                    placeholder="Leave blank to auto-generate"
+                    type="text"
+                    value={formData.roomCode}
                     onChange={e =>
-                      setFormData({
-                        ...formData,
-                        roomType: e.target.value as RoomFormData['roomType'],
-                      })
+                      setFormData({ ...formData, roomCode: e.target.value })
                     }
-                    required
-                  >
-                    <option value="MEETING">Meeting</option>
-                    <option value="CLASSROOM">Classroom</option>
-                    <option value="EVENT">Event</option>
-                    <option value="OTHER">Other</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none size-4" />
+                  />
                 </div>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                  Capacity
-                </label>
-                <input
-                  className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
-                  placeholder="Seats"
-                  type="number"
-                  value={formData.capacity}
-                  onChange={e =>
-                    setFormData({ ...formData, capacity: e.target.value })
-                  }
-                  min={1}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                  Area (m²)
-                </label>
-                <input
-                  className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
-                  placeholder="Optional"
-                  type="number"
-                  step="0.1"
-                  value={formData.area}
-                  onChange={e =>
-                    setFormData({ ...formData, area: e.target.value })
-                  }
-                  min={0}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                Price Per Hour ($)
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
-                  $
-                </span>
-                <input
-                  className="w-full pl-9 pr-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
-                  placeholder="0.00"
-                  type="number"
-                  step="0.01"
-                  value={formData.pricePerHour}
-                  onChange={e =>
-                    setFormData({ ...formData, pricePerHour: e.target.value })
-                  }
-                  min={0}
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                Security Deposit ($)
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
-                  $
-                </span>
-                <input
-                  className="w-full pl-9 pr-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
-                  placeholder="Optional"
-                  type="number"
-                  step="0.01"
-                  value={formData.securityDeposit}
-                  onChange={e =>
-                    setFormData({
-                      ...formData,
-                      securityDeposit: e.target.value,
-                    })
-                  }
-                  min={0}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                Room Code
-              </label>
-              <input
-                className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
-                placeholder="Leave blank to auto-generate"
-                type="text"
-                value={formData.roomCode}
-                onChange={e =>
-                  setFormData({ ...formData, roomCode: e.target.value })
-                }
-              />
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">
