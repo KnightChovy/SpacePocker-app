@@ -138,7 +138,9 @@ const AmenitiesPage: React.FC = () => {
           <div className="bg-surface-light rounded-2xl shadow-float border border-gray-100 flex flex-col overflow-hidden">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <div className="flex items-center gap-2 text-sm text-text-secondary-light">
-                <span className="material-symbols-outlined text-[18px]">info</span>
+                <span className="material-symbols-outlined text-[18px]">
+                  info
+                </span>
                 <span>
                   {isLoading
                     ? 'Loading amenities...'
@@ -151,7 +153,9 @@ const AmenitiesPage: React.FC = () => {
                 onClick={openCreate}
                 className="flex items-center gap-2 h-10 px-4 bg-primary text-white rounded-lg shadow-lg shadow-primary/30 hover:bg-indigo-600 transition-all"
               >
-                <span className="material-symbols-outlined text-[20px]">add</span>
+                <span className="material-symbols-outlined text-[20px]">
+                  add
+                </span>
                 <span className="text-sm font-semibold">Add</span>
               </button>
             </div>
@@ -242,10 +246,7 @@ const AmenitiesPage: React.FC = () => {
 
       {isModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={closeModal}
-          />
+          <div className="absolute inset-0 bg-black/40" onClick={closeModal} />
           <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-float border border-gray-100 overflow-hidden">
             <div className="p-5 border-b border-gray-100 flex items-center justify-between">
               <div>
@@ -285,7 +286,9 @@ const AmenitiesPage: React.FC = () => {
                   type="button"
                   onClick={closeModal}
                   className="px-4 h-11 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                  disabled={createMutation.isPending || updateMutation.isPending}
+                  disabled={
+                    createMutation.isPending || updateMutation.isPending
+                  }
                 >
                   Cancel
                 </button>
