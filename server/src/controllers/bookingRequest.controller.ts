@@ -50,6 +50,24 @@ class BookingRequestController {
     }).send(res);
   };
 
+  getMyBookingRequests = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    const status = req.query.status
+      ? this.getStatusFromQuery(String(req.query.status))
+      : undefined;
+
+    new OK({
+      message: "Get my booking requests successfully",
+      metadata: await this.bookingRequestService.getMyBookingRequests(
+        String(req.user?.userId),
+        status,
+      ),
+    }).send(res);
+  };
+
   getBookingRequestsForManager = async (
     req: Request,
     res: Response,

@@ -137,6 +137,31 @@ export default class BookingRequestService {
     return bookingRequest;
   }
 
+  async getMyBookingRequests(userId: string, status?: BookingStatus) {
+    if (!userId) {
+      throw new BadRequestError("User ID is required");
+    }
+
+    const where: Prisma.BookingRequestWhereInput = {
+      userId,
+      ...(status && { status }),
+    };
+
+    return prisma.bookingRequest.findMany({
+      where,
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        room: {
+          include: {
+            building: true,
+          },
+        },
+      },
+    });
+  }
+
   async getBookingRequestsForManager(
     userId: string,
     userEmail?: string,

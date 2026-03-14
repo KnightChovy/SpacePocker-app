@@ -1,3 +1,13 @@
+export interface GetUsersFilter {
+  search?: string;
+  role?: string;
+}
+
+export interface PaginationParams {
+  skip: number;
+  take: number;
+}
+
 export interface IUserRepository {
   findByEmail(email: string): Promise<any | null>;
   findById(id: string): Promise<any | null>;
@@ -8,4 +18,9 @@ export interface IUserRepository {
     password: string;
     phone?: string;
   }): Promise<any>;
+  findMany(
+    filter: GetUsersFilter,
+    pagination: PaginationParams,
+  ): Promise<any[]>;
+  count(filter: GetUsersFilter): Promise<number>;
 }

@@ -86,7 +86,6 @@ export const createTokenPair = async (
 
     return { accessToken, refreshToken };
   } catch (error) {
-    console.log("error createTokenPair: ", error);
     throw error;
   }
 };
@@ -95,7 +94,7 @@ export const authorizeRoles = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const userRole = req.user?.role;
 
-    if (!roles.includes(userRole)) {
+    if (!userRole || !roles.includes(userRole)) {
       throw new AuthFailureError("You are not allowed to access this resource");
     }
     next();

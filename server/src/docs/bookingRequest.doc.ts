@@ -448,3 +448,96 @@
  *       409:
  *         description: Conflict (already processed)
  */
+
+/**
+ * @openapi
+ * /v1/api/my-booking-requests:
+ *   get:
+ *     summary: Get my booking requests
+ *     description: |
+ *       Allows a user to view all booking requests they have created.
+ *       Returns booking requests with room and building information.
+ *       Optional status filter.
+ *     tags: [Booking Request]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID (UUID)
+ *       - in: header
+ *         name: authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Access token
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [PENDING, APPROVED, REJECTED, CANCELLED, COMPLETED]
+ *         description: Filter by booking status (optional)
+ *         example: "PENDING"
+ *     responses:
+ *       200:
+ *         description: Booking requests retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Get my booking requests successfully"
+ *                 metadata:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       userId:
+ *                         type: string
+ *                         format: uuid
+ *                       roomId:
+ *                         type: string
+ *                         format: uuid
+ *                       startTime:
+ *                         type: string
+ *                         format: date-time
+ *                       endTime:
+ *                         type: string
+ *                         format: date-time
+ *                       purpose:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                         enum: [PENDING, APPROVED, REJECTED, CANCELLED, COMPLETED]
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       room:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           name:
+ *                             type: string
+ *                           roomCode:
+ *                             type: string
+ *                           building:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                               buildingName:
+ *                                 type: string
+ *                               campus:
+ *                                 type: string
+ *       401:
+ *         description: Unauthorized
+ */
