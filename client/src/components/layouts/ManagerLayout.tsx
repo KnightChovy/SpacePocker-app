@@ -60,27 +60,19 @@ export default function ManagerLayout() {
           path: '/manager/profile',
           icon: <UserCircle className="h-5 w-5" />,
         },
-        {
-          id: 'logout',
-          label: 'Logout',
-          path: '#',
-          icon: <LogOut className="h-5 w-5" />,
-        },
       ],
     },
   ];
 
-  const handleItemClick = (itemId: string) => {
-    if (itemId === 'logout') {
-      const userId = user?.id;
-      if (userId) {
-        logoutMutation.mutate(userId, {
-          onSuccess: () => {
-            navigate('/');
-          },
-        });
-      }
-    }
+  const handleLogout = () => {
+    const userId = user?.id;
+    if (!userId) return;
+
+    logoutMutation.mutate(userId, {
+      onSuccess: () => {
+        navigate('/');
+      },
+    });
   };
 
   const footerCards = [
@@ -97,6 +89,19 @@ export default function ManagerLayout() {
       icon: <HelpCircle className="h-5 w-5" />,
       variant: 'help' as const,
     },
+    {
+      renderCustom: () => (
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center justify-center gap-2 rounded-xl h-12 px-4 border border-border-light dark:border-border-dark hover:bg-red-50 dark:hover:bg-red-900/10 hover:border-red-200 dark:hover:border-red-900/30 text-text-sub-light dark:text-text-sub-dark hover:text-red-600 transition-all group"
+        >
+          <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm font-bold">Log Out</span>
+        </button>
+      ),
+      title: '',
+      description: '',
+    },
   ];
 
   return (
@@ -108,7 +113,6 @@ export default function ManagerLayout() {
         brandIconBg="bg-primary"
         menuSections={menuSections}
         footerCards={footerCards}
-        onItemClick={handleItemClick}
         isOpen={sidebarOpen}
         onOpenChange={setSidebarOpen}
         iconType="lucide"

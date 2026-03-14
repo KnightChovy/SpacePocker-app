@@ -69,27 +69,19 @@ export default function AdminLayout() {
           path: '/admin/security',
           icon: 'shield',
         },
-        {
-          id: 'logout',
-          label: 'Logout',
-          path: '#',
-          icon: 'logout',
-        },
       ],
     },
   ];
 
-  const handleItemClick = (itemId: string) => {
-    if (itemId === 'logout') {
-      const userId = user?.id;
-      if (userId) {
-        logoutMutation.mutate(userId, {
-          onSuccess: () => {
-            navigate('/');
-          },
-        });
-      }
-    }
+  const handleLogout = () => {
+    const userId = user?.id;
+    if (!userId) return;
+
+    logoutMutation.mutate(userId, {
+      onSuccess: () => {
+        navigate('/');
+      },
+    });
   };
 
   const footerCards = [
@@ -119,6 +111,21 @@ export default function AdminLayout() {
       title: '',
       description: '',
     },
+    {
+      renderCustom: () => (
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center justify-center gap-2 rounded-xl h-12 px-4 border border-border-light dark:border-border-dark hover:bg-red-50 dark:hover:bg-red-900/10 hover:border-red-200 dark:hover:border-red-900/30 text-text-sub-light dark:text-text-sub-dark hover:text-red-600 transition-all group"
+        >
+          <span className="material-symbols-outlined text-[20px] group-hover:-translate-x-1 transition-transform">
+            logout
+          </span>
+          <span className="text-sm font-bold">Log Out</span>
+        </button>
+      ),
+      title: '',
+      description: '',
+    },
   ];
 
   return (
@@ -135,7 +142,6 @@ export default function AdminLayout() {
         menuSections={menuSections}
         footerCards={footerCards}
         activeItemId={currentActiveItem}
-        onItemClick={handleItemClick}
         isOpen={sidebarOpen}
         onOpenChange={setSidebarOpen}
         iconType="material"
