@@ -220,19 +220,31 @@ const ManagerRoomPage = () => {
 
   const handleAddRoomSubmit = async (data: {
     name: string;
+    description: string;
     buildingId: string;
+    roomType: 'MEETING' | 'CLASSROOM' | 'EVENT' | 'OTHER';
     capacity: string;
-    rate: string;
-    isAvailable: boolean;
+    area: string;
+    pricePerHour: string;
+    securityDeposit: string;
+    roomCode: string;
   }) => {
     try {
+      const normalizedRoomCode = data.roomCode?.trim();
       await createRoomMutation.mutateAsync({
         name: data.name,
         buildingId: data.buildingId,
         capacity: parseInt(data.capacity, 10),
-        pricePerHour: parseFloat(data.rate),
-        roomType: 'MEETING',
-        roomCode: generateRoomCode(data.name),
+        description: data.description?.trim() || undefined,
+        pricePerHour: parseFloat(data.pricePerHour),
+        securityDeposit:
+          data.securityDeposit?.trim() === ''
+            ? undefined
+            : parseFloat(data.securityDeposit),
+        roomType: data.roomType,
+        area:
+          data.area?.trim() === '' ? undefined : parseFloat(data.area),
+        roomCode: normalizedRoomCode || generateRoomCode(data.name),
       });
       setIsAddModalOpen(false);
     } catch (error) {
@@ -331,7 +343,7 @@ const ManagerRoomPage = () => {
             </button>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-100 shadow-soft overflow-hidden">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-soft overflow-visible">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
                 <div className="animate-spin size-8 border-3 border-primary border-t-transparent rounded-full" />

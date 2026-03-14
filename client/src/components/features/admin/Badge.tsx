@@ -1,18 +1,19 @@
 import React from 'react';
-import type { Role, Status } from '@/types/admin-types';
 
-interface BadgeProps {
-  type: Role | Status;
-}
+type RoleBadgeType = 'Admin' | 'Host' | 'Guest' | 'ADMIN' | 'MANAGER' | 'USER';
+type StatusBadgeType = 'Active' | 'Idle' | 'Offline' | 'Suspended';
 
-export const RoleBadge: React.FC<BadgeProps> = ({ type }) => {
+export const RoleBadge: React.FC<{ type: RoleBadgeType }> = ({ type }) => {
   const getStyles = () => {
     switch (type) {
       case 'Admin':
+      case 'ADMIN':
         return 'bg-purple-100 text-purple-700 border-purple-200 icon-shield_person';
       case 'Host':
+      case 'MANAGER':
         return 'bg-teal-50 text-teal-600 border-teal-100 icon-apartment';
       case 'Guest':
+      case 'USER':
         return 'bg-gray-100 text-gray-700 border-gray-200 icon-person';
       default:
         return 'bg-gray-100 text-gray-700 border-gray-200 icon-person';
@@ -22,10 +23,13 @@ export const RoleBadge: React.FC<BadgeProps> = ({ type }) => {
   const getIcon = () => {
     switch (type) {
       case 'Admin':
+      case 'ADMIN':
         return 'shield_person';
       case 'Host':
+      case 'MANAGER':
         return 'apartment';
       case 'Guest':
+      case 'USER':
         return 'person';
       default:
         return 'person';
@@ -42,7 +46,7 @@ export const RoleBadge: React.FC<BadgeProps> = ({ type }) => {
   );
 };
 
-export const StatusBadge: React.FC<BadgeProps> = ({ type }) => {
+export const StatusBadge: React.FC<{ type: StatusBadgeType }> = ({ type }) => {
   const getStyles = () => {
     switch (type) {
       case 'Active':

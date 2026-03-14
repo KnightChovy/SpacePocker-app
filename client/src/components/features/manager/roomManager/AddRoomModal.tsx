@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 
 interface RoomFormData {
   name: string;
+  description: string;
   buildingId: string;
+  roomType: 'MEETING' | 'CLASSROOM' | 'EVENT' | 'OTHER';
   capacity: string;
-  rate: string;
-  isAvailable: boolean;
+  area: string;
+  pricePerHour: string;
+  securityDeposit: string;
+  roomCode: string;
 }
 
 interface AddRoomModalProps {
@@ -22,24 +26,48 @@ const AddRoomModal = ({
   onAdd,
   buildings,
 }: AddRoomModalProps) => {
+  const defaultBuildingId = useMemo(() => buildings[0]?.id || '', [buildings]);
+  const initialFormState = useMemo<RoomFormData>(
+    () => ({
+      name: '',
+      description: '',
+      buildingId: defaultBuildingId,
+      roomType: 'MEETING',
+      capacity: '',
+      area: '',
+      pricePerHour: '',
+      securityDeposit: '',
+      roomCode: '',
+    }),
+    [defaultBuildingId],
+  );
   const [formData, setFormData] = useState<RoomFormData>({
     name: '',
-    buildingId: buildings[0]?.id || '',
+    description: '',
+    buildingId: defaultBuildingId,
+    roomType: 'MEETING',
     capacity: '',
-    rate: '',
-    isAvailable: true,
+    area: '',
+    pricePerHour: '',
+    securityDeposit: '',
+    roomCode: '',
   });
 
   useEffect(() => {
-    if (!formData.buildingId && buildings[0]?.id) {
-      setFormData(prev => ({ ...prev, buildingId: buildings[0].id }));
+    if (isOpen) {
+      setFormData(initialFormState);
     }
-  }, [buildings, formData.buildingId]);
+  }, [initialFormState, isOpen]);
+
+  useEffect(() => {
+    if (!formData.buildingId && defaultBuildingId) {
+      setFormData(prev => ({ ...prev, buildingId: defaultBuildingId }));
+    }
+  }, [defaultBuildingId, formData.buildingId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onAdd(formData);
-    onClose();
   };
 
   if (!isOpen) return null;
@@ -92,6 +120,20 @@ const AddRoomModal = ({
               />
             </div>
 
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                Description
+              </label>
+              <textarea
+                className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm min-h-24 resize-none"
+                placeholder="Large conference room with projector"
+                value={formData.description}
+                onChange={e =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
@@ -121,6 +163,34 @@ const AddRoomModal = ({
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none size-4" />
                 </div>
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                  Room Type
+                </label>
+                <div className="relative">
+                  <select
+                    className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 appearance-none cursor-pointer backdrop-blur-sm transition-all duration-200 shadow-sm"
+                    value={formData.roomType}
+                    onChange={e =>
+                      setFormData({
+                        ...formData,
+                        roomType: e.target.value as RoomFormData['roomType'],
+                      })
+                    }
+                    required
+                  >
+                    <option value="MEETING">Meeting</option>
+                    <option value="CLASSROOM">Classroom</option>
+                    <option value="EVENT">Event</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none size-4" />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
                   Capacity
@@ -133,14 +203,32 @@ const AddRoomModal = ({
                   onChange={e =>
                     setFormData({ ...formData, capacity: e.target.value })
                   }
+                  min={1}
                   required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                  Area (m²)
+                </label>
+                <input
+                  className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
+                  placeholder="Optional"
+                  type="number"
+                  step="0.1"
+                  value={formData.area}
+                  onChange={e =>
+                    setFormData({ ...formData, area: e.target.value })
+                  }
+                  min={0}
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                Hourly Rate ($)
+                Price Per Hour ($)
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
@@ -151,35 +239,54 @@ const AddRoomModal = ({
                   placeholder="0.00"
                   type="number"
                   step="0.01"
-                  value={formData.rate}
+                  value={formData.pricePerHour}
                   onChange={e =>
-                    setFormData({ ...formData, rate: e.target.value })
+                    setFormData({ ...formData, pricePerHour: e.target.value })
                   }
+                  min={0}
                   required
                 />
               </div>
             </div>
 
-            <div className="flex items-center gap-3 py-1">
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={formData.isAvailable}
-                    onChange={e =>
-                      setFormData({
-                        ...formData,
-                        isAvailable: e.target.checked,
-                      })
-                    }
-                  />
-                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:shadow-sm after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary transition-colors duration-200"></div>
-                </div>
-                <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">
-                  Available for immediate booking
-                </span>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                Security Deposit ($)
               </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
+                  $
+                </span>
+                <input
+                  className="w-full pl-9 pr-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
+                  placeholder="Optional"
+                  type="number"
+                  step="0.01"
+                  value={formData.securityDeposit}
+                  onChange={e =>
+                    setFormData({
+                      ...formData,
+                      securityDeposit: e.target.value,
+                    })
+                  }
+                  min={0}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                Room Code
+              </label>
+              <input
+                className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
+                placeholder="Leave blank to auto-generate"
+                type="text"
+                value={formData.roomCode}
+                onChange={e =>
+                  setFormData({ ...formData, roomCode: e.target.value })
+                }
+              />
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">

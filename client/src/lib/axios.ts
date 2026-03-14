@@ -12,9 +12,15 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(config => {
   const { accessToken, user } = useAuthStore.getState();
+
+  config.headers = config.headers ?? {};
+
+  if (user?.id) {
+    config.headers['x-client-id'] = user.id;
+  }
+
   if (accessToken) {
-    config.headers.Authorization = `${accessToken}`;
-    config.headers['x-client-id'] = user?.id || '';
+    config.headers.authorization = accessToken;
   }
   return config;
 });
@@ -59,7 +65,8 @@ axiosInstance.interceptors.response.use(
           failedQueue.push({ resolve, reject });
         })
           .then(token => {
-            originalRequest.headers.Authorization = token as string;
+            originalRequest.headers = originalRequest.headers ?? {};
+            originalRequest.headers.authorization = token as string;
             return axiosInstance(originalRequest);
           })
           .catch(err => Promise.reject(err));
@@ -99,7 +106,8 @@ axiosInstance.interceptors.response.use(
         setRefreshToken(response.tokens.refreshToken);
         setUser(response.user);
 
-        originalRequest.headers.Authorization = newAccessToken;
+        originalRequest.headers = originalRequest.headers ?? {};
+        originalRequest.headers.authorization = newAccessToken;
 
         processQueue(null, newAccessToken);
         isRefreshing = false;
