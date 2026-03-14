@@ -1,5 +1,13 @@
 import { useMemo } from 'react';
-import { X, Building2, Users, DollarSign, Ruler, Hash, Tags } from 'lucide-react';
+import {
+  X,
+  Building2,
+  Users,
+  DollarSign,
+  Ruler,
+  Hash,
+  Tags,
+} from 'lucide-react';
 import { useGetRoomById } from '@/hooks/manager/rooms/use-get-room-by-id';
 import type { ApiRoomStatus } from '@/types/room-api';
 
@@ -53,7 +61,9 @@ const RoomDetailModal = ({
   const buildingName = useMemo(() => {
     if (room?.building?.buildingName) return room.building.buildingName;
     if (!room?.buildingId) return '';
-    return buildings.find(b => b.id === room.buildingId)?.name || room.buildingId;
+    return (
+      buildings.find(b => b.id === room.buildingId)?.name || room.buildingId
+    );
   }, [buildings, room?.building?.buildingName, room?.buildingId]);
 
   const amenityNames = useMemo(() => {

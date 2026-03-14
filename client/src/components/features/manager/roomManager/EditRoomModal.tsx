@@ -4,7 +4,11 @@ import { useGetAmenities } from '@/hooks/admin/amenities/use-get-amenities';
 import { useGetRoomById } from '@/hooks/manager/rooms/use-get-room-by-id';
 import { useUpdateRoom } from '@/hooks/manager/rooms/use-update-room';
 import { useSyncRoomAmenities } from '@/hooks/manager/rooms/use-sync-room-amenities';
-import type { ApiRoomStatus, ApiRoomType, UpdateRoomPayload } from '@/types/room-api';
+import type {
+  ApiRoomStatus,
+  ApiRoomType,
+  UpdateRoomPayload,
+} from '@/types/room-api';
 
 interface EditRoomModalProps {
   isOpen: boolean;
@@ -39,7 +43,9 @@ const EditRoomModal = ({
 
   const buildingLabel = useMemo(() => {
     if (!room?.buildingId) return '';
-    return buildings.find(b => b.id === room.buildingId)?.name || room.buildingId;
+    return (
+      buildings.find(b => b.id === room.buildingId)?.name || room.buildingId
+    );
   }, [buildings, room?.buildingId]);
 
   const initialFormState = useMemo<EditRoomFormData | null>(() => {
@@ -57,7 +63,8 @@ const EditRoomModal = ({
       capacity: String(room.capacity ?? ''),
       area: room.area == null ? '' : String(room.area),
       pricePerHour: String(room.pricePerHour ?? ''),
-      securityDeposit: room.securityDeposit == null ? '' : String(room.securityDeposit),
+      securityDeposit:
+        room.securityDeposit == null ? '' : String(room.securityDeposit),
       status: room.status,
       amenityIds: currentAmenityIds,
     };
@@ -330,7 +337,10 @@ const EditRoomModal = ({
                         step="0.1"
                         value={formData.area}
                         onChange={e =>
-                          setFormData(prev => ({ ...prev, area: e.target.value }))
+                          setFormData(prev => ({
+                            ...prev,
+                            area: e.target.value,
+                          }))
                         }
                         min={0}
                       />
