@@ -7,7 +7,18 @@ class UserRepository {
         return prisma_1.prisma.user.findUnique({ where: { email } });
     }
     findById(id) {
-        return prisma_1.prisma.user.findUnique({ where: { id } });
+        return prisma_1.prisma.user.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                phoneNumber: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
     }
     updateRole(id, role) {
         return prisma_1.prisma.user.update({
@@ -25,6 +36,48 @@ class UserRepository {
                 role: "USER",
             },
         });
+    }
+    async findMany(filter, pagination) {
+        const where = {};
+        if (filter.search) {
+            where.OR = [
+                { name: { contains: filter.search, mode: "insensitive" } },
+                { email: { contains: filter.search, mode: "insensitive" } },
+            ];
+        }
+        if (filter.role) {
+            where.role = filter.role;
+        }
+        return prisma_1.prisma.user.findMany({
+            where,
+            skip: pagination.skip,
+            take: pagination.take,
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                phoneNumber: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
+    }
+    async count(filter) {
+        const where = {};
+        if (filter.search) {
+            where.OR = [
+                { name: { contains: filter.search, mode: "insensitive" } },
+                { email: { contains: filter.search, mode: "insensitive" } },
+            ];
+        }
+        if (filter.role) {
+            where.role = filter.role;
+        }
+        return prisma_1.prisma.user.count({ where });
     }
 }
 exports.UserRepository = UserRepository;

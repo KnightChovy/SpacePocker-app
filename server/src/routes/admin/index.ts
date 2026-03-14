@@ -6,11 +6,10 @@ import "../../docs/admin.doc";
 
 const router = express.Router();
 
-router.use(authentication);
-router.use(authorizeRoles("ADMIN"));
-
 router.patch(
   "/admin/users/promote-manager/:userId",
+  authentication,
+  authorizeRoles("ADMIN"),
   asyncHandler(adminController.promoteUserToManager),
 );
 

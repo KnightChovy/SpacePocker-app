@@ -5,29 +5,38 @@ import { authentication, authorizeRoles } from "../../auth/authUtils";
 
 const router = express.Router();
 
-router.use(authentication);
-
 router.post(
   "/booking-requests",
+  authentication,
   asyncHandler(bookingRequestController.createBookingRequest),
 );
 router.get(
+  "/my-booking-requests",
+  authentication,
+  authorizeRoles("USER"),
+  asyncHandler(bookingRequestController.getMyBookingRequests),
+);
+router.get(
   "/booking-requests",
+  authentication,
   authorizeRoles("MANAGER", "ADMIN"),
   asyncHandler(bookingRequestController.getBookingRequestsForManager),
 );
 router.patch(
   "/booking-requests/approve/:id",
+  authentication,
   authorizeRoles("MANAGER", "ADMIN"),
   asyncHandler(bookingRequestController.approveBookingRequest),
 );
 router.patch(
   "/booking-requests/reject/:id",
+  authentication,
   authorizeRoles("MANAGER", "ADMIN"),
   asyncHandler(bookingRequestController.rejectBookingRequest),
 );
 router.get(
   "/booking-requests/:id",
+  authentication,
   asyncHandler(bookingRequestController.getBookingRequestById),
 );
 

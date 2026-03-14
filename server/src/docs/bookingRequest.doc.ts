@@ -35,6 +35,30 @@
  *           type: string
  *           description: Purpose of the booking (optional)
  *           example: "Team meeting for Q1 planning"
+ *         amenityIds:
+ *           type: array
+ *           description: Selected amenity IDs available in the room
+ *           items:
+ *             type: string
+ *             format: uuid
+ *           example: ["amenity-1", "amenity-2"]
+ *         services:
+ *           type: array
+ *           description: Selected services and quantities available in the room
+ *           items:
+ *             type: object
+ *             required:
+ *               - serviceId
+ *               - quantity
+ *             properties:
+ *               serviceId:
+ *                 type: string
+ *                 format: uuid
+ *                 example: "service-1"
+ *               quantity:
+ *                 type: integer
+ *                 minimum: 1
+ *                 example: 2
  *
  *     BookingRequestRoom:
  *       type: object
@@ -61,6 +85,28 @@
  *         email:
  *           type: string
  *           example: "dhphuc@gmail.com"
+ *
+ *     BookingRequestSelectedAmenity:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         name:
+ *           type: string
+ *
+ *     BookingRequestSelectedService:
+ *       type: object
+ *       properties:
+ *         serviceId:
+ *           type: string
+ *         name:
+ *           type: string
+ *         price:
+ *           type: number
+ *         quantity:
+ *           type: integer
+ *         lineTotal:
+ *           type: number
  *
  *     BookingRequest:
  *       type: object
@@ -104,6 +150,17 @@
  *           $ref: "#/components/schemas/BookingRequestRoom"
  *         user:
  *           $ref: "#/components/schemas/BookingRequestUser"
+ *         amenities:
+ *           type: array
+ *           items:
+ *             $ref: "#/components/schemas/BookingRequestSelectedAmenity"
+ *         services:
+ *           type: array
+ *           items:
+ *             $ref: "#/components/schemas/BookingRequestSelectedService"
+ *         totalCost:
+ *           type: number
+ *           example: 230.5
  *
  *     BookingRequestResponse:
  *       type: object
@@ -200,6 +257,8 @@
  *       - startTime must be earlier than endTime
  *       - Booking time must not be in the past
  *       - Room must exist and be available
+ *       - Selected amenities must belong to the room
+ *       - Selected services must be available for the room and quantity >= 1
  *
  *       **Conflict detection:**
  *       - Reject if there is an APPROVED booking with overlapping time
@@ -235,7 +294,7 @@
  *             schema:
  *               $ref: "#/components/schemas/BookingRequestResponse"
  *       400:
- *         description: Invalid request data
+ *         description: Invalid request data or invalid amenities/services selection
  *         content:
  *           application/json:
  *             schema:
@@ -447,4 +506,97 @@
  *         description: Booking request or room not found
  *       409:
  *         description: Conflict (already processed)
+ */
+
+/**
+ * @openapi
+ * /v1/api/my-booking-requests:
+ *   get:
+ *     summary: Get my booking requests
+ *     description: |
+ *       Allows a user to view all booking requests they have created.
+ *       Returns booking requests with room and building information.
+ *       Optional status filter.
+ *     tags: [Booking Request]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID (UUID)
+ *       - in: header
+ *         name: authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Access token
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [PENDING, APPROVED, REJECTED, CANCELLED, COMPLETED]
+ *         description: Filter by booking status (optional)
+ *         example: "PENDING"
+ *     responses:
+ *       200:
+ *         description: Booking requests retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Get my booking requests successfully"
+ *                 metadata:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       userId:
+ *                         type: string
+ *                         format: uuid
+ *                       roomId:
+ *                         type: string
+ *                         format: uuid
+ *                       startTime:
+ *                         type: string
+ *                         format: date-time
+ *                       endTime:
+ *                         type: string
+ *                         format: date-time
+ *                       purpose:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                         enum: [PENDING, APPROVED, REJECTED, CANCELLED, COMPLETED]
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       room:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           name:
+ *                             type: string
+ *                           roomCode:
+ *                             type: string
+ *                           building:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                               buildingName:
+ *                                 type: string
+ *                               campus:
+ *                                 type: string
+ *       401:
+ *         description: Unauthorized
  */

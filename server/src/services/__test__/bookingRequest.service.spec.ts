@@ -8,6 +8,48 @@ import {
   ConflictRequestError,
 } from "../../core/error.response";
 
+jest.mock("../../lib/prisma", () => ({
+  prisma: {
+    roomAmenity: {
+      findMany: jest.fn(),
+    },
+    roomServiceCategory: {
+      findMany: jest.fn(),
+    },
+    service: {
+      findMany: jest.fn(),
+    },
+    amenity: {
+      findMany: jest.fn(),
+    },
+    bookingRequest: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
+    manager: {
+      findFirst: jest.fn(),
+    },
+    $transaction: jest.fn(),
+  },
+}));
+
+import { prisma } from "../../lib/prisma";
+
+const prismaMock = prisma as unknown as {
+  roomAmenity: { findMany: jest.Mock };
+  roomServiceCategory: { findMany: jest.Mock };
+  service: { findMany: jest.Mock };
+  amenity: { findMany: jest.Mock };
+  bookingRequest: {
+    findMany: jest.Mock;
+    findUnique: jest.Mock;
+    update: jest.Mock;
+  };
+  manager: { findFirst: jest.Mock };
+  $transaction: jest.Mock;
+};
+
 describe("BookingRequestService", () => {
   let bookingRequestService: BookingRequestService;
   let mockBookingRequestRepo: jest.Mocked<IBookingRequestRepository>;
@@ -86,6 +128,10 @@ describe("BookingRequestService", () => {
       mockRoomRepo,
       mockBookingRepo,
     );
+    prismaMock.roomAmenity.findMany.mockResolvedValue([]);
+    prismaMock.roomServiceCategory.findMany.mockResolvedValue([]);
+    prismaMock.service.findMany.mockResolvedValue([]);
+    prismaMock.amenity.findMany.mockResolvedValue([]);
     jest.clearAllMocks();
   });
 
@@ -99,6 +145,38 @@ describe("BookingRequestService", () => {
     };
 
     describe("Validation", () => {
+      it("should throw BadRequestError if selected amenity does not belong to room", async () => {
+        mockRoomRepo.findById.mockResolvedValue(mockRoom);
+        prismaMock.roomAmenity.findMany.mockResolvedValue([]);
+
+        await expect(
+          bookingRequestService.createBookingRequest({
+            ...validData,
+            amenityIds: ["amenity-1"],
+          }),
+        ).rejects.toThrow(
+          "One or more selected amenities are not available for this room",
+        );
+      });
+
+      it("should throw BadRequestError if service quantity is less than 1", async () => {
+        mockRoomRepo.findById.mockResolvedValue(mockRoom);
+        prismaMock.roomServiceCategory.findMany.mockResolvedValue([
+          {
+            category: {
+              services: [{ id: "service-1" }],
+            },
+          },
+        ]);
+
+        await expect(
+          bookingRequestService.createBookingRequest({
+            ...validData,
+            services: [{ serviceId: "service-1", quantity: 0 }],
+          }),
+        ).rejects.toThrow("Service quantity must be at least 1");
+      });
+
       it("should throw BadRequestError if userId is missing", async () => {
         await expect(
           bookingRequestService.createBookingRequest({
@@ -349,7 +427,12 @@ describe("BookingRequestService", () => {
         const result =
           await bookingRequestService.createBookingRequest(validData);
 
-        expect(result).toEqual(mockBookingRequest);
+        expect(result).toEqual({
+          ...mockBookingRequest,
+          amenities: [],
+          services: [],
+          totalCost: 100000,
+        });
         expect(mockBookingRequestRepo.create).toHaveBeenCalledWith({
           userId: validData.userId,
           roomId: validData.roomId,
@@ -357,6 +440,51 @@ describe("BookingRequestService", () => {
           endTime: expect.any(Date),
           purpose: validData.purpose,
         });
+      });
+
+      it("should create booking request with amenities/services and calculate totalCost", async () => {
+        mockRoomRepo.findById.mockResolvedValue(mockRoom);
+        mockBookingRepo.findOverlappingApprovedBookings.mockResolvedValue([]);
+        mockBookingRequestRepo.findOverlappingPendingRequests.mockResolvedValue(
+          [],
+        );
+        mockBookingRequestRepo.create.mockResolvedValue(mockBookingRequest);
+        prismaMock.roomAmenity.findMany.mockResolvedValue([
+          { roomId: "r-001", amenityId: "amenity-1" },
+        ]);
+        prismaMock.roomServiceCategory.findMany.mockResolvedValue([
+          {
+            category: {
+              services: [{ id: "service-1" }],
+            },
+          },
+        ]);
+        prismaMock.service.findMany.mockResolvedValue([
+          { id: "service-1", name: "Projector", price: 15000 },
+        ]);
+        prismaMock.amenity.findMany.mockResolvedValue([
+          { id: "amenity-1", name: "Whiteboard" },
+        ]);
+
+        const result = await bookingRequestService.createBookingRequest({
+          ...validData,
+          amenityIds: ["amenity-1"],
+          services: [{ serviceId: "service-1", quantity: 2 }],
+        });
+
+        expect(result.totalCost).toBe(130000);
+        expect(result.amenities).toEqual([
+          { id: "amenity-1", name: "Whiteboard" },
+        ]);
+        expect(result.services).toEqual([
+          {
+            serviceId: "service-1",
+            name: "Projector",
+            price: 15000,
+            quantity: 2,
+            lineTotal: 30000,
+          },
+        ]);
       });
 
       it("should create booking request without purpose", async () => {
@@ -376,6 +504,7 @@ describe("BookingRequestService", () => {
           await bookingRequestService.createBookingRequest(dataWithoutPurpose);
 
         expect(result.purpose).toBeNull();
+        expect(result.totalCost).toBe(100000);
         expect(mockBookingRequestRepo.create).toHaveBeenCalledWith({
           userId: dataWithoutPurpose.userId,
           roomId: dataWithoutPurpose.roomId,

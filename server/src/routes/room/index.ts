@@ -1,16 +1,31 @@
-import express from 'express';
-import { asyncHandler } from '../../helper/asyncHandler';
-import { roomController } from '../../container/room.container';
-import { authentication } from '../../auth/authUtils';
+import express from "express";
+import { asyncHandler } from "../../helper/asyncHandler";
+import { roomController } from "../../container/room.container";
+import { authentication } from "../../auth/authUtils";
 
 const roomRouter = express.Router();
 
-roomRouter.get('/rooms', asyncHandler(roomController.getAllRooms));
-roomRouter.get('/rooms/:id', asyncHandler(roomController.getRoomById));
+roomRouter.get("/rooms", asyncHandler(roomController.getAllRooms));
+roomRouter.get("/rooms/:id", asyncHandler(roomController.getRoomById));
+roomRouter.get(
+  "/rooms/:id/amenities-services",
+  asyncHandler(roomController.getRoomAmenitiesAndServices),
+);
 
-roomRouter.use(authentication);
-roomRouter.post('/rooms', asyncHandler(roomController.createRoom));
-roomRouter.patch('/rooms/:id', asyncHandler(roomController.updateRoom));
-roomRouter.delete('/rooms/:id', asyncHandler(roomController.deleteRoom));
+roomRouter.post(
+  "/rooms",
+  authentication,
+  asyncHandler(roomController.createRoom),
+);
+roomRouter.patch(
+  "/rooms/:id",
+  authentication,
+  asyncHandler(roomController.updateRoom),
+);
+roomRouter.delete(
+  "/rooms/:id",
+  authentication,
+  asyncHandler(roomController.deleteRoom),
+);
 
 export default roomRouter;

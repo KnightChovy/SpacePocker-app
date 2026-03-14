@@ -1,4 +1,4 @@
-import { Room, RoomType, RoomStatus } from '@prisma/client';
+import { Room, RoomType, RoomStatus } from "@prisma/client";
 
 export interface IRoomRepository {
   findById(roomId: string): Promise<Room | null>;
