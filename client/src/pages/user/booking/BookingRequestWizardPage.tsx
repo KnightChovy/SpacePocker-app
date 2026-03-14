@@ -11,9 +11,7 @@ import {
   Pencil,
 } from 'lucide-react';
 
-import {
-  useGetRoomAmenitiesServices,
-} from '@/hooks/user/rooms/use-get-room-amenities-services';
+import { useGetRoomAmenitiesServices } from '@/hooks/user/rooms/use-get-room-amenities-services';
 import { useGetRoomById } from '@/hooks/user/rooms/use-get-room-by-id';
 import { useGetRooms } from '@/hooks/user/rooms/use-get-rooms';
 import { useGetBuildingById } from '@/hooks/user/buildings/use-get-building-by-id';
