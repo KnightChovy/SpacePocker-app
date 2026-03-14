@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import AppSidebar from './AppSidebar';
 import {
   LayoutDashboard,
@@ -10,10 +10,16 @@ import {
   HelpCircle,
   Zap,
   UserCircle,
+  LogOut,
 } from 'lucide-react';
+import { useLogout } from '@/hooks/auth/use-logout';
+import { useAuthStore } from '@/stores/auth.store';
 
 export default function ManagerLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+  const logoutMutation = useLogout();
+  const user = useAuthStore(state => state.user);
 
   const menuSections = [
     {
@@ -54,9 +60,28 @@ export default function ManagerLayout() {
           path: '/manager/profile',
           icon: <UserCircle className="h-5 w-5" />,
         },
+        {
+          id: 'logout',
+          label: 'Logout',
+          path: '#',
+          icon: <LogOut className="h-5 w-5" />,
+        },
       ],
     },
   ];
+
+  const handleItemClick = (itemId: string) => {
+    if (itemId === 'logout') {
+      const userId = user?.id;
+      if (userId) {
+        logoutMutation.mutate(userId, {
+          onSuccess: () => {
+            navigate('/');
+          },
+        });
+      }
+    }
+  };
 
   const footerCards = [
     {
@@ -83,6 +108,7 @@ export default function ManagerLayout() {
         brandIconBg="bg-primary"
         menuSections={menuSections}
         footerCards={footerCards}
+        onItemClick={handleItemClick}
         isOpen={sidebarOpen}
         onOpenChange={setSidebarOpen}
         iconType="lucide"

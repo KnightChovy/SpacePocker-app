@@ -1,10 +1,15 @@
 import { useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import AppSidebar from './AppSidebar';
+import { useLogout } from '@/hooks/auth/use-logout';
+import { useAuthStore } from '@/stores/auth.store';
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const logoutMutation = useLogout();
+  const user = useAuthStore(state => state.user);
 
   const getActiveItemFromPath = () => {
     const path = location.pathname;
@@ -64,9 +69,28 @@ export default function AdminLayout() {
           path: '/admin/security',
           icon: 'shield',
         },
+        {
+          id: 'logout',
+          label: 'Logout',
+          path: '#',
+          icon: 'logout',
+        },
       ],
     },
   ];
+
+  const handleItemClick = (itemId: string) => {
+    if (itemId === 'logout') {
+      const userId = user?.id;
+      if (userId) {
+        logoutMutation.mutate(userId, {
+          onSuccess: () => {
+            navigate('/');
+          },
+        });
+      }
+    }
+  };
 
   const footerCards = [
     {
@@ -111,6 +135,7 @@ export default function AdminLayout() {
         menuSections={menuSections}
         footerCards={footerCards}
         activeItemId={currentActiveItem}
+        onItemClick={handleItemClick}
         isOpen={sidebarOpen}
         onOpenChange={setSidebarOpen}
         iconType="material"
