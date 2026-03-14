@@ -17,6 +17,7 @@ import type { ApiRoom, ApiRoomStatus } from '@/types/room-api';
 import { useGetRooms } from '@/hooks/manager/rooms/use-get-rooms';
 import { useCreateRoom } from '@/hooks/manager/rooms/use-create-room';
 import { useDeleteRoom } from '@/hooks/manager/rooms/use-delete-room';
+import { useAttachRoomAmenities } from '@/hooks/manager/rooms/use-attach-room-amenities';
 import { useGetBuildings } from '@/hooks/manager/buildings/use-get-buildings';
 import AppHeader from '@/components/layouts/AppHeader';
 import AddRoomModal from '@/components/features/manager/roomManager/AddRoomModal';
@@ -202,6 +203,7 @@ const ManagerRoomPage = () => {
 
   const createRoomMutation = useCreateRoom();
   const deleteRoomMutation = useDeleteRoom();
+  const attachRoomAmenitiesMutation = useAttachRoomAmenities();
 
   const generateRoomCode = (name: string) => {
     const slug = name
@@ -228,10 +230,11 @@ const ManagerRoomPage = () => {
     pricePerHour: string;
     securityDeposit: string;
     roomCode: string;
+    amenityIds: string[];
   }) => {
     try {
       const normalizedRoomCode = data.roomCode?.trim();
-      await createRoomMutation.mutateAsync({
+      const createdRoom = await createRoomMutation.mutateAsync({
         name: data.name,
         buildingId: data.buildingId,
         capacity: parseInt(data.capacity, 10),
@@ -245,6 +248,20 @@ const ManagerRoomPage = () => {
         area: data.area?.trim() === '' ? undefined : parseFloat(data.area),
         roomCode: normalizedRoomCode || generateRoomCode(data.name),
       });
+
+      const amenityIds = data.amenityIds ?? [];
+      if (amenityIds.length > 0) {
+        try {
+          await attachRoomAmenitiesMutation.mutateAsync({
+            roomId: createdRoom.id,
+            amenityIds,
+          });
+        } catch (attachError) {
+          // The hook already reports errors (toast + console).
+          console.error('Failed to attach amenities to room:', attachError);
+        }
+      }
+
       setIsAddModalOpen(false);
     } catch (error) {
       console.error('Failed to create room:', error);
