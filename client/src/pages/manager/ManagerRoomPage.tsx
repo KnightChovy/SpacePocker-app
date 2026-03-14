@@ -21,6 +21,9 @@ import { useAttachRoomAmenities } from '@/hooks/manager/rooms/use-attach-room-am
 import { useGetBuildings } from '@/hooks/manager/buildings/use-get-buildings';
 import AppHeader from '@/components/layouts/AppHeader';
 import AddRoomModal from '@/components/features/manager/roomManager/AddRoomModal';
+import RoomDetailModal from '@/components/features/manager/roomManager/RoomDetailModal';
+import EditRoomModal from '@/components/features/manager/roomManager/EditRoomModal';
+import DeleteRoomConfirmModal from '@/components/features/manager/roomManager/DeleteRoomConfirmModal';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
 
@@ -181,6 +184,9 @@ const ManagerRoomPage = () => {
     'all'
   );
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [viewRoomId, setViewRoomId] = useState<string | null>(null);
+  const [editRoomId, setEditRoomId] = useState<string | null>(null);
+  const [deleteRoomId, setDeleteRoomId] = useState<string | null>(null);
 
   const roomQueryParams = useMemo(
     () => ({
@@ -269,21 +275,15 @@ const ManagerRoomPage = () => {
   };
 
   const handleEditRoom = (room: ApiRoom) => {
-    console.log('Edit room:', room);
+    setEditRoomId(room.id);
   };
 
   const handleDeleteRoom = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this room?')) {
-      try {
-        await deleteRoomMutation.mutateAsync(id);
-      } catch (error) {
-        console.error('Failed to delete room:', error);
-      }
-    }
+    setDeleteRoomId(id);
   };
 
   const handleViewRoom = (room: ApiRoom) => {
-    console.log('View room:', room);
+    setViewRoomId(room.id);
   };
 
   return (
@@ -422,6 +422,40 @@ const ManagerRoomPage = () => {
           onClose={() => setIsAddModalOpen(false)}
           onAdd={handleAddRoomSubmit}
           buildings={buildings}
+        />
+
+        <RoomDetailModal
+          isOpen={Boolean(viewRoomId)}
+          onClose={() => setViewRoomId(null)}
+          roomId={viewRoomId}
+          buildings={buildings}
+        />
+
+        <EditRoomModal
+          isOpen={Boolean(editRoomId)}
+          onClose={() => setEditRoomId(null)}
+          roomId={editRoomId}
+          buildings={buildings}
+        />
+
+        <DeleteRoomConfirmModal
+          isOpen={Boolean(deleteRoomId)}
+          onClose={() => setDeleteRoomId(null)}
+          isLoading={deleteRoomMutation.isPending}
+          roomName={
+            deleteRoomId
+              ? rooms.find(r => r.id === deleteRoomId)?.name
+              : undefined
+          }
+          onConfirm={async () => {
+            if (!deleteRoomId) return;
+            try {
+              await deleteRoomMutation.mutateAsync(deleteRoomId);
+              setDeleteRoomId(null);
+            } catch (error) {
+              console.error('Failed to delete room:', error);
+            }
+          }}
         />
       </div>
     </>
