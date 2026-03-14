@@ -8,6 +8,8 @@ import feedbackRoutes from "./feedback";
 import amenityRoutes from "./amenity";
 import userRoutes from "./user";
 import roomRouter from "./room";
+import serviceRoutes from "./service";
+import serviceCategoryRoutes from "./serviceCategory";
 
 router.use("/v1/api", accessRoutes);
 router.use("/v1/api", bookingRequestRoutes);
@@ -17,4 +19,6 @@ router.use("/v1/api", adminRoutes);
 router.use("/v1/api", feedbackRoutes);
 router.use("/v1/api", amenityRoutes);
 router.use("/v1/api", userRoutes);
+router.use("/v1/api", serviceRoutes);
+router.use("/v1/api", serviceCategoryRoutes);
 export default router;
