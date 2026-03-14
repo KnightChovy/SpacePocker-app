@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 
 interface RoomFormData {
   name: string;
-  building: string;
+  buildingId: string;
   capacity: string;
   rate: string;
   isAvailable: boolean;
@@ -13,16 +13,28 @@ interface AddRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (data: RoomFormData) => void;
+  buildings: Array<{ id: string; name: string }>;
 }
 
-const AddRoomModal = ({ isOpen, onClose, onAdd }: AddRoomModalProps) => {
+const AddRoomModal = ({
+  isOpen,
+  onClose,
+  onAdd,
+  buildings,
+}: AddRoomModalProps) => {
   const [formData, setFormData] = useState<RoomFormData>({
     name: '',
-    building: 'Science Building',
+    buildingId: buildings[0]?.id || '',
     capacity: '',
     rate: '',
     isAvailable: true,
   });
+
+  useEffect(() => {
+    if (!formData.buildingId && buildings[0]?.id) {
+      setFormData(prev => ({ ...prev, buildingId: buildings[0].id }));
+    }
+  }, [buildings, formData.buildingId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,14 +100,23 @@ const AddRoomModal = ({ isOpen, onClose, onAdd }: AddRoomModalProps) => {
                 <div className="relative">
                   <select
                     className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 appearance-none cursor-pointer backdrop-blur-sm transition-all duration-200 shadow-sm"
-                    value={formData.building}
+                    value={formData.buildingId}
                     onChange={e =>
-                      setFormData({ ...formData, building: e.target.value })
+                      setFormData({ ...formData, buildingId: e.target.value })
                     }
+                    required
                   >
-                    <option>Science Building</option>
-                    <option>Main Hall</option>
-                    <option>Arts Center</option>
+                    {buildings.length === 0 ? (
+                      <option value="" disabled>
+                        No buildings
+                      </option>
+                    ) : (
+                      buildings.map(b => (
+                        <option key={b.id} value={b.id}>
+                          {b.name}
+                        </option>
+                      ))
+                    )}
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none size-4" />
                 </div>

@@ -16,10 +16,20 @@ const CAMPUS_OPTIONS = [
   'West Campus',
 ];
 
-const INITIAL: CreateBuildingPayload = {
+type CreateBuildingFormState = {
+  buildingName: string;
+  address: string;
+  campus: string;
+  latitude: string;
+  longitude: string;
+};
+
+const INITIAL: CreateBuildingFormState = {
   buildingName: '',
   address: '',
   campus: '',
+  latitude: '',
+  longitude: '',
 };
 
 const AddBuildingModal = ({
@@ -27,7 +37,7 @@ const AddBuildingModal = ({
   onClose,
   onAdd,
 }: AddBuildingModalProps) => {
-  const [form, setForm] = useState<CreateBuildingPayload>(INITIAL);
+  const [form, setForm] = useState<CreateBuildingFormState>(INITIAL);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,7 +56,7 @@ const AddBuildingModal = ({
     };
   }, [isOpen]);
 
-  const set = (field: keyof CreateBuildingPayload, value: string) =>
+  const set = (field: keyof CreateBuildingFormState, value: string) =>
     setForm(prev => ({ ...prev, [field]: value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,7 +64,17 @@ const AddBuildingModal = ({
     setError(null);
     try {
       setIsSubmitting(true);
-      await onAdd(form);
+      const latitude =
+        form.latitude.trim() === '' ? undefined : Number(form.latitude);
+      const longitude =
+        form.longitude.trim() === '' ? undefined : Number(form.longitude);
+      await onAdd({
+        buildingName: form.buildingName,
+        address: form.address,
+        campus: form.campus,
+        latitude,
+        longitude,
+      } satisfies CreateBuildingPayload);
       setForm(INITIAL);
       onClose();
     } catch (err: unknown) {
@@ -155,6 +175,38 @@ const AddBuildingModal = ({
                   ))}
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none size-4" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-text-gray mb-2">
+                  Latitude
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  name="latitude"
+                  value={form.latitude}
+                  onChange={e => set('latitude', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  placeholder="e.g. 10.758"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text-gray mb-2">
+                  Longitude
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  name="longitude"
+                  value={form.longitude}
+                  onChange={e => set('longitude', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  placeholder="e.g. 106.675"
+                />
               </div>
             </div>
 

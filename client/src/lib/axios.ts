@@ -41,13 +41,25 @@ axiosInstance.interceptors.response.use(
   async error => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 403 && !originalRequest._retry) {
+    const status = error.response?.status;
+    const requestUrl: string = originalRequest?.url || '';
+    const isAuthEndpoint =
+      requestUrl.includes('/login') ||
+      requestUrl.includes('/signup') ||
+      requestUrl.includes('/refresh-token') ||
+      requestUrl.includes('/logout');
+
+    if (
+      (status === 401 || status === 403) &&
+      !isAuthEndpoint &&
+      !originalRequest._retry
+    ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then(token => {
-            originalRequest.headers.Authorization = token;
+            originalRequest.headers.Authorization = token as string;
             return axiosInstance(originalRequest);
           })
           .catch(err => Promise.reject(err));

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import {
   Plus,
@@ -13,31 +13,37 @@ import {
   Bell,
   MessageSquare,
 } from 'lucide-react';
-import type { ManagerRoom } from '@/types/types';
-import { roomService } from '@/services/roomService';
+import type { ApiRoom, ApiRoomStatus } from '@/types/room-api';
+import { useGetRooms } from '@/hooks/manager/rooms/use-get-rooms';
+import { useCreateRoom } from '@/hooks/manager/rooms/use-create-room';
+import { useDeleteRoom } from '@/hooks/manager/rooms/use-delete-room';
+import { useGetBuildings } from '@/hooks/manager/buildings/use-get-buildings';
 import AppHeader from '@/components/layouts/AppHeader';
 import AddRoomModal from '@/components/features/manager/roomManager/AddRoomModal';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
 
-const StatusBadge = ({ status }: { status: ManagerRoom['status'] }) => {
+const StatusBadge = ({ status }: { status: ApiRoomStatus }) => {
   const config: Record<string, { bg: string; text: string; label: string }> = {
-    available: {
+    AVAILABLE: {
       bg: 'bg-emerald-50',
       text: 'text-emerald-600',
       label: 'Available',
     },
-    occupied: { bg: 'bg-blue-50', text: 'text-blue-600', label: 'Occupied' },
-    maintenance: {
+    PROCESS: { bg: 'bg-blue-50', text: 'text-blue-600', label: 'Processing' },
+    MAINTAIN: {
       bg: 'bg-amber-50',
       text: 'text-amber-600',
       label: 'Maintenance',
     },
-    active: { bg: 'bg-green-50', text: 'text-green-600', label: 'Active' },
-    booked: { bg: 'bg-purple-50', text: 'text-purple-600', label: 'Booked' },
+    UNAVAILABLE: {
+      bg: 'bg-slate-100',
+      text: 'text-slate-600',
+      label: 'Unavailable',
+    },
   };
 
-  const statusConfig = config[status] || config['available'];
+  const statusConfig = config[status] || config['AVAILABLE'];
   const { bg, text, label } = statusConfig;
 
   return (
@@ -55,30 +61,34 @@ const RoomRow = ({
   onDelete,
   onView,
 }: {
-  room: ManagerRoom;
-  onEdit: (room: ManagerRoom) => void;
+  room: ApiRoom;
+  onEdit: (room: ApiRoom) => void;
   onDelete: (id: string) => void;
-  onView: (room: ManagerRoom) => void;
+  onView: (room: ApiRoom) => void;
 }) => {
   const [showActions, setShowActions] = useState(false);
+  const imageUrl =
+    room.images?.[0] ||
+    'https://images.unsplash.com/photo-1497366216548-37526070297c?w=300';
+  const buildingName = room.building?.buildingName || room.buildingId;
 
   return (
     <tr className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
       <td className="py-4 px-4">
         <div className="flex items-center gap-3">
           <img
-            src={room.imageUrl}
+            src={imageUrl}
             alt={room.name}
             className="size-12 rounded-lg object-cover"
           />
           <div>
             <p className="font-semibold text-text-dark">{room.name}</p>
-            <p className="text-xs text-text-gray">{room.building}</p>
+            <p className="text-xs text-text-gray">{buildingName}</p>
           </div>
         </div>
       </td>
       <td className="py-4 px-4">
-        <span className="text-sm text-text-dark">{room.type}</span>
+        <span className="text-sm text-text-dark">{room.roomType}</span>
       </td>
       <td className="py-4 px-4">
         <span className="text-sm text-text-dark">{room.capacity} people</span>
@@ -164,35 +174,45 @@ const ManagerRoomPage = () => {
     },
   ];
 
-  const [rooms, setRooms] = useState<ManagerRoom[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<ApiRoomStatus | 'all'>(
+    'all'
+  );
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const fetchRooms = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const data = await roomService.getAllRooms({
-        search: searchQuery || undefined,
-        building: selectedBuilding !== 'all' ? selectedBuilding : undefined,
-        status:
-          selectedStatus !== 'all'
-            ? (selectedStatus as ManagerRoom['status'])
-            : undefined,
-      });
-      setRooms(data);
-    } catch (error) {
-      console.error('Failed to fetch rooms:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [searchQuery, selectedBuilding, selectedStatus]);
+  const roomQueryParams = useMemo(
+    () => ({
+      search: searchQuery || undefined,
+      buildingId: selectedBuildingId !== 'all' ? selectedBuildingId : undefined,
+      status: selectedStatus !== 'all' ? selectedStatus : undefined,
+      limit: 100,
+      offset: 0,
+    }),
+    [searchQuery, selectedBuildingId, selectedStatus]
+  );
 
-  useEffect(() => {
-    fetchRooms();
-  }, [fetchRooms]);
+  const { data: roomList, isLoading } = useGetRooms(roomQueryParams);
+  const rooms = roomList?.rooms ?? [];
+
+  const { data: buildingList } = useGetBuildings({ limit: 100, offset: 0 });
+  const buildings =
+    buildingList?.buildings?.map(b => ({ id: b.id, name: b.buildingName })) ??
+    [];
+
+  const createRoomMutation = useCreateRoom();
+  const deleteRoomMutation = useDeleteRoom();
+
+  const generateRoomCode = (name: string) => {
+    const slug = name
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+      .slice(0, 20);
+    const rand = Math.floor(1000 + Math.random() * 9000);
+    return `${slug || 'ROOM'}-${rand}`;
+  };
 
   const handleAddRoom = () => {
     setIsAddModalOpen(true);
@@ -200,60 +220,43 @@ const ManagerRoomPage = () => {
 
   const handleAddRoomSubmit = async (data: {
     name: string;
-    building: string;
+    buildingId: string;
     capacity: string;
     rate: string;
     isAvailable: boolean;
   }) => {
     try {
-      const newRoom = await roomService.createRoom({
+      await createRoomMutation.mutateAsync({
         name: data.name,
-        building: data.building,
-        type: 'Meeting Room',
-        capacity: parseInt(data.capacity),
+        buildingId: data.buildingId,
+        capacity: parseInt(data.capacity, 10),
         pricePerHour: parseFloat(data.rate),
-        status: data.isAvailable ? 'available' : 'maintenance',
-        amenities: [],
+        roomType: 'MEETING',
+        roomCode: generateRoomCode(data.name),
       });
-      setRooms(prev => [...prev, newRoom]);
       setIsAddModalOpen(false);
     } catch (error) {
       console.error('Failed to create room:', error);
     }
   };
 
-  const handleEditRoom = (room: ManagerRoom) => {
+  const handleEditRoom = (room: ApiRoom) => {
     console.log('Edit room:', room);
   };
 
   const handleDeleteRoom = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this room?')) {
       try {
-        await roomService.deleteRoom(id);
-        setRooms(prev => prev.filter(room => room.id !== id));
+        await deleteRoomMutation.mutateAsync(id);
       } catch (error) {
         console.error('Failed to delete room:', error);
       }
     }
   };
 
-  const handleViewRoom = (room: ManagerRoom) => {
+  const handleViewRoom = (room: ApiRoom) => {
     console.log('View room:', room);
   };
-
-  const filteredRooms = rooms.filter(room => {
-    const matchesSearch =
-      room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      room.building.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesBuilding =
-      selectedBuilding === 'all' || room.building === selectedBuilding;
-    const matchesStatus =
-      selectedStatus === 'all' || room.status === selectedStatus;
-
-    return matchesSearch && matchesBuilding && matchesStatus;
-  });
-
-  const buildings = [...new Set(rooms.map(room => room.building))];
 
   return (
     <>
@@ -285,14 +288,14 @@ const ManagerRoomPage = () => {
 
             <div className="relative">
               <select
-                value={selectedBuilding}
-                onChange={e => setSelectedBuilding(e.target.value)}
+                value={selectedBuildingId}
+                onChange={e => setSelectedBuildingId(e.target.value)}
                 className="appearance-none pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
               >
                 <option value="all">All Buildings</option>
                 {buildings.map(building => (
-                  <option key={building} value={building}>
-                    {building}
+                  <option key={building.id} value={building.id}>
+                    {building.name}
                   </option>
                 ))}
               </select>
@@ -303,13 +306,16 @@ const ManagerRoomPage = () => {
             <div className="relative">
               <select
                 value={selectedStatus}
-                onChange={e => setSelectedStatus(e.target.value)}
+                onChange={e =>
+                  setSelectedStatus(e.target.value as ApiRoomStatus | 'all')
+                }
                 className="appearance-none pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
               >
                 <option value="all">All Status</option>
-                <option value="available">Available</option>
-                <option value="occupied">Occupied</option>
-                <option value="maintenance">Maintenance</option>
+                <option value="AVAILABLE">Available</option>
+                <option value="UNAVAILABLE">Unavailable</option>
+                <option value="PROCESS">Processing</option>
+                <option value="MAINTAIN">Maintenance</option>
               </select>
               <Filter className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
@@ -330,7 +336,7 @@ const ManagerRoomPage = () => {
               <div className="flex items-center justify-center py-20">
                 <div className="animate-spin size-8 border-3 border-primary border-t-transparent rounded-full" />
               </div>
-            ) : filteredRooms.length === 0 ? (
+            ) : rooms.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-gray-400">
                 <Building2 className="size-12 mb-3" />
                 <p className="text-lg font-medium">No rooms found</p>
@@ -361,7 +367,7 @@ const ManagerRoomPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRooms.map(room => (
+                  {rooms.map(room => (
                     <RoomRow
                       key={room.id}
                       room={room}
@@ -375,9 +381,10 @@ const ManagerRoomPage = () => {
             )}
           </div>
 
-          {!isLoading && filteredRooms.length > 0 && (
+          {!isLoading && rooms.length > 0 && (
             <div className="mt-4 text-sm text-text-gray">
-              Showing {filteredRooms.length} of {rooms.length} rooms
+              Showing {rooms.length} of{' '}
+              {roomList?.pagination?.total ?? rooms.length} rooms
             </div>
           )}
         </div>
@@ -386,6 +393,7 @@ const ManagerRoomPage = () => {
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           onAdd={handleAddRoomSubmit}
+          buildings={buildings}
         />
       </div>
     </>

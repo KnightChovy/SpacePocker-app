@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {
   Building2,
   MoreHorizontal,
@@ -34,6 +34,22 @@ const BuildingRow = ({
   onView,
 }: BuildingRowProps) => {
   const [showActions, setShowActions] = useState(false);
+  const actionBtnRef = useRef<HTMLButtonElement | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!showActions) return;
+    const btn = actionBtnRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    setMenuPosition({
+      top: rect.bottom + 6,
+      left: rect.right,
+    });
+  }, [showActions]);
 
   return (
     <tr className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
@@ -46,7 +62,6 @@ const BuildingRow = ({
             <p className="font-semibold text-text-dark leading-tight">
               {building.buildingName}
             </p>
-            <p className="text-xs text-text-gray mt-0.5">ID: {building.id}</p>
           </div>
         </div>
       </td>
@@ -67,13 +82,6 @@ const BuildingRow = ({
         </div>
       </td>
 
-      {/* Manager ID */}
-      <td className="py-4 px-4">
-        <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-mono">
-          {building.managerId}
-        </span>
-      </td>
-
       {/* Created At */}
       <td className="py-4 px-4">
         <div className="flex items-center gap-1.5 text-sm text-text-gray">
@@ -86,6 +94,7 @@ const BuildingRow = ({
       <td className="py-4 px-4">
         <div className="relative">
           <button
+            ref={actionBtnRef}
             onClick={() => setShowActions(!showActions)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
@@ -98,7 +107,13 @@ const BuildingRow = ({
                 className="fixed inset-0 z-10"
                 onClick={() => setShowActions(false)}
               />
-              <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20 min-w-32">
+              <div
+                className="fixed bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20 min-w-32 transform -translate-x-full"
+                style={{
+                  top: menuPosition?.top ?? 0,
+                  left: menuPosition?.left ?? 0,
+                }}
+              >
                 <button
                   onClick={() => {
                     onView(building);

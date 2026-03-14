@@ -217,6 +217,8 @@ export interface BuildingDetail {
   address: string;
   campus: string;
   managerId: string;
+  latitude?: number;
+  longitude?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -226,6 +228,8 @@ export interface CreateBuildingPayload {
   address: string;
   campus: string;
   managerId?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface UpdateBuildingPayload {
@@ -233,6 +237,8 @@ export interface UpdateBuildingPayload {
   address?: string;
   campus?: string;
   managerId?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface BuildingQueryParams {
