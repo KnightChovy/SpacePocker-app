@@ -1,12 +1,5 @@
 import { useEffect } from 'react';
-import {
-  X,
-  Building2,
-  MapPin,
-  GraduationCap,
-  User,
-  Calendar,
-} from 'lucide-react';
+import { X, Building2, MapPin, GraduationCap, Calendar } from 'lucide-react';
 import type { BuildingDetail } from '@/types/types';
 
 interface ViewBuildingModalProps {
@@ -81,21 +74,6 @@ const ViewBuildingModal = ({
 
           {/* Content */}
           <div className="px-6 py-6 flex flex-col gap-5">
-            {/* Building ID */}
-            <div className="flex items-start gap-3">
-              <div className="size-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
-                <Building2 className="size-5 text-slate-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                  Building ID
-                </p>
-                <p className="text-sm font-mono text-slate-700 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
-                  {building.id}
-                </p>
-              </div>
-            </div>
-
             {/* Address */}
             <div className="flex items-start gap-3">
               <div className="size-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
@@ -122,17 +100,21 @@ const ViewBuildingModal = ({
               </div>
             </div>
 
-            {/* Manager ID */}
-            <div className="flex items-start gap-3">
-              <div className="size-10 rounded-lg bg-purple-50 flex items-center justify-center shrink-0 mt-0.5">
-                <User className="size-5 text-purple-600" />
-              </div>
-              <div className="flex-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                  Manager ID
+                  Latitude
                 </p>
-                <p className="text-sm font-mono text-slate-700 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 break-all">
-                  {building.managerId}
+                <p className="text-sm text-slate-700 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
+                  {building.latitude ?? '—'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                  Longitude
+                </p>
+                <p className="text-sm text-slate-700 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
+                  {building.longitude ?? '—'}
                 </p>
               </div>
             </div>

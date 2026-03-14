@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import type { BuildingDetail, UpdateBuildingPayload } from '@/types/types';
 
@@ -17,13 +17,29 @@ const CAMPUS_OPTIONS = [
   'West Campus',
 ];
 
+type EditBuildingFormState = {
+  buildingName: string;
+  address: string;
+  campus: string;
+  latitude: string;
+  longitude: string;
+};
+
+const INITIAL: EditBuildingFormState = {
+  buildingName: '',
+  address: '',
+  campus: '',
+  latitude: '',
+  longitude: '',
+};
+
 const EditBuildingModal = ({
   isOpen,
   building,
   onClose,
   onUpdate,
 }: EditBuildingModalProps) => {
-  const [form, setForm] = useState<UpdateBuildingPayload>({});
+  const [form, setForm] = useState<EditBuildingFormState>(INITIAL);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,30 +56,56 @@ const EditBuildingModal = ({
   }, [isOpen]);
 
   useEffect(() => {
-    if (building) {
-      setError(null);
-      setForm({
-        buildingName: building.buildingName,
-        address: building.address,
-        campus: building.campus,
-      });
-    } else {
-      // Reset form khi đóng modal
-      setForm({});
-      setError(null);
-    }
-  }, [building]);
+    if (!isOpen || !building) return;
+    setError(null);
+    setForm({
+      buildingName: building.buildingName ?? '',
+      address: building.address ?? '',
+      campus: building.campus ?? '',
+      latitude:
+        building.latitude === null || building.latitude === undefined
+          ? ''
+          : String(building.latitude),
+      longitude:
+        building.longitude === null || building.longitude === undefined
+          ? ''
+          : String(building.longitude),
+    });
+  }, [building, isOpen]);
 
-  const set = (field: keyof UpdateBuildingPayload, value: string) =>
+  const set = (field: keyof EditBuildingFormState, value: string) =>
     setForm(prev => ({ ...prev, [field]: value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!building) return;
     setError(null);
+
+    const latitudeRaw = form.latitude.trim();
+    const longitudeRaw = form.longitude.trim();
+    const latitude = latitudeRaw === '' ? undefined : Number(latitudeRaw);
+    const longitude = longitudeRaw === '' ? undefined : Number(longitudeRaw);
+
+    if (latitudeRaw !== '' && !Number.isFinite(latitude)) {
+      setError('Latitude must be a valid number.');
+      return;
+    }
+    if (longitudeRaw !== '' && !Number.isFinite(longitude)) {
+      setError('Longitude must be a valid number.');
+      return;
+    }
+
+    const payload: UpdateBuildingPayload = {
+      buildingName: form.buildingName,
+      address: form.address,
+      campus: form.campus,
+      latitude,
+      longitude,
+    };
+
     try {
       setIsSubmitting(true);
-      await onUpdate(building.id, form);
+      await onUpdate(building.id, payload);
       onClose();
     } catch (err: unknown) {
       const msg =
@@ -151,7 +193,7 @@ const EditBuildingModal = ({
               <div className="relative">
                 <select
                   required
-                  value={form.campus ?? ''}
+                  value={form.campus}
                   onChange={e => set('campus', e.target.value)}
                   className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 appearance-none cursor-pointer shadow-sm text-slate-800"
                 >
@@ -166,20 +208,34 @@ const EditBuildingModal = ({
               </div>
             </div>
 
-            {/* Manager ID - Read Only */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                Manager ID
-              </label>
-              <input
-                disabled
-                readOnly
-                value={building.managerId}
-                className="w-full px-4 py-3 bg-slate-100 border border-slate-200/80 rounded-xl text-sm shadow-sm text-slate-600 cursor-not-allowed"
-              />
-              <p className="text-xs text-slate-400 mt-1">
-                Manager ID cannot be changed
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                  Latitude
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={form.latitude}
+                  onChange={e => set('latitude', e.target.value)}
+                  className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 shadow-sm text-slate-800 placeholder-slate-400 transition-all"
+                  placeholder="e.g. 10.758"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                  Longitude
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={form.longitude}
+                  onChange={e => set('longitude', e.target.value)}
+                  className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 shadow-sm text-slate-800 placeholder-slate-400 transition-all"
+                  placeholder="e.g. 106.675"
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-1">

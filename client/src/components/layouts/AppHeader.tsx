@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 export interface HeaderAction {
   id: string;
-  icon: ReactNode;
+  icon: ReactNode | string;
   label?: string;
   onClick?: () => void;
   badge?: boolean;
@@ -99,7 +99,7 @@ export default function AppHeader({
         onClick={action.onClick}
         className={action.label ? buttonClasses : iconOnlyClasses}
       >
-        {action.icon}
+        {renderIcon(action.icon)}
         {action.label && <span>{action.label}</span>}
         {action.badge && (
           <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border-2 border-white dark:border-surface-dark" />

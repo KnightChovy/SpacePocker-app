@@ -46,22 +46,22 @@ const BuildingTableView = ({
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  {[
-                    { label: 'Building', w: '' },
-                    { label: 'Address', w: '' },
-                    { label: 'Campus', w: '' },
-                    { label: 'Manager ID', w: '' },
-                    { label: 'Created At', w: '' },
-                    { label: '', w: 'w-12' },
-                  ].map((col, i) => (
-                    <th
-                      key={i}
-                      className={`text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider ${col.w}`}
-                    >
-                      {col.label}
-                    </th>
-                  ))}
+                <tr className="bg-gray-50/50">
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                    Building
+                  </th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                    Address
+                  </th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                    Campus
+                  </th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider">
+                    Created At
+                  </th>
+                  <th className="text-right py-3 px-4 text-xs font-semibold text-text-gray uppercase tracking-wider w-12">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
