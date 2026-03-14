@@ -56,15 +56,15 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const { 
-        refreshToken, 
-        user, 
+      const {
+        refreshToken,
+        user,
         setAccessToken,
-        setRefreshToken, 
+        setRefreshToken,
         setUser,
-        clearAccessToken, 
-        clearRefreshToken, 
-        clearUser 
+        clearAccessToken,
+        clearRefreshToken,
+        clearUser,
       } = useAuthStore.getState();
 
       if (!refreshToken || !user) {
@@ -88,7 +88,7 @@ axiosInstance.interceptors.response.use(
         setUser(response.user);
 
         originalRequest.headers.Authorization = newAccessToken;
-        
+
         processQueue(null, newAccessToken);
         isRefreshing = false;
 
@@ -96,12 +96,12 @@ axiosInstance.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         isRefreshing = false;
-        
+
         clearAccessToken();
         clearRefreshToken();
         clearUser();
         window.location.href = '/login';
-        
+
         return Promise.reject(refreshError);
       }
     }
