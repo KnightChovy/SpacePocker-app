@@ -1,4 +1,4 @@
-import { BookingRequest, Booking, Room } from '@prisma/client';
+import { BookingRequest, Booking, Room } from "@prisma/client";
 
 export interface CreateBookingRequestInput {
   userId: string;

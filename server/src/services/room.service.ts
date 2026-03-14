@@ -6,6 +6,7 @@ import {
   ConflictRequestError,
 } from '../core/error.response';
 import { RoomType, RoomStatus } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 
 export default class RoomService {
   constructor(
@@ -287,5 +288,45 @@ export default class RoomService {
     const room = await this.roomRepo.delete(roomId);
 
     return { room };
+  }
+
+  async getRoomAmenitiesAndServices(roomId: string) {
+    if (!roomId) {
+      throw new BadRequestError('Room ID is required');
+    }
+
+    const room = await prisma.room.findUnique({
+      where: { id: roomId },
+      include: {
+        amenities: {
+          include: {
+            amenity: true,
+          },
+        },
+        serviceCategories: {
+          include: {
+            category: {
+              include: {
+                services: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!room) {
+      throw new NotFoundError('Room not found');
+    }
+
+    return {
+      amenities: room.amenities.map((ra) => ra.amenity),
+      serviceCategories: room.serviceCategories.map((rsc) => ({
+        id: rsc.category.id,
+        name: rsc.category.name,
+        description: rsc.category.description,
+        services: rsc.category.services,
+      })),
+    };
   }
 }

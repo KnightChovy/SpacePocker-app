@@ -7,6 +7,10 @@ const roomRouter = express.Router();
 
 roomRouter.get("/rooms", asyncHandler(roomController.getAllRooms));
 roomRouter.get("/rooms/:id", asyncHandler(roomController.getRoomById));
+roomRouter.get(
+  "/rooms/:id/amenities-services",
+  asyncHandler(roomController.getRoomAmenitiesAndServices),
+);
 
 roomRouter.post(
   "/rooms",

@@ -35,6 +35,30 @@
  *           type: string
  *           description: Purpose of the booking (optional)
  *           example: "Team meeting for Q1 planning"
+ *         amenityIds:
+ *           type: array
+ *           description: Selected amenity IDs available in the room
+ *           items:
+ *             type: string
+ *             format: uuid
+ *           example: ["amenity-1", "amenity-2"]
+ *         services:
+ *           type: array
+ *           description: Selected services and quantities available in the room
+ *           items:
+ *             type: object
+ *             required:
+ *               - serviceId
+ *               - quantity
+ *             properties:
+ *               serviceId:
+ *                 type: string
+ *                 format: uuid
+ *                 example: "service-1"
+ *               quantity:
+ *                 type: integer
+ *                 minimum: 1
+ *                 example: 2
  *
  *     BookingRequestRoom:
  *       type: object
@@ -61,6 +85,28 @@
  *         email:
  *           type: string
  *           example: "dhphuc@gmail.com"
+ *
+ *     BookingRequestSelectedAmenity:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         name:
+ *           type: string
+ *
+ *     BookingRequestSelectedService:
+ *       type: object
+ *       properties:
+ *         serviceId:
+ *           type: string
+ *         name:
+ *           type: string
+ *         price:
+ *           type: number
+ *         quantity:
+ *           type: integer
+ *         lineTotal:
+ *           type: number
  *
  *     BookingRequest:
  *       type: object
@@ -104,6 +150,17 @@
  *           $ref: "#/components/schemas/BookingRequestRoom"
  *         user:
  *           $ref: "#/components/schemas/BookingRequestUser"
+ *         amenities:
+ *           type: array
+ *           items:
+ *             $ref: "#/components/schemas/BookingRequestSelectedAmenity"
+ *         services:
+ *           type: array
+ *           items:
+ *             $ref: "#/components/schemas/BookingRequestSelectedService"
+ *         totalCost:
+ *           type: number
+ *           example: 230.5
  *
  *     BookingRequestResponse:
  *       type: object
@@ -200,6 +257,8 @@
  *       - startTime must be earlier than endTime
  *       - Booking time must not be in the past
  *       - Room must exist and be available
+ *       - Selected amenities must belong to the room
+ *       - Selected services must be available for the room and quantity >= 1
  *
  *       **Conflict detection:**
  *       - Reject if there is an APPROVED booking with overlapping time
@@ -235,7 +294,7 @@
  *             schema:
  *               $ref: "#/components/schemas/BookingRequestResponse"
  *       400:
- *         description: Invalid request data
+ *         description: Invalid request data or invalid amenities/services selection
  *         content:
  *           application/json:
  *             schema:

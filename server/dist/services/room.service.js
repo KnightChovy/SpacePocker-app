@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const error_response_1 = require("../core/error.response");
+const prisma_1 = require("../lib/prisma");
 class RoomService {
     constructor(roomRepo, buildingRepo) {
         this.roomRepo = roomRepo;
@@ -192,6 +193,42 @@ class RoomService {
         }
         const room = await this.roomRepo.delete(roomId);
         return { room };
+    }
+    async getRoomAmenitiesAndServices(roomId) {
+        if (!roomId) {
+            throw new error_response_1.BadRequestError('Room ID is required');
+        }
+        const room = await prisma_1.prisma.room.findUnique({
+            where: { id: roomId },
+            include: {
+                amenities: {
+                    include: {
+                        amenity: true,
+                    },
+                },
+                serviceCategories: {
+                    include: {
+                        category: {
+                            include: {
+                                services: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        if (!room) {
+            throw new error_response_1.NotFoundError('Room not found');
+        }
+        return {
+            amenities: room.amenities.map((ra) => ra.amenity),
+            serviceCategories: room.serviceCategories.map((rsc) => ({
+                id: rsc.category.id,
+                name: rsc.category.name,
+                description: rsc.category.description,
+                services: rsc.category.services,
+            })),
+        };
     }
 }
 exports.default = RoomService;

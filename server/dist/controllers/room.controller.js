@@ -28,6 +28,12 @@ class RoomController {
                 metadata: await this.roomService.updateRoom(String(req.params.id), req.body),
             }).send(res);
         };
+        this.getRoomAmenitiesAndServices = async (req, res, next) => {
+            new success_response_1.OK({
+                message: 'Get room amenities and services successfully',
+                metadata: await this.roomService.getRoomAmenitiesAndServices(String(req.params.id)),
+            }).send(res);
+        };
         this.deleteRoom = async (req, res, next) => {
             new success_response_1.OK({
                 message: 'Room deleted successfully',

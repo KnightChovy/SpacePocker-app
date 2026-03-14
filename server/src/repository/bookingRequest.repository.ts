@@ -1,9 +1,9 @@
-import { prisma } from '../lib/prisma';
+import { prisma } from "../lib/prisma";
 import {
   IBookingRequestRepository,
   CreateBookingRequestInput,
   CheckUserPendingOverlapInput,
-} from '../interface/bookingRequest.repository.interface';
+} from "../interface/bookingRequest.repository.interface";
 
 export class BookingRequestRepository implements IBookingRequestRepository {
   async create(data: CreateBookingRequestInput) {
@@ -23,7 +23,7 @@ export class BookingRequestRepository implements IBookingRequestRepository {
       where: {
         roomId: input.roomId,
         userId: input.userId,
-        status: 'PENDING',
+        status: "PENDING",
         AND: [
           { startTime: { lt: input.endTime } },
           { endTime: { gt: input.startTime } },

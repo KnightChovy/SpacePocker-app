@@ -36,6 +36,19 @@ class RoomController {
     }).send(res);
   };
 
+  getRoomAmenitiesAndServices = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    new OK({
+      message: 'Get room amenities and services successfully',
+      metadata: await this.roomService.getRoomAmenitiesAndServices(
+        String(req.params.id),
+      ),
+    }).send(res);
+  };
+
   deleteRoom = async (req: Request, res: Response, next: NextFunction) => {
     new OK({
       message: 'Room deleted successfully',

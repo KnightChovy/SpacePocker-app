@@ -10,6 +10,7 @@ const authUtils_1 = require("../../auth/authUtils");
 const roomRouter = express_1.default.Router();
 roomRouter.get("/rooms", (0, asyncHandler_1.asyncHandler)(room_container_1.roomController.getAllRooms));
 roomRouter.get("/rooms/:id", (0, asyncHandler_1.asyncHandler)(room_container_1.roomController.getRoomById));
+roomRouter.get("/rooms/:id/amenities-services", (0, asyncHandler_1.asyncHandler)(room_container_1.roomController.getRoomAmenitiesAndServices));
 roomRouter.post("/rooms", authUtils_1.authentication, (0, asyncHandler_1.asyncHandler)(room_container_1.roomController.createRoom));
 roomRouter.patch("/rooms/:id", authUtils_1.authentication, (0, asyncHandler_1.asyncHandler)(room_container_1.roomController.updateRoom));
 roomRouter.delete("/rooms/:id", authUtils_1.authentication, (0, asyncHandler_1.asyncHandler)(room_container_1.roomController.deleteRoom));
