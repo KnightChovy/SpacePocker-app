@@ -1,3 +1,5 @@
+import type React from 'react';
+
 export type SpaceType =
   | 'Meeting Room'
   | 'Conference Hall'
@@ -47,7 +49,7 @@ export interface Feature {
   id: string;
   title: string;
   description: string;
-  icon: any;
+  icon: React.ReactNode;
 }
 
 export interface FilterState {
@@ -93,7 +95,7 @@ export interface BookingResponse {
   data: {
     id: string;
     bookingId: string;
-    status: 'pending' | 'confirmed' | 'cancelled';
+    status: Exclude<BookingStatus, 'completed'>;
     createdAt: string;
   };
   message: string;
@@ -160,8 +162,6 @@ export type ManagerRoom = Room;
 // ==========================================
 // BOOKING TYPES - Unified Booking Interface
 // ==========================================
-
-// Customer info for bookings
 export interface Customer {
   id: string;
   name: string;
@@ -169,8 +169,6 @@ export interface Customer {
   initials?: string;
   department?: string;
 }
-
-// Schedule Booking - for timeline display
 export interface ScheduleBooking {
   id: string;
   roomId: string;
@@ -182,12 +180,11 @@ export interface ScheduleBooking {
   icon?: string;
 }
 
-// Booking - full booking for management
 export interface Booking {
   id: string;
   bookingNumber: string;
   customer: Customer;
-  room: Pick<Room, 'id' | 'name' | 'building'>;
+  room: BookingRoom;
   scheduleDate: string;
   startTime: string;
   endTime: string;
@@ -204,6 +201,65 @@ export interface Building {
   name: string;
   count: number;
   checked?: boolean;
+}
+
+// Manager entity for building management
+export interface ManagerEntity {
+  id: string;
+  name: string;
+  email: string;
+}
+
+// Full Building entity (matches server model)
+export interface BuildingDetail {
+  id: string;
+  buildingName: string;
+  address: string;
+  campus: string;
+  managerId: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateBuildingPayload {
+  buildingName: string;
+  address: string;
+  campus: string;
+  managerId?: string;
+}
+
+export interface UpdateBuildingPayload {
+  buildingName?: string;
+  address?: string;
+  campus?: string;
+  managerId?: string;
+}
+
+export interface BuildingQueryParams {
+  search?: string;
+  campus?: string;
+  sortBy?: 'buildingName' | 'campus' | 'createdAt';
+  sortOrder?: 'asc' | 'desc';
+  limit?: number;
+  offset?: number;
+}
+
+export interface BuildingPagination {
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+}
+
+export interface GetAllBuildingsResponse {
+  buildings: BuildingDetail[];
+  pagination: BuildingPagination;
+  filters: {
+    search: string | null;
+    campus: string | null;
+    sortBy: string | null;
+    sortOrder: string | null;
+  };
 }
 
 export interface NavItem {

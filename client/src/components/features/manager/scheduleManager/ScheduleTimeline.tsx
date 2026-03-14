@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { scheduleService } from '@/services/scheduleService';
 import type { BookingType, ScheduleRoom, ScheduleBooking } from '@/types/types';
 import { Plus, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import AddScheduleBookingModal from './AddScheduleBookingModal';
 
 const TIME_SLOTS = [
   '09:00',
@@ -32,6 +33,7 @@ export default function ScheduleTimeline({
   const [rooms, setRooms] = useState<ScheduleRoom[]>([]);
   const [bookings, setBookings] = useState<ScheduleBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchScheduleData = async () => {
@@ -166,11 +168,32 @@ export default function ScheduleTimeline({
           </div>
         </div>
 
-        <button className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95">
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+        >
           <Plus className="h-5 w-5" />
           <span>New Booking</span>
         </button>
       </div>
+
+      <AddScheduleBookingModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        rooms={rooms}
+        onAdd={data => {
+          const newBooking: ScheduleBooking = {
+            id: `booking-${Date.now()}`,
+            roomId: data.roomId,
+            title: data.title,
+            subtitle: data.subtitle,
+            startTime: data.startTime,
+            endTime: data.endTime,
+            type: data.type,
+          };
+          setBookings(prev => [...prev, newBooking]);
+        }}
+      />
 
       <div className="flex border-b border-border-light bg-background-light/50">
         <div className="w-48 xl:w-60 p-3 shrink-0 border-r border-border-light flex items-center gap-2">

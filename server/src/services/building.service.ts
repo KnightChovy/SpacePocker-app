@@ -1,9 +1,9 @@
-import { BadRequestError, NotFoundError } from '../core/error.response';
-import { IBuildingRepository } from '../interface/building.repository.interface';
+import { BadRequestError, NotFoundError } from "../core/error.response";
+import { IBuildingRepository } from "../interface/building.repository.interface";
 import {
   CreateBuildingDTO,
   UpdateBuildingDTO,
-} from '../types/buildings/building.type';
+} from "../types/buildings/building.type";
 
 export class BuildingService {
   constructor(private buildingRepository: IBuildingRepository) {}
@@ -26,7 +26,7 @@ export class BuildingService {
     }
 
     if (!managerId) {
-      throw new BadRequestError('Manager ID is required');
+      throw new BadRequestError("Manager ID is required");
     }
 
     // Validate latitude and longitude if provided
@@ -60,13 +60,13 @@ export class BuildingService {
 
   async getBuildingById(id: string) {
     if (!id) {
-      throw new BadRequestError('Building ID is required!');
+      throw new BadRequestError("Building ID is required!");
     }
 
     const building = await this.buildingRepository.findById(id);
 
     if (!building) {
-      throw new NotFoundError('Building not found!');
+      throw new NotFoundError("Building not found!");
     }
 
     return {
@@ -78,25 +78,25 @@ export class BuildingService {
     const { search, campus, sortBy, sortOrder, limit, offset } = query;
 
     const filter: any = {};
-    if (search && typeof search === 'string') {
+    if (search && typeof search === "string") {
       filter.buildingName = {
         contains: search,
-        mode: 'insensitive',
+        mode: "insensitive",
       };
     }
-    if (campus && typeof campus === 'string') {
+    if (campus && typeof campus === "string") {
       filter.campus = campus;
     }
 
     let orderBy: any = undefined;
     if (sortBy) {
-      const validSortFields = ['buildingName', 'campus', 'createdAt'];
-      const validSortOrders = ['asc', 'desc'];
+      const validSortFields = ["buildingName", "campus", "createdAt"];
+      const validSortOrders = ["asc", "desc"];
 
       if (validSortFields.includes(sortBy)) {
         const order = validSortOrders.includes(sortOrder?.toLowerCase())
           ? sortOrder.toLowerCase()
-          : 'asc';
+          : "asc";
 
         orderBy = { [sortBy]: order };
       }
