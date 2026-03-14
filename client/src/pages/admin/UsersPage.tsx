@@ -197,80 +197,78 @@ const UsersPage: React.FC = () => {
                         key={u.id}
                         className="group hover:bg-gray-50 transition-colors"
                       >
-                      <td className="py-4 px-6 text-center">
-                        <input
-                          className="rounded border-gray-300 text-primary focus:ring-primary/20"
-                          type="checkbox"
-                        />
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="size-10 rounded-full bg-cover bg-center border border-gray-200"
-                            style={{
-                              backgroundImage: `url(${getAvatarUrl(u.name, 'User')})`,
-                            }}
+                        <td className="py-4 px-6 text-center">
+                          <input
+                            className="rounded border-gray-300 text-primary focus:ring-primary/20"
+                            type="checkbox"
                           />
-                          <div className="flex flex-col">
-                            <span
-                              className="font-semibold text-sm text-gray-900"
-                            >
-                              {u.name}
-                            </span>
-                            <span
-                              className="text-xs text-text-secondary-light"
-                            >
-                              {handle}
-                            </span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="size-10 rounded-full bg-cover bg-center border border-gray-200"
+                              style={{
+                                backgroundImage: `url(${getAvatarUrl(u.name, 'User')})`,
+                              }}
+                            />
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-sm text-gray-900">
+                                {u.name}
+                              </span>
+                              <span className="text-xs text-text-secondary-light">
+                                {handle}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td
-                        className="py-4 px-4 text-sm text-gray-600"
-                      >
-                        {u.email}
-                      </td>
-                      <td className="py-4 px-4">
-                        <RoleBadge type={u.role} />
-                      </td>
-                      <td className="py-4 px-4">
-                        <StatusBadge type={status} />
-                      </td>
-                      <td className="py-4 px-4 text-sm text-gray-500 font-mono">
-                        {new Date(u.updatedAt).toLocaleString()}
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        {canPromote ? (
-                          <button
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            disabled={promoteMutation.isPending}
-                            onClick={() => {
-                              if (
-                                !window.confirm(
-                                  `Promote ${u.email} to MANAGER?`
-                                )
-                              ) {
-                                return;
+                        </td>
+                        <td className="py-4 px-4 text-sm text-gray-600">
+                          {u.email}
+                        </td>
+                        <td className="py-4 px-4">
+                          <RoleBadge type={u.role} />
+                        </td>
+                        <td className="py-4 px-4">
+                          <StatusBadge type={status} />
+                        </td>
+                        <td className="py-4 px-4 text-sm text-gray-500 font-mono">
+                          {new Date(u.updatedAt).toLocaleString()}
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          {canPromote ? (
+                            <button
+                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              disabled={promoteMutation.isPending}
+                              onClick={() => {
+                                if (
+                                  !window.confirm(
+                                    `Promote ${u.email} to MANAGER?`
+                                  )
+                                ) {
+                                  return;
+                                }
+                                promoteMutation.mutate(u.id);
+                              }}
+                            >
+                              <span className="material-symbols-outlined text-[18px]">
+                                upgrade
+                              </span>
+                              {promoteMutation.isPending
+                                ? 'Promoting...'
+                                : 'Promote'}
+                            </button>
+                          ) : (
+                            <button
+                              className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              disabled={!canGoNext || isLoading}
+                              onClick={() =>
+                                setPage(p => Math.min(totalPages, p + 1))
                               }
-                              promoteMutation.mutate(u.id);
-                            }}
-                          >
-                            <span className="material-symbols-outlined text-[18px]">
-                              upgrade
-                            </span>
-                            {promoteMutation.isPending ? 'Promoting...' : 'Promote'}
-                          </button>
-                        ) : (
-                          <button
-                            className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            disabled={!canGoNext || isLoading}
-                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                          >
-                            Next
-                          </button>
-                        )}
-                      </td>
-                    </tr>
+                            >
+                              Next
+                            </button>
+                          )}
+                        </td>
+                      </tr>
                     );
                   })}
                 </tbody>

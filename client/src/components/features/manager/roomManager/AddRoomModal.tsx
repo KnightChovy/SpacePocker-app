@@ -39,7 +39,7 @@ const AddRoomModal = ({
       securityDeposit: '',
       roomCode: '',
     }),
-    [defaultBuildingId],
+    [defaultBuildingId]
   );
   const [formData, setFormData] = useState<RoomFormData>({
     name: '',

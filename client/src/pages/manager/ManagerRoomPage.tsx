@@ -242,8 +242,7 @@ const ManagerRoomPage = () => {
             ? undefined
             : parseFloat(data.securityDeposit),
         roomType: data.roomType,
-        area:
-          data.area?.trim() === '' ? undefined : parseFloat(data.area),
+        area: data.area?.trim() === '' ? undefined : parseFloat(data.area),
         roomCode: normalizedRoomCode || generateRoomCode(data.name),
       });
       setIsAddModalOpen(false);
