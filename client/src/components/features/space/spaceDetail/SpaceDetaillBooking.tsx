@@ -10,8 +10,7 @@ import {
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { createBooking } from '@/services/spaceService';
-import type { BookingData } from '@/types/types';
+import { useAuthStore } from '@/stores/auth.store';
 
 interface SpaceDetailBookingProps {
   spaceId: string;
@@ -53,6 +52,8 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
   }, [hours, price]);
 
   const navigate = useNavigate();
+  const user = useAuthStore(s => s.user);
+  const accessToken = useAuthStore(s => s.accessToken);
 
   const timeSlots = useMemo(() => {
     const slots = [];
@@ -99,23 +100,24 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
 
     setIsLoading(true);
     try {
-      const bookingData: BookingData = {
-        spaceId,
-        date: date.toISOString().split('T')[0],
+      if (!accessToken || !user || user.role !== 'USER') {
+        navigate('/auth-login');
+        return;
+      }
+
+      const day = date.toISOString().split('T')[0];
+      const search = new URLSearchParams({
+        roomId: spaceId,
+        startDate: day,
+        endDate: day,
         startTime,
         endTime,
-        hours,
-        totalPrice: totalPrice,
-        guests: capacity,
-      };
+      });
 
-      const response = await createBooking(bookingData);
-      console.log('✅ Booking Response:', response);
-
-      navigate('/spaces/booking', { state: { bookingData, response } });
+      navigate(`/user/booking?${search.toString()}`);
     } catch (error) {
       console.error('❌ Booking Error:', error);
-      alert('Failed to create booking. Please try again.');
+      alert('Failed to start booking. Please try again.');
     } finally {
       setIsLoading(false);
     }

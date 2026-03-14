@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import type { FilterState, Space } from '@/types/types';
 
 import Navbar from '@/components/Navbar';
@@ -7,33 +6,82 @@ import Sidebar from '@/components/features/space/filter/Sidebar';
 import SpaceList from '@/components/features/space/spaceList/SpaceList';
 import SearchBar from '@/components/features/space/filter/SearchBar';
 
-import { SPACES, SPACE_TYPES, AMENITIES } from '@/data/constant';
-
-import { spaceService } from '@/services/spaceService';
+import { SPACE_TYPES, AMENITIES } from '@/data/constant';
+import { useGetRooms } from '@/hooks/user/rooms/use-get-rooms';
+import type { ApiRoom } from '@/types/room-api';
 
 const SpacesPage = () => {
   const [filters, setFilters] = useState<FilterState>({
-    priceRange: [20, 500],
+    priceRange: [0, 0],
     spaceTypes: [],
     amenities: [],
     minRating: null,
     searchQuery: '',
   });
 
+  const [didInitPriceRange, setDidInitPriceRange] = useState(false);
+
   const [displayedSpaces, setDisplayedSpaces] = useState<Space[]>([]);
 
-  const {
-    data: spaces,
-    isLoading,
-    isError,
-    error,
-  } = useQuery<Space[]>({
-    queryKey: ['spaces'],
-    queryFn: spaceService.getAllSpaces,
-    staleTime: 10 * 60 * 1000,
+  const roomsQuery = useGetRooms({
+    status: 'AVAILABLE',
+    limit: 200,
+    offset: 0,
   });
 
-  const spacesData = spaces && spaces.length > 0 ? spaces : SPACES;
+  const spacesData: Space[] = useMemo(() => {
+    const rooms: ApiRoom[] = roomsQuery.data?.rooms ?? [];
+
+    return rooms.map(room => {
+      const buildingLabel = room.building?.buildingName
+        ? ` - ${room.building.buildingName}`
+        : '';
+
+      const type =
+        room.roomType === 'MEETING'
+          ? 'Meeting Room'
+          : room.roomType === 'EVENT'
+            ? 'Event Space'
+            : room.roomType === 'CLASSROOM'
+              ? 'Co-working Space'
+              : undefined;
+
+      return {
+        id: room.id,
+        name: room.name,
+        title: `${room.name}${buildingLabel}`,
+        description: room.description ?? '',
+        price: room.pricePerHour,
+        rating: 0,
+        capacity: room.capacity,
+        imageUrl: room.images?.[0] ?? '',
+        images: room.images ?? [],
+        type,
+        location: room.building?.address ?? room.building?.campus,
+      } satisfies Space;
+    });
+  }, [roomsQuery.data?.rooms]);
+
+  const priceBounds = useMemo(() => {
+    const prices = spacesData
+      .map(s => s.price)
+      .filter(p => typeof p === 'number' && Number.isFinite(p));
+    if (prices.length === 0) return { min: 0, max: 0 };
+    const min = Math.max(0, Math.floor(Math.min(...prices)));
+    const max = Math.max(min + 1, Math.ceil(Math.max(...prices)));
+    return { min, max };
+  }, [spacesData]);
+
+  useEffect(() => {
+    if (didInitPriceRange) return;
+    if (spacesData.length === 0) return;
+
+    setFilters(prev => ({
+      ...prev,
+      priceRange: [priceBounds.min, priceBounds.max],
+    }));
+    setDidInitPriceRange(true);
+  }, [didInitPriceRange, priceBounds.max, priceBounds.min, spacesData.length]);
 
   const filteredSpaces = useMemo(() => {
     return spacesData.filter(space => {
@@ -82,7 +130,7 @@ const SpacesPage = () => {
     setDisplayedSpaces(filteredSpaces);
   }, [filteredSpaces]);
 
-  if (isLoading) {
+  if (roomsQuery.isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="h-20 bg-slate-900">
@@ -98,7 +146,7 @@ const SpacesPage = () => {
     );
   }
 
-  if (isError) {
+  if (roomsQuery.isError) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="h-20 bg-slate-900">
@@ -110,7 +158,9 @@ const SpacesPage = () => {
               Failed to load Spaces
             </p>
             <p className="text-slate-500 text-sm">
-              {error instanceof Error ? error.message : 'Something went wrong'}
+              {roomsQuery.error instanceof Error
+                ? roomsQuery.error.message
+                : 'Something went wrong'}
             </p>
           </div>
         </div>
@@ -131,6 +181,8 @@ const SpacesPage = () => {
             onFilterChange={setFilters}
             spaceTypes={SPACE_TYPES}
             amenities={AMENITIES}
+            defaultPriceRange={[priceBounds.min, priceBounds.max]}
+            priceBounds={priceBounds}
           />
 
           <main className="flex-1">
