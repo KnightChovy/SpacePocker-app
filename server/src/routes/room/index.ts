@@ -1,7 +1,7 @@
 import express from "express";
 import { asyncHandler } from "../../helper/asyncHandler";
 import { roomController } from "../../container/room.container";
-import { authentication } from "../../auth/authUtils";
+import { authentication, authorizeRoles } from "../../auth/authUtils";
 
 const roomRouter = express.Router();
 
@@ -15,16 +15,19 @@ roomRouter.get(
 roomRouter.post(
   "/rooms",
   authentication,
+  authorizeRoles("MANAGER", "ADMIN"),
   asyncHandler(roomController.createRoom),
 );
 roomRouter.patch(
   "/rooms/:id",
   authentication,
+  authorizeRoles("MANAGER", "ADMIN"),
   asyncHandler(roomController.updateRoom),
 );
 roomRouter.delete(
   "/rooms/:id",
   authentication,
+  authorizeRoles("MANAGER", "ADMIN"),
   asyncHandler(roomController.deleteRoom),
 );
 

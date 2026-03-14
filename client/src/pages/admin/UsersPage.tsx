@@ -1,17 +1,27 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import AppHeader from '@/components/layouts/AppHeader';
 import { RoleBadge, StatusBadge } from '@/components/features/admin/Badge';
-import type { User } from '@/types/admin-types';
-import usersData from '@/data/admin-users.json';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
+import { useGetUsers } from '@/hooks/admin/users/use-get-users';
+import { usePromoteUserToManager } from '@/hooks/admin/users/use-promote-user-to-manager';
+import type { ApiUser, ApiUserRole } from '@/types/users-api';
 
-const INITIAL_USERS: User[] = usersData.users.map(user => ({
-  ...user,
-  role: user.role as 'Admin' | 'Host' | 'Guest',
-  status: user.status as 'Active' | 'Idle' | 'Offline' | 'Suspended',
-}));
+type UiStatus = 'Active' | 'Idle' | 'Offline' | 'Suspended';
+
+const toHandle = (email: string) => {
+  const atIndex = email.indexOf('@');
+  const prefix = atIndex === -1 ? email : email.slice(0, atIndex);
+  return `@${prefix}`;
+};
+
+const roleOptions: Array<{ label: string; value?: ApiUserRole }> = [
+  { label: 'All Roles', value: undefined },
+  { label: 'ADMIN', value: 'ADMIN' },
+  { label: 'MANAGER', value: 'MANAGER' },
+  { label: 'USER', value: 'USER' },
+];
 
 const UsersPage: React.FC = () => {
   const { setSidebarOpen } = useOutletContext<{
@@ -19,7 +29,24 @@ const UsersPage: React.FC = () => {
   }>();
   const user = useAuthStore(state => state.user);
   const [searchQuery, setSearchQuery] = useState('');
-  const [users] = useState<User[]>(INITIAL_USERS);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [roleFilter, setRoleFilter] = useState<ApiUserRole | undefined>(
+    undefined
+  );
+
+  const { data, isLoading, isError } = useGetUsers({
+    search: searchQuery || undefined,
+    role: roleFilter,
+    page,
+    limit,
+  });
+
+  const promoteMutation = usePromoteUserToManager();
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, roleFilter]);
 
   const headerActions = [
     {
@@ -34,20 +61,22 @@ const UsersPage: React.FC = () => {
     },
   ];
 
-  const filteredUsers = useMemo(() => {
-    return users.filter(
-      user =>
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.handle.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [users, searchQuery]);
+  const users: ApiUser[] = useMemo(() => data?.users ?? [], [data?.users]);
+  const pagination = data?.pagination;
+  const totalUsers = pagination?.total;
+  const totalPages = pagination?.totalPages ?? 1;
+  const canGoPrev = page > 1;
+  const canGoNext = page < totalPages;
 
   return (
     <>
       <AppHeader
         title="User Management"
-        subtitle="Manage 2,451 registered users."
+        subtitle={
+          typeof totalUsers === 'number'
+            ? `Manage ${totalUsers.toLocaleString()} registered users.`
+            : 'Manage registered users.'
+        }
         onMenuClick={() => setSidebarOpen(true)}
         showSearch={true}
         searchPlaceholder="Search users..."
@@ -71,6 +100,21 @@ const UsersPage: React.FC = () => {
               </span>
               <span className="hidden lg:inline">Filters</span>
             </button>
+            <select
+              className="form-select bg-transparent text-sm border-gray-200 rounded-lg text-gray-600 focus:ring-0 focus:border-primary h-10 py-1 pl-3 pr-8 cursor-pointer"
+              value={roleFilter ?? ''}
+              onChange={e =>
+                setRoleFilter(
+                  (e.target.value || undefined) as ApiUserRole | undefined
+                )
+              }
+            >
+              {roleOptions.map(opt => (
+                <option key={opt.label} value={opt.value ?? ''}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
             <button className="flex items-center justify-center shrink-0 h-10 w-10 sm:w-auto sm:px-4 bg-primary text-white rounded-lg shadow-lg shadow-primary/30 hover:bg-indigo-600 transition-all">
               <span className="material-symbols-outlined text-[20px]">add</span>
               <span className="hidden sm:inline ml-2 text-sm font-semibold">
@@ -85,7 +129,13 @@ const UsersPage: React.FC = () => {
                 <span className="material-symbols-outlined text-[18px]">
                   info
                 </span>
-                <span>Showing {filteredUsers.length} users</span>
+                <span>
+                  {isLoading
+                    ? 'Loading users...'
+                    : isError
+                      ? 'Failed to load users'
+                      : `Showing ${users.length} users`}
+                </span>
               </div>
               <div className="flex gap-2">
                 <select className="form-select bg-transparent text-sm border-gray-200 rounded-lg text-gray-600 focus:ring-0 focus:border-primary py-1 pl-2 pr-8 cursor-pointer">
@@ -115,62 +165,112 @@ const UsersPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filteredUsers.map(user => (
-                    <tr
-                      key={user.id}
-                      className={`group hover:bg-gray-50 transition-colors ${user.status === 'Suspended' ? 'bg-red-50/30' : ''}`}
-                    >
-                      <td className="py-4 px-6 text-center">
-                        <input
-                          className="rounded border-gray-300 text-primary focus:ring-primary/20"
-                          type="checkbox"
-                        />
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`size-10 rounded-full bg-cover bg-center border border-gray-200 ${user.status === 'Suspended' ? 'grayscale' : ''}`}
-                            style={{
-                              backgroundImage: `url(${user.avatarUrl})`,
-                            }}
-                          />
-                          <div className="flex flex-col">
-                            <span
-                              className={`font-semibold text-sm ${user.isRestricted ? 'text-gray-500 line-through decoration-red-400' : 'text-gray-900'}`}
-                            >
-                              {user.name}
-                            </span>
-                            <span
-                              className={`text-xs ${user.isRestricted ? 'text-red-400 font-medium' : 'text-text-secondary-light'}`}
-                            >
-                              {user.handle}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
+                  {isError ? (
+                    <tr>
                       <td
-                        className={`py-4 px-4 text-sm ${user.isRestricted ? 'text-gray-500' : 'text-gray-600'}`}
+                        colSpan={7}
+                        className="py-10 px-6 text-center text-sm text-red-600"
                       >
-                        {user.email}
-                      </td>
-                      <td className="py-4 px-4">
-                        <RoleBadge type={user.role} />
-                      </td>
-                      <td className="py-4 px-4">
-                        <StatusBadge type={user.status} />
-                      </td>
-                      <td className="py-4 px-4 text-sm text-gray-500 font-mono">
-                        {user.lastLogin}
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        <button className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-gray-100 transition-all">
-                          <span className="material-symbols-outlined">
-                            more_vert
-                          </span>
-                        </button>
+                        Failed to load users. Please try again.
                       </td>
                     </tr>
-                  ))}
+                  ) : null}
+
+                  {!isLoading && !isError && users.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="py-10 px-6 text-center text-sm text-gray-500"
+                      >
+                        No users found.
+                      </td>
+                    </tr>
+                  ) : null}
+
+                  {users.map(u => {
+                    const status: UiStatus = 'Active';
+                    const handle = toHandle(u.email);
+                    const canPromote = u.role === 'USER';
+
+                    return (
+                      <tr
+                        key={u.id}
+                        className="group hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="py-4 px-6 text-center">
+                          <input
+                            className="rounded border-gray-300 text-primary focus:ring-primary/20"
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="size-10 rounded-full bg-cover bg-center border border-gray-200"
+                              style={{
+                                backgroundImage: `url(${getAvatarUrl(u.name, 'User')})`,
+                              }}
+                            />
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-sm text-gray-900">
+                                {u.name}
+                              </span>
+                              <span className="text-xs text-text-secondary-light">
+                                {handle}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4 text-sm text-gray-600">
+                          {u.email}
+                        </td>
+                        <td className="py-4 px-4">
+                          <RoleBadge type={u.role} />
+                        </td>
+                        <td className="py-4 px-4">
+                          <StatusBadge type={status} />
+                        </td>
+                        <td className="py-4 px-4 text-sm text-gray-500 font-mono">
+                          {new Date(u.updatedAt).toLocaleString()}
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          {canPromote ? (
+                            <button
+                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              disabled={promoteMutation.isPending}
+                              onClick={() => {
+                                if (
+                                  !window.confirm(
+                                    `Promote ${u.email} to MANAGER?`
+                                  )
+                                ) {
+                                  return;
+                                }
+                                promoteMutation.mutate(u.id);
+                              }}
+                            >
+                              <span className="material-symbols-outlined text-[18px]">
+                                upgrade
+                              </span>
+                              {promoteMutation.isPending
+                                ? 'Promoting...'
+                                : 'Promote'}
+                            </button>
+                          ) : (
+                            <button
+                              className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              disabled={!canGoNext || isLoading}
+                              onClick={() =>
+                                setPage(p => Math.min(totalPages, p + 1))
+                              }
+                            >
+                              Next
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -178,13 +278,14 @@ const UsersPage: React.FC = () => {
             <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-sm text-gray-500">
                 Showing page{' '}
-                <span className="font-medium text-gray-900">1</span> of{' '}
-                <span className="font-medium text-gray-900">245</span>
+                <span className="font-medium text-gray-900">{page}</span> of{' '}
+                <span className="font-medium text-gray-900">{totalPages}</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  disabled
+                  disabled={!canGoPrev || isLoading}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
                 >
                   Previous
                 </button>
