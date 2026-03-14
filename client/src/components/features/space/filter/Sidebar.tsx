@@ -11,6 +11,8 @@ interface SidebarProps {
   onFilterChange: (filters: FilterState) => void;
   spaceTypes: Array<{ label: SpaceType }>;
   amenities: Amenity[];
+  defaultPriceRange?: [number, number];
+  priceBounds?: { min: number; max: number };
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -18,10 +20,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   onFilterChange,
   spaceTypes,
   amenities,
+  defaultPriceRange,
+  priceBounds,
 }) => {
   const clearAll = () => {
     onFilterChange({
-      priceRange: [20, 500],
+      priceRange: defaultPriceRange ?? [20, 500],
       spaceTypes: [],
       amenities: [],
       minRating: null,
@@ -49,6 +53,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       <PriceRangeFilter
         priceRange={filters.priceRange}
         onChange={range => onFilterChange({ ...filters, priceRange: range })}
+        min={priceBounds?.min}
+        max={priceBounds?.max}
       />
 
       <SpaceTypeFilter

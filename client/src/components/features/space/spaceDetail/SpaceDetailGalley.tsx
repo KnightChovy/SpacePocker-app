@@ -8,6 +8,17 @@ interface SpaceDetailGalleryProps {
 const SpaceDetailGallery: React.FC<SpaceDetailGalleryProps> = ({ images }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  if (!images || images.length === 0) {
+    return (
+      <div className="w-full aspect-21/9 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center">
+        <div className="text-center text-gray-500">
+          <Image className="w-10 h-10 mx-auto mb-2" />
+          <p className="text-sm font-medium">No photos available</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-100 md:h-137.5 overflow-hidden rounded-2xl relative">

@@ -21,6 +21,8 @@ export interface ApiBuilding {
   address?: string;
   campus?: string;
   managerId?: string;
+  latitude?: number;
+  longitude?: number;
   createdAt?: string;
   updatedAt?: string;
 }

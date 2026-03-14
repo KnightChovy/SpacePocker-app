@@ -3,12 +3,19 @@ import React from 'react';
 interface PriceRangeFilterProps {
   priceRange: [number, number];
   onChange: (range: [number, number]) => void;
+  min?: number;
+  max?: number;
 }
 
 const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
   priceRange,
   onChange,
+  min = 0,
+  max = 500,
 }) => {
+  const safeMax = Math.max(max, min + 1);
+  const clampedUpper = Math.min(priceRange[1], safeMax);
+
   return (
     <div className="space-y-4">
       <h4 className="font-semibold text-sm text-slate-900">
@@ -17,16 +24,18 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
       <div className="relative pt-6 pb-2">
         <input
           className="absolute z-20 w-full h-1 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:shadow-md"
-          max="500"
-          min="0"
+          max={safeMax}
+          min={min}
           type="range"
-          value={priceRange[1]}
-          onChange={e => onChange([20, parseInt(e.target.value)])}
+          value={clampedUpper}
+          onChange={e => onChange([priceRange[0], parseInt(e.target.value)])}
         />
         <div className="h-1 w-full bg-slate-200 rounded-full absolute top-6">
           <div
             className="h-1 bg-primary rounded-full absolute left-0"
-            style={{ width: `${(priceRange[1] / 500) * 100}%` }}
+            style={{
+              width: `${((clampedUpper - min) / (safeMax - min)) * 100}%`,
+            }}
           ></div>
         </div>
       </div>
@@ -36,8 +45,8 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
         </div>
         <span className="text-slate-300">-</span>
         <div className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
-          ${priceRange[1]}
-          {priceRange[1] >= 500 ? '+' : ''}
+          ${clampedUpper}
+          {clampedUpper >= safeMax ? '+' : ''}
         </div>
       </div>
     </div>

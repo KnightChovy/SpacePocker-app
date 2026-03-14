@@ -5,15 +5,19 @@ CREATE TYPE "Role" AS ENUM ('USER', 'MANAGER', 'ADMIN');
 CREATE TYPE "RoomType" AS ENUM ('MEETING', 'CLASSROOM', 'EVENT', 'OTHER');
 
 -- CreateEnum
+CREATE TYPE "RoomStatus" AS ENUM ('AVAILABLE', 'UNAVAILABLE', 'PROCESS', 'MAINTAIN');
+
+-- CreateEnum
 CREATE TYPE "BookingStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED', 'COMPLETED');
 
 -- CreateTable
 CREATE TABLE "User" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "phoneNumber" TEXT,
     "role" "Role" NOT NULL DEFAULT 'USER',
+    "password" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -22,7 +26,7 @@ CREATE TABLE "User" (
 
 -- CreateTable
 CREATE TABLE "Manager" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "phoneNumber" TEXT,
@@ -35,13 +39,13 @@ CREATE TABLE "Manager" (
 
 -- CreateTable
 CREATE TABLE "Building" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "buildingName" TEXT NOT NULL,
     "campus" TEXT NOT NULL,
     "address" TEXT NOT NULL,
     "latitude" DECIMAL(10,7),
     "longitude" DECIMAL(10,7),
-    "managerId" INTEGER NOT NULL,
+    "managerId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -50,9 +54,9 @@ CREATE TABLE "Building" (
 
 -- CreateTable
 CREATE TABLE "Room" (
-    "id" SERIAL NOT NULL,
-    "buildingId" INTEGER NOT NULL,
-    "managerId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "buildingId" TEXT NOT NULL,
+    "managerId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
     "pricePerHour" DOUBLE PRECISION NOT NULL,
@@ -60,8 +64,9 @@ CREATE TABLE "Room" (
     "capacity" INTEGER NOT NULL,
     "roomType" "RoomType" NOT NULL,
     "area" DOUBLE PRECISION,
-    "isAvailable" BOOLEAN NOT NULL DEFAULT true,
+    "status" "RoomStatus" NOT NULL DEFAULT 'AVAILABLE',
     "roomCode" TEXT NOT NULL,
+    "images" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -70,7 +75,7 @@ CREATE TABLE "Room" (
 
 -- CreateTable
 CREATE TABLE "Amenity" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -80,8 +85,8 @@ CREATE TABLE "Amenity" (
 
 -- CreateTable
 CREATE TABLE "RoomAmenity" (
-    "roomId" INTEGER NOT NULL,
-    "amenityId" INTEGER NOT NULL,
+    "roomId" TEXT NOT NULL,
+    "amenityId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "RoomAmenity_pkey" PRIMARY KEY ("roomId","amenityId")
@@ -89,24 +94,24 @@ CREATE TABLE "RoomAmenity" (
 
 -- CreateTable
 CREATE TABLE "BookingRequest" (
-    "id" SERIAL NOT NULL,
-    "userId" INTEGER NOT NULL,
-    "roomId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "roomId" TEXT NOT NULL,
     "startTime" TIMESTAMP(3) NOT NULL,
     "endTime" TIMESTAMP(3) NOT NULL,
     "purpose" TEXT,
     "status" "BookingStatus" NOT NULL DEFAULT 'PENDING',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "approvedBy" INTEGER,
+    "approvedBy" TEXT,
 
     CONSTRAINT "BookingRequest_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Booking" (
-    "id" SERIAL NOT NULL,
-    "userId" INTEGER NOT NULL,
-    "roomId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "roomId" TEXT NOT NULL,
     "startTime" TIMESTAMP(3) NOT NULL,
     "endTime" TIMESTAMP(3) NOT NULL,
     "purpose" TEXT,
@@ -114,6 +119,66 @@ CREATE TABLE "Booking" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Booking_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Keys" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "privateKey" TEXT NOT NULL,
+    "publicKey" TEXT NOT NULL,
+    "refreshTokensUsed" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "refreshToken" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Keys_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Feedback" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "roomId" TEXT NOT NULL,
+    "rating" INTEGER NOT NULL,
+    "comment" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Feedback_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ServiceCategory" (
+    "id" TEXT NOT NULL,
+    "managerId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ServiceCategory_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Service" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "price" DOUBLE PRECISION NOT NULL,
+    "categoryId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Service_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "RoomServiceCategory" (
+    "roomId" TEXT NOT NULL,
+    "categoryId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "RoomServiceCategory_pkey" PRIMARY KEY ("roomId","categoryId")
 );
 
 -- CreateIndex
@@ -155,6 +220,30 @@ CREATE INDEX "Booking_userId_idx" ON "Booking"("userId");
 -- CreateIndex
 CREATE INDEX "Booking_roomId_idx" ON "Booking"("roomId");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "Keys_userId_key" ON "Keys"("userId");
+
+-- CreateIndex
+CREATE INDEX "Keys_userId_idx" ON "Keys"("userId");
+
+-- CreateIndex
+CREATE INDEX "Feedback_userId_idx" ON "Feedback"("userId");
+
+-- CreateIndex
+CREATE INDEX "Feedback_roomId_idx" ON "Feedback"("roomId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ServiceCategory_name_key" ON "ServiceCategory"("name");
+
+-- CreateIndex
+CREATE INDEX "ServiceCategory_managerId_idx" ON "ServiceCategory"("managerId");
+
+-- CreateIndex
+CREATE INDEX "Service_categoryId_idx" ON "Service"("categoryId");
+
+-- CreateIndex
+CREATE INDEX "RoomServiceCategory_categoryId_idx" ON "RoomServiceCategory"("categoryId");
+
 -- AddForeignKey
 ALTER TABLE "Building" ADD CONSTRAINT "Building_managerId_fkey" FOREIGN KEY ("managerId") REFERENCES "Manager"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -184,3 +273,24 @@ ALTER TABLE "Booking" ADD CONSTRAINT "Booking_userId_fkey" FOREIGN KEY ("userId"
 
 -- AddForeignKey
 ALTER TABLE "Booking" ADD CONSTRAINT "Booking_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Keys" ADD CONSTRAINT "Keys_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Feedback" ADD CONSTRAINT "Feedback_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Feedback" ADD CONSTRAINT "Feedback_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ServiceCategory" ADD CONSTRAINT "ServiceCategory_managerId_fkey" FOREIGN KEY ("managerId") REFERENCES "Manager"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Service" ADD CONSTRAINT "Service_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "ServiceCategory"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RoomServiceCategory" ADD CONSTRAINT "RoomServiceCategory_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RoomServiceCategory" ADD CONSTRAINT "RoomServiceCategory_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "ServiceCategory"("id") ON DELETE CASCADE ON UPDATE CASCADE;

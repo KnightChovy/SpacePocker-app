@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -6,37 +6,76 @@ import SpaceDetailGallery from '@/components/features/space/spaceDetail/SpaceDet
 import SpaceDetailInfo from '@/components/features/space/spaceDetail/SpaceDetailInfor';
 import SpaceDetailAmenities from '@/components/features/space/spaceDetail/SpaceDetailAmenities';
 import SpaceDetailLocation from '@/components/features/space/spaceDetail/SpaceDetailLocation';
-import SpaceDetailReviews from '@/components/features/space/spaceDetail/SpaceDetailReview';
 import SpaceDetailBooking from '@/components/features/space/spaceDetail/SpaceDetaillBooking';
-import { fetchSpaceDetail } from '@/services/spaceService';
-import type { Space } from '@/types/types';
+import type { AmenityDetail } from '@/types/types';
+import {
+  useGetRoomById,
+  useGetRoomAmenitiesServices,
+} from '@/hooks/user/rooms';
+import { useGetBuildingById } from '@/hooks/user/buildings';
 import { ChevronLeft, Heart, MapPin, Share } from 'lucide-react';
 
 const SpaceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [spaceData, setSpaceData] = useState<Space | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
 
-  useEffect(() => {
-    const getSpaceDetail = async () => {
-      try {
-        const data = await fetchSpaceDetail(id || '1');
-        setSpaceData(data);
-      } catch (err) {
-        setError('Failed to fetch space details');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const roomId = id;
 
-    getSpaceDetail();
-  }, [id]);
+  const roomQuery = useGetRoomById(roomId);
+  const room = roomQuery.data;
 
-  if (loading) {
+  const buildingQuery = useGetBuildingById(room?.buildingId);
+  const building = buildingQuery.data;
+
+  const extrasQuery = useGetRoomAmenitiesServices(roomId || undefined);
+
+  const amenitiesDetail: AmenityDetail[] = useMemo(() => {
+    const list = extrasQuery.data?.amenities ?? [];
+    return list.map(a => {
+      const name = a.name ?? '';
+      const n = name.toLowerCase();
+      const icon = n.includes('wifi')
+        ? 'wifi'
+        : n.includes('tv') || n.includes('screen')
+          ? 'tv'
+          : n.includes('projector') ||
+              n.includes('camera') ||
+              n.includes('video')
+            ? 'videoCam'
+            : n.includes('air') || n.includes('ac')
+              ? 'ac_unit'
+              : n.includes('whiteboard') || n.includes('board')
+                ? 'whiteboard'
+                : '';
+
+      return { icon, label: name };
+    });
+  }, [extrasQuery.data?.amenities]);
+
+  const locationText = useMemo(() => {
+    if (!building) return room?.building?.address ?? room?.building?.campus;
+
+    const pieces = [building.buildingName, building.address, building.campus]
+      .filter(Boolean)
+      .join(' · ');
+    return pieces || undefined;
+  }, [building, room?.building?.address, room?.building?.campus]);
+
+  const coordinates = useMemo(() => {
+    const lat = building?.latitude ?? room?.building?.latitude;
+    const lng = building?.longitude ?? room?.building?.longitude;
+
+    if (typeof lat !== 'number' || typeof lng !== 'number') return undefined;
+    return { lat, lng };
+  }, [
+    building?.latitude,
+    building?.longitude,
+    room?.building?.latitude,
+    room?.building?.longitude,
+  ]);
+
+  if (roomQuery.isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -47,12 +86,16 @@ const SpaceDetailPage: React.FC = () => {
     );
   }
 
-  if (error || !spaceData) {
+  if (roomQuery.isError || !room) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <span className=" text-6xl text-red-500 mb-4">error</span>
-          <p className="text-gray-600">{error || 'Space not found'}</p>
+          <p className="text-gray-600">
+            {roomQuery.error instanceof Error
+              ? roomQuery.error.message
+              : 'Space not found'}
+          </p>
         </div>
       </div>
     );
@@ -76,28 +119,14 @@ const SpaceDetailPage: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight mb-2">
-              {spaceData.title || spaceData.name}
+              {room.name}
             </h1>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600">
               <div className="flex items-center gap-1">
                 <span className=" text-sm text-cyan-400">
                   <MapPin />
                 </span>
-                <span>{spaceData.location}</span>
-              </div>
-              <div className="flex items-center gap-1 font-semibold">
-                <span className=" text-sm text-cyan-400 material-fill">⭐</span>
-                <span className="text-gray-900">{spaceData.rating}</span>
-                <span
-                  onClick={() =>
-                    document
-                      .getElementById('reviews-section')
-                      ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                  }
-                  className="font-normal text-gray-500 underline decoration-dotted cursor-pointer hover:text-gray-700 transition-colors"
-                >
-                  ({spaceData.reviews?.length || 0} reviews)
-                </span>
+                <span>{locationText ?? building?.buildingName ?? '—'}</span>
               </div>
             </div>
           </div>
@@ -118,43 +147,26 @@ const SpaceDetailPage: React.FC = () => {
           </div>
         </div>
 
-        <SpaceDetailGallery images={spaceData.images || []} />
+        <SpaceDetailGallery images={room.images || []} />
 
         <div className="mt-12 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-12 lg:gap-20">
           <div className="space-y-12">
-            <SpaceDetailInfo
-              description={spaceData.description}
-              host={spaceData.host}
-            />
-            <SpaceDetailAmenities
-              amenities={
-                Array.isArray(spaceData.amenities) &&
-                spaceData.amenities.length > 0
-                  ? typeof spaceData.amenities[0] === 'string'
-                    ? undefined
-                    : (spaceData.amenities as any[])
-                  : undefined
-              }
-            />
+            <SpaceDetailInfo description={room.description ?? ''} />
+            <SpaceDetailAmenities amenities={amenitiesDetail} />
             <SpaceDetailLocation
-              location={spaceData.location}
-              locationDescription={spaceData.locationDescription}
-              coordinates={spaceData.coordinates}
-            />
-
-            <SpaceDetailReviews
-              reviews={spaceData.reviews}
-              rating={spaceData.rating}
+              location={locationText}
+              locationDescription={building?.address ?? building?.campus}
+              coordinates={coordinates}
             />
           </div>
 
           <aside className="relative">
             <div className="sticky top-24">
               <SpaceDetailBooking
-                spaceId={spaceData.id}
-                price={spaceData.price}
-                rating={spaceData.rating}
-                capacity={spaceData.capacity}
+                spaceId={room.id}
+                price={room.pricePerHour}
+                rating={0}
+                capacity={room.capacity}
               />
             </div>
           </aside>
