@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import AppSidebar from './AppSidebar';
 import {
   LayoutDashboard,
@@ -11,10 +11,16 @@ import {
   HelpCircle,
   Zap,
   UserCircle,
+  LogOut,
 } from 'lucide-react';
+import { useLogout } from '@/hooks/auth/use-logout';
+import { useAuthStore } from '@/stores/auth.store';
 
 export default function ManagerLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+  const logoutMutation = useLogout();
+  const user = useAuthStore(state => state.user);
 
   const menuSections = [
     {
@@ -65,6 +71,17 @@ export default function ManagerLayout() {
     },
   ];
 
+  const handleLogout = () => {
+    const userId = user?.id;
+    if (!userId) return;
+
+    logoutMutation.mutate(userId, {
+      onSuccess: () => {
+        navigate('/');
+      },
+    });
+  };
+
   const footerCards = [
     {
       title: 'Quick Optimization',
@@ -78,6 +95,19 @@ export default function ManagerLayout() {
       description: 'Contact support for booking issues.',
       icon: <HelpCircle className="h-5 w-5" />,
       variant: 'help' as const,
+    },
+    {
+      renderCustom: () => (
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center justify-center gap-2 rounded-xl h-12 px-4 border border-border-light dark:border-border-dark hover:bg-red-50 dark:hover:bg-red-900/10 hover:border-red-200 dark:hover:border-red-900/30 text-text-sub-light dark:text-text-sub-dark hover:text-red-600 transition-all group"
+        >
+          <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm font-bold">Log Out</span>
+        </button>
+      ),
+      title: '',
+      description: '',
     },
   ];
 
