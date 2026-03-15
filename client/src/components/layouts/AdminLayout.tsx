@@ -17,6 +17,7 @@ export default function AdminLayout() {
     if (path.includes('/users')) return 'users';
     if (path.includes('/spaces')) return 'spaces';
     if (path.includes('/amenities')) return 'amenities';
+    if (path.includes('/services')) return 'services';
     if (path.includes('/finance')) return 'finance';
     if (path.includes('/settings')) return 'settings';
     if (path.includes('/security')) return 'security';
@@ -52,6 +53,12 @@ export default function AdminLayout() {
           label: 'Amenities',
           path: '/admin/amenities',
           icon: 'checklist',
+        },
+        {
+          id: 'services',
+          label: 'Services',
+          path: '/admin/services',
+          icon: 'home_repair_service',
         },
         {
           id: 'finance',
