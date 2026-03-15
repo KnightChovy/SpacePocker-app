@@ -10,29 +10,29 @@ class RoomService {
     async createRoom(data) {
         const { buildingId, managerId, name, description, pricePerHour, securityDeposit, capacity, roomType, area, roomCode, } = data;
         if (!buildingId) {
-            throw new error_response_1.BadRequestError('Building ID is required');
+            throw new error_response_1.BadRequestError("Building ID is required");
         }
         if (!managerId) {
-            throw new error_response_1.BadRequestError('Manager ID is required');
+            throw new error_response_1.BadRequestError("Manager ID is required");
         }
-        if (!name || name.trim() === '') {
-            throw new error_response_1.BadRequestError('Room name is required');
+        if (!name || name.trim() === "") {
+            throw new error_response_1.BadRequestError("Room name is required");
         }
         if (!pricePerHour || pricePerHour <= 0) {
-            throw new error_response_1.BadRequestError('Price per hour must be greater than 0');
+            throw new error_response_1.BadRequestError("Price per hour must be greater than 0");
         }
         if (!capacity || capacity <= 0) {
-            throw new error_response_1.BadRequestError('Capacity must be greater than 0');
+            throw new error_response_1.BadRequestError("Capacity must be greater than 0");
         }
         if (!roomType) {
-            throw new error_response_1.BadRequestError('Room type is required');
+            throw new error_response_1.BadRequestError("Room type is required");
         }
-        if (!roomCode || roomCode.trim() === '') {
-            throw new error_response_1.BadRequestError('Room code is required');
+        if (!roomCode || roomCode.trim() === "") {
+            throw new error_response_1.BadRequestError("Room code is required");
         }
         const building = await this.buildingRepo.findById(buildingId);
         if (!building) {
-            throw new error_response_1.NotFoundError('Building not found');
+            throw new error_response_1.NotFoundError("Building not found");
         }
         const existingRoom = await this.roomRepo.findByRoomCode(roomCode);
         if (existingRoom) {
@@ -54,44 +54,44 @@ class RoomService {
     }
     async getRoomById(roomId) {
         if (!roomId) {
-            throw new error_response_1.BadRequestError('Room ID is required');
+            throw new error_response_1.BadRequestError("Room ID is required");
         }
         const room = await this.roomRepo.findById(roomId);
         if (!room) {
-            throw new error_response_1.NotFoundError('Room not found');
+            throw new error_response_1.NotFoundError("Room not found");
         }
         return { room };
     }
     async getAllRooms(query) {
         const { search, buildingId, roomType, status, minPrice, maxPrice, minCapacity, sortBy, sortOrder, limit, offset, } = query;
         const filter = {};
-        if (search && typeof search === 'string') {
+        if (search && typeof search === "string") {
             filter.OR = [
                 {
                     name: {
                         contains: search,
-                        mode: 'insensitive',
+                        mode: "insensitive",
                     },
                 },
                 {
                     roomCode: {
                         contains: search,
-                        mode: 'insensitive',
+                        mode: "insensitive",
                     },
                 },
             ];
         }
-        if (buildingId && typeof buildingId === 'string') {
+        if (buildingId && typeof buildingId === "string") {
             filter.buildingId = buildingId;
         }
-        if (roomType && typeof roomType === 'string') {
-            const validRoomTypes = ['MEETING', 'CLASSROOM', 'EVENT', 'OTHER'];
+        if (roomType && typeof roomType === "string") {
+            const validRoomTypes = ["MEETING", "CLASSROOM", "EVENT", "OTHER"];
             if (validRoomTypes.includes(roomType.toUpperCase())) {
                 filter.roomType = roomType.toUpperCase();
             }
         }
-        if (status && typeof status === 'string') {
-            const validStatuses = ['AVAILABLE', 'UNAVAILABLE', 'PROCESS', 'MAINTAIN'];
+        if (status && typeof status === "string") {
+            const validStatuses = ["AVAILABLE", "UNAVAILABLE", "PROCESS", "MAINTAIN"];
             if (validStatuses.includes(status.toUpperCase())) {
                 filter.status = status.toUpperCase();
             }
@@ -120,17 +120,17 @@ class RoomService {
         let orderBy = undefined;
         if (sortBy) {
             const validSortFields = [
-                'name',
-                'pricePerHour',
-                'capacity',
-                'roomType',
-                'createdAt',
+                "name",
+                "pricePerHour",
+                "capacity",
+                "roomType",
+                "createdAt",
             ];
-            const validSortOrders = ['asc', 'desc'];
+            const validSortOrders = ["asc", "desc"];
             if (validSortFields.includes(sortBy)) {
                 const order = validSortOrders.includes(sortOrder?.toLowerCase())
                     ? sortOrder.toLowerCase()
-                    : 'asc';
+                    : "asc";
                 orderBy = { [sortBy]: order };
             }
         }
@@ -165,38 +165,38 @@ class RoomService {
     }
     async updateRoom(roomId, data) {
         if (!roomId) {
-            throw new error_response_1.BadRequestError('Room ID is required');
+            throw new error_response_1.BadRequestError("Room ID is required");
         }
         const existingRoom = await this.roomRepo.findById(roomId);
         if (!existingRoom) {
-            throw new error_response_1.NotFoundError('Room not found');
+            throw new error_response_1.NotFoundError("Room not found");
         }
-        if (data.name !== undefined && data.name.trim() === '') {
-            throw new error_response_1.BadRequestError('Room name cannot be empty');
+        if (data.name !== undefined && data.name.trim() === "") {
+            throw new error_response_1.BadRequestError("Room name cannot be empty");
         }
         if (data.pricePerHour !== undefined && data.pricePerHour <= 0) {
-            throw new error_response_1.BadRequestError('Price per hour must be greater than 0');
+            throw new error_response_1.BadRequestError("Price per hour must be greater than 0");
         }
         if (data.capacity !== undefined && data.capacity <= 0) {
-            throw new error_response_1.BadRequestError('Capacity must be greater than 0');
+            throw new error_response_1.BadRequestError("Capacity must be greater than 0");
         }
         const room = await this.roomRepo.update(roomId, data);
         return { room };
     }
     async deleteRoom(roomId) {
         if (!roomId) {
-            throw new error_response_1.BadRequestError('Room ID is required');
+            throw new error_response_1.BadRequestError("Room ID is required");
         }
         const existingRoom = await this.roomRepo.findById(roomId);
         if (!existingRoom) {
-            throw new error_response_1.NotFoundError('Room not found');
+            throw new error_response_1.NotFoundError("Room not found");
         }
         const room = await this.roomRepo.delete(roomId);
         return { room };
     }
     async getRoomAmenitiesAndServices(roomId) {
         if (!roomId) {
-            throw new error_response_1.BadRequestError('Room ID is required');
+            throw new error_response_1.BadRequestError("Room ID is required");
         }
         const room = await prisma_1.prisma.room.findUnique({
             where: { id: roomId },
@@ -218,7 +218,7 @@ class RoomService {
             },
         });
         if (!room) {
-            throw new error_response_1.NotFoundError('Room not found');
+            throw new error_response_1.NotFoundError("Room not found");
         }
         return {
             amenities: room.amenities.map((ra) => ra.amenity),

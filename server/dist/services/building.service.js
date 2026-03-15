@@ -7,12 +7,16 @@ class BuildingService {
         this.buildingRepository = buildingRepository;
     }
     async createBuilding(data) {
-        const { buildingName, address, description, campus, managerId } = data;
-        if (!buildingName || !address) {
-            throw new error_response_1.BadRequestError("Name and address are required");
+        const { buildingName, address, campus, managerId, latitude, longitude } = data;
+        // Validation
+        if (!buildingName || buildingName.trim() === '') {
+            throw new error_response_1.BadRequestError('Building name is required');
         }
-        if (!campus) {
-            throw new error_response_1.BadRequestError("Campus is required");
+        if (!address || address.trim() === '') {
+            throw new error_response_1.BadRequestError('Address is required');
+        }
+        if (!campus || campus.trim() === '') {
+            throw new error_response_1.BadRequestError('Campus is required');
         }
         if (!managerId) {
             throw new error_response_1.BadRequestError("Manager ID is required");
@@ -101,11 +105,11 @@ class BuildingService {
     }
     async updateBuilding(id, data) {
         if (!id) {
-            throw new error_response_1.BadRequestError("Building ID is required!");
+            throw new error_response_1.BadRequestError('Building ID is required');
         }
-        const foundId = await this.buildingRepository.findById(id);
-        if (!foundId) {
-            throw new error_response_1.NotFoundError("Building not found!");
+        const existingBuilding = await this.buildingRepository.findById(id);
+        if (!existingBuilding) {
+            throw new error_response_1.NotFoundError('Building not found');
         }
         if (data.buildingName !== undefined && data.buildingName.trim() === '') {
             throw new error_response_1.BadRequestError('Building name cannot be empty');
@@ -135,16 +139,14 @@ class BuildingService {
     }
     async deleteBuilding(id) {
         if (!id) {
-            throw new error_response_1.BadRequestError("Building ID is required!!");
+            throw new error_response_1.BadRequestError('Building ID is required');
         }
-        const deleteBuilding = await this.buildingRepository.findById(id);
-        if (!deleteBuilding) {
-            throw new error_response_1.NotFoundError("Building not found!");
+        const existingBuilding = await this.buildingRepository.findById(id);
+        if (!existingBuilding) {
+            throw new error_response_1.NotFoundError('Building not found');
         }
-        await this.buildingRepository.delete(id);
-        return {
-            message: "Building delete successfully!",
-        };
+        const building = await this.buildingRepository.delete(id);
+        return { building };
     }
 }
 exports.BuildingService = BuildingService;
