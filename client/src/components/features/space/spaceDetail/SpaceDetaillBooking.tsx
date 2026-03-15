@@ -105,7 +105,7 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
         return;
       }
 
-      const day = date.toISOString().split('T')[0];
+      const day = format(date, 'yyyy-MM-dd');
       const search = new URLSearchParams({
         roomId: spaceId,
         startDate: day,

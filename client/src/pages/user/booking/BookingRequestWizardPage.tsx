@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Calendar,
@@ -12,6 +12,9 @@ import {
 } from 'lucide-react';
 
 import { useGetRoomAmenitiesServices } from '@/hooks/user/rooms/use-get-room-amenities-services';
+import { useGetAmenities } from '@/hooks/user/amenities/use-get-amenities';
+import { useGetServicesByCategoryIds } from '@/hooks/user/services/use-get-services-by-category-ids';
+import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
 import { useGetRoomById } from '@/hooks/user/rooms/use-get-room-by-id';
 import { useGetRooms } from '@/hooks/user/rooms/use-get-rooms';
 import { useGetBuildingById } from '@/hooks/user/buildings/use-get-building-by-id';
@@ -115,6 +118,11 @@ const BookingRequestWizardPage = () => {
     searchParams.get('roomId') ?? ''
   );
 
+  const bookingExtrasDraftKey = useMemo(() => {
+    if (!roomId) return null;
+    return `spacepocker:booking:extras:draft:${roomId}`;
+  }, [roomId]);
+
   const today = useMemo(() => {
     const now = new Date();
     return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
@@ -140,6 +148,59 @@ const BookingRequestWizardPage = () => {
   const [selectedServices, setSelectedServices] = useState<
     Record<string, number>
   >({});
+
+  useEffect(() => {
+    if (!bookingExtrasDraftKey) return;
+
+    try {
+      const raw = localStorage.getItem(bookingExtrasDraftKey);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw) as
+        | {
+            amenityIds?: string[];
+            services?: Record<string, number>;
+          }
+        | undefined;
+
+      const amenityIds = Array.isArray(parsed?.amenityIds)
+        ? parsed!.amenityIds!
+        : [];
+      const services = parsed?.services && typeof parsed.services === 'object'
+        ? parsed.services
+        : {};
+
+      setSelectedAmenityIds(new Set(amenityIds));
+      setSelectedServices(services);
+    } catch (e) {
+      console.warn('Failed to load booking extras draft from localStorage', e);
+    }
+  }, [bookingExtrasDraftKey]);
+
+  useEffect(() => {
+    if (!bookingExtrasDraftKey) return;
+
+    const amenityIds = Array.from(selectedAmenityIds);
+    const hasServices = Object.keys(selectedServices).length > 0;
+
+    if (amenityIds.length === 0 && !hasServices) {
+      localStorage.removeItem(bookingExtrasDraftKey);
+      return;
+    }
+
+    const payload = {
+      roomId,
+      amenityIds,
+      services: selectedServices,
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      localStorage.setItem(bookingExtrasDraftKey, JSON.stringify(payload));
+    } catch (e) {
+      console.warn('Failed to save booking extras draft to localStorage', e);
+    }
+  }, [bookingExtrasDraftKey, roomId, selectedAmenityIds, selectedServices]);
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CARD');
   const [cardNumber, setCardNumber] = useState('');
@@ -179,18 +240,127 @@ const BookingRequestWizardPage = () => {
     lockedBuildingQuery.data?.buildingName;
 
   const roomExtrasQuery = useGetRoomAmenitiesServices(roomId || undefined);
-  const amenities = useMemo(
+  const roomAmenities = useMemo(
     () => roomExtrasQuery.data?.amenities ?? [],
     [roomExtrasQuery.data?.amenities]
   );
+  const roomAmenityIdSet = useMemo(() => {
+    return new Set(roomAmenities.map(a => a.id));
+  }, [roomAmenities]);
+
+  const allAmenitiesQuery = useGetAmenities();
+  const allAmenities = useMemo(
+    () => allAmenitiesQuery.data ?? [],
+    [allAmenitiesQuery.data]
+  );
+
   const serviceCategories = useMemo(
     () => roomExtrasQuery.data?.serviceCategories ?? [],
     [roomExtrasQuery.data?.serviceCategories]
   );
 
+  const allServiceCategoriesQuery = useGetServiceCategories();
+  const allServiceCategories = useMemo(
+    () => allServiceCategoriesQuery.data ?? [],
+    [allServiceCategoriesQuery.data]
+  );
+
+  const serviceCategoryIds = useMemo(
+    () => serviceCategories.map(c => c.id),
+    [serviceCategories]
+  );
+  const servicesByCategoryQuery = useGetServicesByCategoryIds(
+    roomId ? serviceCategoryIds : undefined
+  );
+
+  const serviceCategoriesResolved = useMemo(() => {
+    const byCategory = servicesByCategoryQuery.data;
+    return serviceCategories.map(cat => ({
+      ...cat,
+      // Prefer the dedicated Services API; fall back to room endpoint if needed.
+      services: byCategory?.[cat.id] ?? cat.services,
+    }));
+  }, [serviceCategories, servicesByCategoryQuery.data]);
+
   const allServices: ApiService[] = useMemo(() => {
-    return serviceCategories.flatMap(c => c.services);
-  }, [serviceCategories]);
+    return serviceCategoriesResolved.flatMap(c => c.services);
+  }, [serviceCategoriesResolved]);
+
+  const availableServiceIdSet = useMemo(() => {
+    return new Set(allServices.map(s => s.id));
+  }, [allServices]);
+
+  const didInitDefaultsForRoom = useRef<string | null>(null);
+  const freeServiceIds = useMemo(() => {
+    const ids = allServices.filter(s => s.price === 0).map(s => s.id);
+    return Array.from(new Set(ids));
+  }, [allServices]);
+
+  useEffect(() => {
+    if (!roomId) {
+      didInitDefaultsForRoom.current = null;
+      return;
+    }
+
+    if (didInitDefaultsForRoom.current === roomId) return;
+    if (!roomExtrasQuery.isSuccess) return;
+
+    // If the user already has a saved draft for this room, keep it.
+    if (bookingExtrasDraftKey) {
+      try {
+        if (localStorage.getItem(bookingExtrasDraftKey)) {
+          didInitDefaultsForRoom.current = roomId;
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    setSelectedAmenityIds(new Set(roomAmenities.map(a => a.id)));
+
+    // "Pre-check" only free/included services (price === 0) by defaulting them to qty=1.
+    // Paid services stay at qty=0 until the user increases them.
+    const nextServices = Object.fromEntries(
+      freeServiceIds.map(id => [id, 1] as const)
+    );
+    setSelectedServices(nextServices);
+
+    didInitDefaultsForRoom.current = roomId;
+  }, [
+    roomAmenities,
+    freeServiceIds,
+    bookingExtrasDraftKey,
+    roomExtrasQuery.isSuccess,
+    roomId,
+  ]);
+
+  useEffect(() => {
+    if (!roomId) return;
+    if (!roomExtrasQuery.isSuccess) return;
+
+    setSelectedAmenityIds(prev => {
+      const next = new Set(
+        Array.from(prev).filter(id => roomAmenityIdSet.has(id))
+      );
+      return next;
+    });
+
+    setSelectedServices(prev => {
+      const next: Record<string, number> = {};
+      for (const [id, qty] of Object.entries(prev)) {
+        if (!availableServiceIdSet.has(id)) continue;
+        if (qty <= 0) continue;
+        next[id] = qty;
+      }
+      return next;
+    });
+  }, [
+    availableServiceIdSet,
+    roomAmenityIdSet,
+    roomExtrasQuery.isSuccess,
+    roomId,
+  ]);
 
   const startIso = useMemo(
     () => buildIsoFromDateTime(startDate, startTime),
@@ -256,8 +426,9 @@ const BookingRequestWizardPage = () => {
 
   const selectedAmenityList = useMemo(() => {
     const ids = selectedAmenityIds;
-    return amenities.filter(a => ids.has(a.id));
-  }, [amenities, selectedAmenityIds]);
+    const source = allAmenities.length > 0 ? allAmenities : roomAmenities;
+    return source.filter(a => ids.has(a.id));
+  }, [allAmenities, roomAmenities, selectedAmenityIds]);
 
   const selectedServiceLines = useMemo(() => {
     return Object.entries(selectedServices)
@@ -315,6 +486,32 @@ const BookingRequestWizardPage = () => {
             : undefined,
         services: servicesPayload.length > 0 ? servicesPayload : undefined,
       });
+
+      try {
+        const confirmedKey = `spacepocker:booking:extras:${result.id}`;
+        const confirmedPayload = {
+          bookingRequestId: result.id,
+          roomId,
+          startTime: startIso,
+          endTime: endIso,
+          amenities: selectedAmenityList.map(a => ({ id: a.id, name: a.name })),
+          services: selectedServiceLines.map(s => ({
+            serviceId: s.serviceId,
+            name: s.name,
+            price: s.price,
+            quantity: s.quantity,
+            lineTotal: s.lineTotal,
+          })),
+          savedAt: new Date().toISOString(),
+        };
+        localStorage.setItem(confirmedKey, JSON.stringify(confirmedPayload));
+      } catch (e) {
+        console.warn('Failed to save confirmed booking extras to localStorage', e);
+      }
+
+      if (bookingExtrasDraftKey) {
+        localStorage.removeItem(bookingExtrasDraftKey);
+      }
 
       setConfirmedId(result.id);
       setStep(4);
@@ -493,28 +690,42 @@ const BookingRequestWizardPage = () => {
                             <p className="text-sm text-slate-400">
                               Select a room to see available amenities.
                             </p>
+                          ) : allAmenitiesQuery.isLoading ? (
+                            <p className="text-sm text-slate-400">Loading...</p>
+                          ) : allAmenitiesQuery.isError ? (
+                            <p className="text-sm text-red-600">
+                              Failed to load amenities.
+                            </p>
                           ) : roomExtrasQuery.isLoading ? (
                             <p className="text-sm text-slate-400">Loading...</p>
-                          ) : amenities.length === 0 ? (
+                          ) : allAmenities.length === 0 ? (
                             <p className="text-sm text-slate-400">
                               No amenities available.
                             </p>
                           ) : (
                             <div className="space-y-2">
-                              {amenities.map(a => (
-                                <label
-                                  key={a.id}
-                                  className="flex items-center gap-2 text-sm text-slate-700"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedAmenityIds.has(a.id)}
-                                    onChange={() => toggleAmenity(a.id)}
-                                    className="size-4 accent-primary"
-                                  />
-                                  {a.name}
-                                </label>
-                              ))}
+                              {allAmenities.map(a => {
+                                const isAvailable = roomAmenityIdSet.has(a.id);
+                                return (
+                                  <label
+                                    key={a.id}
+                                    className={`flex items-center gap-2 text-sm ${
+                                      isAvailable
+                                        ? 'text-slate-700'
+                                        : 'text-slate-400'
+                                    }`}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedAmenityIds.has(a.id)}
+                                      onChange={() => toggleAmenity(a.id)}
+                                      disabled={!isAvailable}
+                                      className="size-4 accent-primary disabled:opacity-50"
+                                    />
+                                    {a.name}
+                                  </label>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
@@ -529,15 +740,21 @@ const BookingRequestWizardPage = () => {
                             <p className="text-sm text-slate-400">
                               Select a room to see available services.
                             </p>
+                          ) : allServiceCategoriesQuery.isLoading ? (
+                            <p className="text-sm text-slate-400">Loading...</p>
+                          ) : allServiceCategoriesQuery.isError ? (
+                            <p className="text-sm text-red-600">
+                              Failed to load services.
+                            </p>
                           ) : roomExtrasQuery.isLoading ? (
                             <p className="text-sm text-slate-400">Loading...</p>
-                          ) : serviceCategories.length === 0 ? (
+                          ) : allServiceCategories.length === 0 ? (
                             <p className="text-sm text-slate-400">
                               No services available.
                             </p>
                           ) : (
                             <div className="space-y-4">
-                              {serviceCategories.map(cat => (
+                              {allServiceCategories.map(cat => (
                                 <div key={cat.id}>
                                   <p className="text-sm font-semibold text-slate-800">
                                     {cat.name}
@@ -549,6 +766,9 @@ const BookingRequestWizardPage = () => {
                                   )}
                                   <div className="mt-2 space-y-2">
                                     {cat.services.map(svc => {
+                                      const isAvailable = availableServiceIdSet.has(
+                                        svc.id
+                                      );
                                       const qty = selectedServices[svc.id] ?? 0;
                                       return (
                                         <div
@@ -556,7 +776,13 @@ const BookingRequestWizardPage = () => {
                                           className="flex items-center justify-between gap-3"
                                         >
                                           <div className="min-w-0">
-                                            <p className="text-sm text-slate-700 truncate">
+                                            <p
+                                              className={`text-sm truncate ${
+                                                isAvailable
+                                                  ? 'text-slate-700'
+                                                  : 'text-slate-400'
+                                              }`}
+                                            >
                                               {svc.name}
                                             </p>
                                             <p className="text-xs text-slate-400">
@@ -569,7 +795,8 @@ const BookingRequestWizardPage = () => {
                                               onClick={() =>
                                                 setServiceQty(svc.id, qty - 1)
                                               }
-                                              className="size-8 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center"
+                                              disabled={!isAvailable || qty <= 0}
+                                              className="size-8 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                               aria-label="decrease"
                                             >
                                               <Minus className="size-4 text-slate-500" />
@@ -582,7 +809,8 @@ const BookingRequestWizardPage = () => {
                                               onClick={() =>
                                                 setServiceQty(svc.id, qty + 1)
                                               }
-                                              className="size-8 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center"
+                                              disabled={!isAvailable}
+                                              className="size-8 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                               aria-label="increase"
                                             >
                                               <Plus className="size-4 text-slate-500" />

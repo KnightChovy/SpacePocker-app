@@ -8,12 +8,10 @@ import SpaceDetailAmenities from '@/components/features/space/spaceDetail/SpaceD
 import SpaceDetailLocation from '@/components/features/space/spaceDetail/SpaceDetailLocation';
 import SpaceDetailBooking from '@/components/features/space/spaceDetail/SpaceDetaillBooking';
 import type { AmenityDetail } from '@/types/types';
-import {
-  useGetRoomById,
-  useGetRoomAmenitiesServices,
-} from '@/hooks/user/rooms';
-import { useGetBuildingById } from '@/hooks/user/buildings';
+import {useGetRoomById} from '@/hooks/user/rooms/use-get-room-by-id';
+import { useGetBuildingById } from '@/hooks/user/buildings/use-get-building-by-id';
 import { ChevronLeft, Heart, MapPin, Share } from 'lucide-react';
+import { useGetRoomAmenitiesServices } from '@/hooks/user/rooms/use-get-room-amenities-services';
 
 const SpaceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
