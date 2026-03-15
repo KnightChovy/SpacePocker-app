@@ -166,9 +166,10 @@ const BookingRequestWizardPage = () => {
       const amenityIds = Array.isArray(parsed?.amenityIds)
         ? parsed!.amenityIds!
         : [];
-      const services = parsed?.services && typeof parsed.services === 'object'
-        ? parsed.services
-        : {};
+      const services =
+        parsed?.services && typeof parsed.services === 'object'
+          ? parsed.services
+          : {};
 
       setSelectedAmenityIds(new Set(amenityIds));
       setSelectedServices(services);
@@ -506,7 +507,10 @@ const BookingRequestWizardPage = () => {
         };
         localStorage.setItem(confirmedKey, JSON.stringify(confirmedPayload));
       } catch (e) {
-        console.warn('Failed to save confirmed booking extras to localStorage', e);
+        console.warn(
+          'Failed to save confirmed booking extras to localStorage',
+          e
+        );
       }
 
       if (bookingExtrasDraftKey) {
@@ -766,9 +770,8 @@ const BookingRequestWizardPage = () => {
                                   )}
                                   <div className="mt-2 space-y-2">
                                     {cat.services.map(svc => {
-                                      const isAvailable = availableServiceIdSet.has(
-                                        svc.id
-                                      );
+                                      const isAvailable =
+                                        availableServiceIdSet.has(svc.id);
                                       const qty = selectedServices[svc.id] ?? 0;
                                       return (
                                         <div
@@ -795,7 +798,9 @@ const BookingRequestWizardPage = () => {
                                               onClick={() =>
                                                 setServiceQty(svc.id, qty - 1)
                                               }
-                                              disabled={!isAvailable || qty <= 0}
+                                              disabled={
+                                                !isAvailable || qty <= 0
+                                              }
                                               className="size-8 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                               aria-label="decrease"
                                             >
