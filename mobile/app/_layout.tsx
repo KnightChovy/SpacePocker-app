@@ -1,5 +1,6 @@
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useAuthStore } from '@/store/authStore';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import '../global.css';
@@ -7,13 +8,21 @@ import '../global.css';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const { colorScheme, loaded } = useColorScheme();
+  const { colorScheme, loaded: themeLoaded } = useColorScheme();
+  const loadFromStorage = useAuthStore(s => s.loadFromStorage);
+  const authLoading = useAuthStore(s => s.isLoading);
 
   useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
-  }, [loaded]);
+    loadFromStorage();
+  }, []);
 
-  if (!loaded) return null;
+  useEffect(() => {
+    if (themeLoaded && !authLoading) {
+      SplashScreen.hideAsync();
+    }
+  }, [themeLoaded, authLoading]);
+
+  if (!themeLoaded || authLoading) return null;
 
   return (
     <GluestackUIProvider mode={colorScheme}>
