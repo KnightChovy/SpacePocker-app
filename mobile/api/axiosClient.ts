@@ -1,7 +1,7 @@
-import { useAuthStore } from '@/store/authStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { router } from 'expo-router';
+
 const baseApi = process.env.EXPO_PUBLIC_API_URL;
 const axiosClient: AxiosInstance = axios.create({
   baseURL: baseApi,
@@ -13,6 +13,7 @@ const axiosClient: AxiosInstance = axios.create({
 
 axiosClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
+    const { useAuthStore } = require('@/store/authStore');
     const token = useAuthStore.getState().accessToken;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

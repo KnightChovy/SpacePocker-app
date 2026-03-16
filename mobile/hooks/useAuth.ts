@@ -1,13 +1,9 @@
 import { useAuthStore } from '@/store/authStore';
-
 export function useAuth() {
-  return useAuthStore(state => ({
-    user: state.user,
-    isLoggedIn: state.isLoggedIn,
-    isLoading: state.isLoading,
-    error: state.error,
-    login: state.login,
-    logout: state.logout,
-    clearError: state.clearError,
-  }));
+  const isLoggedIn = useAuthStore(state => state.isLoggedIn);
+  const isLoading = useAuthStore(state => state.isLoading);
+  const login = useAuthStore(state => state.login);
+  const logout = useAuthStore(state => state.logout);
+
+  return { isLoggedIn, isLoading, login, logout };
 }
