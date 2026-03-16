@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import AppSidebar from './AppSidebar';
-import {
-  LayoutDashboard,
-  CalendarDays,
-  Settings,
-  LogOut,
-} from 'lucide-react';
+import { LayoutDashboard, CalendarDays, Settings, LogOut } from 'lucide-react';
 import { useLogout } from '@/hooks/auth/use-logout';
 import { useAuthStore } from '@/stores/auth.store';
 
