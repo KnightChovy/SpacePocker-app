@@ -52,6 +52,12 @@ const SpaceDetailLocation: React.FC<SpaceDetailLocationProps> = ({
           {locationDescription}
         </p>
       )}
+      {coordinates && (
+        <p className="mt-2 text-gray-500 text-sm">
+          Latitude: {coordinates.lat.toFixed(6)} · Longitude:{' '}
+          {coordinates.lng.toFixed(6)}
+        </p>
+      )}
     </section>
   );
 };

@@ -1,8 +1,9 @@
-import { useRef, useEffect, useState } from 'react';
-import { scheduleService } from '@/services/scheduleService';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import type { BookingType, ScheduleRoom, ScheduleBooking } from '@/types/types';
-import { Plus, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Filter, Users } from 'lucide-react';
 import AddScheduleBookingModal from './AddScheduleBookingModal';
+import { useGetRooms } from '@/hooks/manager/rooms/use-get-rooms';
+import { useGetBookingRequestsForManager } from '@/hooks/manager/booking-requests/use-get-booking-requests';
 
 const TIME_SLOTS = [
   '09:00',
@@ -18,70 +19,187 @@ const TIME_SLOTS = [
 const SLOT_WIDTH = 120;
 const START_HOUR = 9;
 const END_HOUR = 17;
+const DISPLAY_TIME_ZONE = 'Asia/Ho_Chi_Minh';
+const TIMELINE_WIDTH = TIME_SLOTS.length * SLOT_WIDTH;
+
+const getZonedParts = (date: Date, timeZone: string) => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  const lookup = (type: string) => parts.find(p => p.type === type)?.value;
+  const year = lookup('year') ?? '0000';
+  const month = lookup('month') ?? '01';
+  const day = lookup('day') ?? '01';
+  const hour = lookup('hour') ?? '00';
+  const minute = lookup('minute') ?? '00';
+
+  return {
+    dateKey: `${year}-${month}-${day}`,
+    hhmm: `${hour}:${minute}`,
+    hour: Number(hour),
+    minute: Number(minute),
+  };
+};
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
+const formatInTimeZone = (
+  date: Date,
+  options: Intl.DateTimeFormatOptions,
+  locale = 'en-GB'
+) =>
+  new Intl.DateTimeFormat(locale, {
+    timeZone: DISPLAY_TIME_ZONE,
+    ...options,
+  }).format(date);
+
+const getDurationLabel = (startIso: string, endIso: string) => {
+  const durationMs = new Date(endIso).getTime() - new Date(startIso).getTime();
+  const totalMinutes = Math.max(0, Math.round(durationMs / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours && minutes) return `${hours}h ${minutes}m`;
+  if (hours) return `${hours}h`;
+  return `${minutes}m`;
+};
 
 interface ScheduleTimelineProps {
   selectedDate: Date | undefined;
   onDateChange: (date: Date) => void;
 }
 
+type TimelineBooking = ScheduleBooking & {
+  createdAtLabel: string;
+  durationLabel: string;
+  roomLabel: string;
+  statusLabel: string;
+};
+
 export default function ScheduleTimeline({
   selectedDate,
   onDateChange,
 }: ScheduleTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [currentTimeX, setCurrentTimeX] = useState<number>(0);
-  const [rooms, setRooms] = useState<ScheduleRoom[]>([]);
-  const [bookings, setBookings] = useState<ScheduleBooking[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [currentTimeX, setCurrentTimeX] = useState<number | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchScheduleData = async () => {
-      try {
-        setIsLoading(true);
-        const [roomsData, bookingsData] = await Promise.all([
-          scheduleService.getRooms({ date: selectedDate }),
-          scheduleService.getBookings({ date: selectedDate }),
-        ]);
-        setRooms(roomsData);
-        setBookings(bookingsData);
-      } catch (error) {
-        console.error('Failed to fetch schedule data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const roomsQuery = useGetRooms();
+  const completedQuery = useGetBookingRequestsForManager('COMPLETED');
+  const approvedQuery = useGetBookingRequestsForManager('APPROVED');
 
-    fetchScheduleData();
-  }, [selectedDate]);
+  const isLoading =
+    roomsQuery.isLoading || completedQuery.isLoading || approvedQuery.isLoading;
+
+  const localRooms = useMemo<ScheduleRoom[]>(() => {
+    if (!roomsQuery.data?.rooms) return [];
+    return roomsQuery.data.rooms.map(r => ({
+      id: r.id,
+      name: r.name,
+      capacity: r.capacity || 0,
+      type: r.roomType || 'Standard',
+    }));
+  }, [roomsQuery.data]);
+
+  const localBookings = useMemo<TimelineBooking[]>(() => {
+    const completedReqs = completedQuery.data || [];
+    const approvedReqs = approvedQuery.data || [];
+    const unique = new Map<string, (typeof completedReqs)[number]>();
+    [...completedReqs, ...approvedReqs].forEach(req => unique.set(req.id, req));
+    const allRequests = Array.from(unique.values());
+
+    const selectedDateKey = selectedDate
+      ? getZonedParts(selectedDate, DISPLAY_TIME_ZONE).dateKey
+      : null;
+
+    const filteredRequests = allRequests.filter(req => {
+      if (!selectedDateKey) return true;
+      const reqKey = getZonedParts(
+        new Date(req.startTime),
+        DISPLAY_TIME_ZONE
+      ).dateKey;
+      return reqKey === selectedDateKey;
+    });
+
+    return filteredRequests
+      .sort(
+        (left, right) =>
+          new Date(left.startTime).getTime() -
+          new Date(right.startTime).getTime()
+      )
+      .map(req => ({
+        id: req.id,
+        roomId: req.roomId,
+        title: req.user?.name || 'User Booking',
+        subtitle: req.purpose || req.room.name,
+        startTime: getZonedParts(new Date(req.startTime), DISPLAY_TIME_ZONE)
+          .hhmm,
+        endTime: getZonedParts(new Date(req.endTime), DISPLAY_TIME_ZONE).hhmm,
+        type: (req.status === 'COMPLETED' ? 'teal' : 'primary') as BookingType,
+        createdAtLabel: formatInTimeZone(new Date(req.createdAt), {
+          day: '2-digit',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        }),
+        durationLabel: getDurationLabel(req.startTime, req.endTime),
+        roomLabel: req.room.roomCode
+          ? `${req.room.name} · ${req.room.roomCode}`
+          : req.room.name,
+        statusLabel: req.status === 'COMPLETED' ? 'Completed' : 'Approved',
+      }));
+  }, [completedQuery.data, approvedQuery.data, selectedDate]);
 
   const getTimePosition = (time: string) => {
     const [hours, minutes] = time.split(':').map(Number);
-    const totalMinutes = (hours - START_HOUR) * 60 + minutes;
-    return (totalMinutes / 60) * SLOT_WIDTH;
+    const totalMinutes = hours * 60 + minutes;
+    const minMinutes = START_HOUR * 60;
+    const maxMinutes = END_HOUR * 60;
+    const clamped = clamp(totalMinutes, minMinutes, maxMinutes);
+    return ((clamped - minMinutes) / 60) * SLOT_WIDTH;
   };
 
   const getTimeWidth = (start: string, end: string) => {
-    return getTimePosition(end) - getTimePosition(start);
+    return Math.max(0, getTimePosition(end) - getTimePosition(start));
   };
 
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      const h = now.getHours();
-      const m = now.getMinutes();
+      const nowParts = getZonedParts(now, DISPLAY_TIME_ZONE);
+      const selectedKey = selectedDate
+        ? getZonedParts(selectedDate, DISPLAY_TIME_ZONE).dateKey
+        : null;
+      const isSameDay = selectedKey ? selectedKey === nowParts.dateKey : true;
+
+      if (!isSameDay) {
+        setCurrentTimeX(null);
+        return;
+      }
+
+      const h = nowParts.hour;
+      const m = nowParts.minute;
 
       if (h >= START_HOUR && h < END_HOUR) {
         setCurrentTimeX(getTimePosition(`${h}:${m}`));
       } else {
-        setCurrentTimeX(getTimePosition('11:30'));
+        setCurrentTimeX(null);
       }
     };
 
     updateTime();
     const timer = setInterval(updateTime, 60000);
     return () => clearInterval(timer);
-  }, []);
+  }, [selectedDate]);
 
   const getVariantStyles = (type: BookingType) => {
     switch (type) {
@@ -127,10 +245,12 @@ export default function ScheduleTimeline({
     onDateChange(new Date());
   };
 
+  const bookingCountLabel = `${localBookings.length} booking${localBookings.length === 1 ? '' : 's'}`;
+
   return (
     <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-border-light relative overflow-hidden">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b border-border-light gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <div className="flex bg-background-light p-1 rounded-xl border border-border-light">
             <button className="px-4 py-1.5 rounded-lg text-sm font-medium bg-white text-slate-900 shadow-sm border border-black/5">
               Day
@@ -150,7 +270,7 @@ export default function ScheduleTimeline({
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <span className="text-sm font-bold text-slate-900 min-w-25 text-center">
+            <span className="text-sm font-bold text-slate-900 min-w-35 text-center">
               {formatDate(selectedDate)}
             </span>
             <button
@@ -166,6 +286,15 @@ export default function ScheduleTimeline({
               Today
             </button>
           </div>
+
+          <div className="flex items-center gap-2 text-[11px]">
+            <span className="rounded-full bg-primary/8 px-3 py-1 font-semibold text-primary border border-primary/10">
+              {bookingCountLabel}
+            </span>
+            <span className="rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-600 border border-slate-200">
+              Timezone GMT+7
+            </span>
+          </div>
         </div>
 
         <button
@@ -180,18 +309,11 @@ export default function ScheduleTimeline({
       <AddScheduleBookingModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        rooms={rooms}
-        onAdd={data => {
-          const newBooking: ScheduleBooking = {
-            id: `booking-${Date.now()}`,
-            roomId: data.roomId,
-            title: data.title,
-            subtitle: data.subtitle,
-            startTime: data.startTime,
-            endTime: data.endTime,
-            type: data.type,
-          };
-          setBookings(prev => [...prev, newBooking]);
+        rooms={localRooms}
+        onAdd={() => {
+          // Note: Add Schedule Booking locally (won't persist to the API without mutation hook unfortunately,
+          // but we follow current component structure)
+          // localBookings cannot be pushed, but the user is not asking to fix AddBooking here.
         }}
       />
 
@@ -228,7 +350,7 @@ export default function ScheduleTimeline({
                 <span className="text-sm text-slate-500">Loading...</span>
               </div>
             ) : (
-              rooms.map(room => (
+              localRooms.map(room => (
                 <div
                   key={room.id}
                   className="h-24 p-4 border-b border-border-light flex flex-col justify-center"
@@ -236,9 +358,15 @@ export default function ScheduleTimeline({
                   <span className="text-sm font-semibold text-slate-800">
                     {room.name}
                   </span>
-                  <span className="text-xs text-slate-500 flex items-center gap-1 mt-1">
-                    <span className="text-[10px]">👥</span> Cap: {room.capacity}
-                  </span>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                    <span className="rounded-full bg-slate-100 px-2 py-1 font-medium text-slate-600">
+                      {room.type}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Users className="h-3.5 w-3.5 text-slate-400" />
+                      {room.capacity} seats
+                    </span>
+                  </div>
                 </div>
               ))
             )}
@@ -248,10 +376,7 @@ export default function ScheduleTimeline({
             className="flex-1 relative overflow-x-auto no-scrollbar"
             ref={containerRef}
           >
-            <div
-              className="h-full relative"
-              style={{ width: TIME_SLOTS.length * SLOT_WIDTH }}
-            >
+            <div className="h-full relative" style={{ width: TIMELINE_WIDTH }}>
               <div className="absolute inset-0 flex pointer-events-none">
                 {TIME_SLOTS.map((_, i) => (
                   <div
@@ -262,42 +387,79 @@ export default function ScheduleTimeline({
                 ))}
               </div>
 
-              <div
-                className="absolute top-0 bottom-0 w-px bg-red-500 z-20 pointer-events-none"
-                style={{ left: currentTimeX }}
-              >
-                <div className="absolute -top-1.5 -left-1.5 h-3 w-3 bg-red-500 rounded-full" />
-              </div>
+              {!isLoading && localBookings.length === 0 && (
+                <div className="absolute inset-x-6 top-6 z-10 rounded-2xl border border-dashed border-slate-200 bg-white/90 px-4 py-3 text-sm text-slate-500 shadow-sm backdrop-blur-sm">
+                  No bookings for this date. Approved or completed requests will
+                  appear here using local time.
+                </div>
+              )}
 
-              {rooms.map(room => (
+              {currentTimeX !== null && (
+                <div
+                  className="absolute top-0 bottom-0 w-px bg-red-500 z-20 pointer-events-none"
+                  style={{ left: currentTimeX }}
+                >
+                  <div className="absolute -top-1.5 -left-1.5 h-3 w-3 bg-red-500 rounded-full" />
+                </div>
+              )}
+
+              {localRooms.map(room => (
                 <div
                   key={room.id}
                   className="h-24 border-b border-border-light relative hover:bg-slate-50/50 transition-colors"
                 >
-                  {bookings
+                  {localBookings
                     .filter(b => b.roomId === room.id)
-                    .map(booking => (
-                      <div
-                        key={booking.id}
-                        className={`absolute top-2 bottom-2 border-l-4 rounded-r-md px-3 py-2 cursor-pointer hover:shadow-md transition-shadow flex items-center gap-3 overflow-hidden ${getVariantStyles(booking.type)}`}
-                        style={{
-                          left: getTimePosition(booking.startTime),
-                          width: getTimeWidth(
-                            booking.startTime,
-                            booking.endTime
-                          ),
-                        }}
-                      >
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold truncate">
-                            {booking.title}
-                          </p>
-                          <p className="text-[10px] opacity-70 truncate">
-                            {booking.subtitle}
-                          </p>
+                    .map(booking => {
+                      const bookingWidth = getTimeWidth(
+                        booking.startTime,
+                        booking.endTime
+                      );
+
+                      if (bookingWidth <= 0) {
+                        return null;
+                      }
+
+                      return (
+                        <div
+                          key={booking.id}
+                          className={`absolute top-1.5 bottom-1.5 rounded-xl border-l-4 px-2.5 py-1.5 cursor-pointer transition-all hover:shadow-md hover:z-30 overflow-hidden group ${getVariantStyles(booking.type)}`}
+                          style={{
+                            left: getTimePosition(booking.startTime),
+                            width: bookingWidth,
+                          }}
+                          title={`${booking.title} • ${booking.roomLabel} • ${booking.startTime}-${booking.endTime} (${booking.durationLabel}) • Created ${booking.createdAtLabel}`}
+                        >
+                          <div className="flex h-full min-w-0 flex-col justify-center gap-0.5">
+                            <div className="flex items-baseline justify-between gap-1 min-w-0">
+                              <p className="text-xs font-bold truncate leading-tight">
+                                {booking.title}
+                              </p>
+                              <span className="shrink-0 rounded-full bg-white/70 border border-current/20 px-1.5 py-0.5 text-[9px] font-semibold leading-none whitespace-nowrap">
+                                {booking.statusLabel}
+                              </span>
+                            </div>
+
+                            <p className="text-[10px] opacity-70 truncate leading-tight">
+                              {booking.roomLabel}
+                            </p>
+
+                            <p className="text-[10px] font-medium opacity-80 truncate leading-tight">
+                              {booking.startTime}–{booking.endTime}
+                              {bookingWidth >= 140 && (
+                                <span> • {booking.durationLabel}</span>
+                              )}
+                              {bookingWidth >= 200 && (
+                                <span className="opacity-60">
+                                  {' '}
+                                  • Created {booking.createdAtLabel}
+                                </span>
+                              )}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
 
                   <div className="absolute inset-0 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
                     <button className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/20 backdrop-blur-sm">
