@@ -284,6 +284,24 @@ const BookingRequestWizardPage = () => {
     return new Set(roomAmenities.map(a => a.id));
   }, [roomAmenities]);
 
+  const [amenitiesInitializedForRoomId, setAmenitiesInitializedForRoomId] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    if (!roomId) return;
+    if (amenitiesInitializedForRoomId === roomId) return;
+
+    if (selectedAmenityIds.size > 0) {
+      setAmenitiesInitializedForRoomId(roomId);
+      return;
+    }
+
+    if (roomAmenities.length > 0) {
+      setSelectedAmenityIds(new Set(roomAmenities.map(a => a.id)));
+      setAmenitiesInitializedForRoomId(roomId);
+    }
+  }, [amenitiesInitializedForRoomId, roomAmenities, roomId, selectedAmenityIds.size]);
+
   const allAmenitiesQuery = useGetAmenities();
   const allAmenities = useMemo(
     () => allAmenitiesQuery.data ?? [],
@@ -299,9 +317,6 @@ const BookingRequestWizardPage = () => {
   const allServices: ApiService[] = useMemo(() => {
     return allServiceCategories.flatMap(c => c.services);
   }, [allServiceCategories]);
-
-  // Note: defaults & sanitization are handled via room change handler and
-  // derived calculations below, to avoid cascading render diagnostics.
 
   const startIso = useMemo(
     () => buildIsoFromDateTime(startDate, startTime),
@@ -419,16 +434,13 @@ const BookingRequestWizardPage = () => {
         quantity,
       }));
 
+    const selectedAmenityIdList = Array.from(selectedAmenityIds);
+
     const payload = {
       roomId,
       startTime: startIso,
       endTime: endIso,
       purpose: purpose.trim() ? purpose.trim() : undefined,
-      amenityIds:
-        selectedAmenityIds.size > 0
-          ? Array.from(selectedAmenityIds)
-          : undefined,
-      services: servicesPayload.length > 0 ? servicesPayload : undefined,
     };
 
     const makeLocalId = () => {
@@ -444,13 +456,13 @@ const BookingRequestWizardPage = () => {
       const result = await createBooking.mutateAsync(payload);
 
       addLocalBooking({
-        id: result.id,
+        bookingRequestId: result.id,
         roomId,
         startTime: startIso,
         endTime: endIso,
         purpose: payload.purpose,
-        amenityIds: payload.amenityIds ?? [],
-        services: payload.services ?? [],
+        amenityIds: selectedAmenityIdList,
+        services: servicesPayload,
         savedAt: new Date().toISOString(),
       });
       clearDraft(roomId);
@@ -458,16 +470,15 @@ const BookingRequestWizardPage = () => {
       setConfirmedId(result.id);
       setStep(4);
     } catch {
-      // Backend may not support/validate extras yet; persist locally and confirm.
       const localId = makeLocalId();
       addLocalBooking({
-        id: localId,
+        bookingRequestId: localId,
         roomId,
         startTime: startIso,
         endTime: endIso,
         purpose: payload.purpose,
-        amenityIds: payload.amenityIds ?? [],
-        services: payload.services ?? [],
+        amenityIds: selectedAmenityIdList,
+        services: servicesPayload,
         savedAt: new Date().toISOString(),
       });
       clearDraft(roomId);

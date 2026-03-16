@@ -14,7 +14,7 @@ export type BookingDraft = {
 };
 
 export type LocalBookingRecord = {
-  id: string;
+  bookingRequestId: string;
   roomId: string;
   startTime: string;
   endTime: string;
@@ -62,7 +62,7 @@ export const useBookingDraftStore = create<BookingDraftState>()(
         set(state => ({
           localBookingsById: {
             ...state.localBookingsById,
-            [record.id]: record,
+            [record.bookingRequestId]: record,
           },
         })),
     }),
