@@ -48,6 +48,19 @@
  *               type: string
  *               example: "Projector"
  *
+ *     RoomServiceCategory:
+ *       type: object
+ *       properties:
+ *         category:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *               example: "category-123"
+ *             name:
+ *               type: string
+ *               example: "Food & Beverage"
+ *
  *     Room:
  *       type: object
  *       properties:
@@ -92,6 +105,11 @@
  *         roomCode:
  *           type: string
  *           example: "ROOM-A-001"
+ *         images:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["url1.jpg", "url2.jpg"]
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -108,6 +126,10 @@
  *           type: array
  *           items:
  *             $ref: "#/components/schemas/RoomAmenity"
+ *         serviceCategories:
+ *           type: array
+ *           items:
+ *             $ref: "#/components/schemas/RoomServiceCategory"
  *
  *     CreateRoomInput:
  *       type: object
@@ -163,6 +185,24 @@
  *           type: string
  *           description: Unique room code
  *           example: "ROOM-A-001"
+ *         images:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of image URLs
+ *           example: ["url1.jpg", "url2.jpg"]
+ *         amenities:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of amenity IDs
+ *           example: ["amenity-123", "amenity-456"]
+ *         serviceCategories:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of service category IDs
+ *           example: ["category-123", "category-456"]
  *
  *     UpdateRoomInput:
  *       type: object
@@ -200,6 +240,24 @@
  *           type: boolean
  *           description: Room availability status
  *           example: true
+ *         images:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of image URLs
+ *           example: ["url1.jpg", "url2.jpg"]
+ *         amenities:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of amenity IDs
+ *           example: ["amenity-123"]
+ *         serviceCategories:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of service category IDs
+ *           example: ["category-123"]
  *
  *     RoomPagination:
  *       type: object

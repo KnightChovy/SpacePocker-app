@@ -1,4 +1,4 @@
-import { Room, RoomType, RoomStatus } from "@prisma/client";
+import { Room, RoomType, RoomStatus } from '@prisma/client';
 
 export interface IRoomRepository {
   findById(roomId: string): Promise<Room | null>;
@@ -13,6 +13,9 @@ export interface IRoomRepository {
     roomType: RoomType;
     area?: number;
     roomCode: string;
+    images?: string[];
+    amenities?: string[];
+    serviceCategories?: string[];
   }): Promise<Room>;
   findAll(
     filter?: any,
@@ -31,6 +34,9 @@ export interface IRoomRepository {
       roomType?: RoomType;
       area?: number;
       status?: RoomStatus;
+      images?: string[];
+      amenities?: string[];
+      serviceCategories?: string[];
     },
   ): Promise<Room>;
   delete(roomId: string): Promise<Room>;
