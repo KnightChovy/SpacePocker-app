@@ -10,6 +10,7 @@ describe("UserService", () => {
     mockUserRepo = {
       findByEmail: jest.fn(),
       findById: jest.fn(),
+      updateProfile: jest.fn(),
       updateRole: jest.fn(),
       createUser: jest.fn(),
       findMany: jest.fn(),
@@ -265,6 +266,53 @@ describe("UserService", () => {
           totalPages: 0,
         },
       });
+    });
+  });
+
+  describe("updateUserProfile()", () => {
+    it("should throw BadRequestError when userId is missing", async () => {
+      await expect(
+        userService.updateUserProfile("", { name: "New Name" }),
+      ).rejects.toThrow(BadRequestError);
+    });
+
+    it("should throw BadRequestError when request body is empty", async () => {
+      await expect(userService.updateUserProfile("user-1", {})).rejects.toThrow(
+        BadRequestError,
+      );
+    });
+
+    it("should throw NotFoundError when user does not exist", async () => {
+      mockUserRepo.findById.mockResolvedValue(null);
+
+      await expect(
+        userService.updateUserProfile("user-1", { name: "New Name" }),
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    it("should update profile successfully", async () => {
+      mockUserRepo.findById.mockResolvedValue({
+        id: "user-1",
+        name: "Old Name",
+      });
+      mockUserRepo.updateProfile.mockResolvedValue({
+        id: "user-1",
+        name: "New Name",
+        email: "john@example.com",
+        phoneNumber: "0123456789",
+        role: "USER",
+      });
+
+      const result = await userService.updateUserProfile("user-1", {
+        name: " New Name ",
+        phoneNumber: "0123456789",
+      });
+
+      expect(mockUserRepo.updateProfile).toHaveBeenCalledWith("user-1", {
+        name: "New Name",
+        phoneNumber: "0123456789",
+      });
+      expect(result).toHaveProperty("name", "New Name");
     });
   });
 });

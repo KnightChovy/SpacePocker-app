@@ -310,6 +310,26 @@ export default class BookingRequestService {
     });
   }
 
+  async getAllBookingRequestsForAdmin(userId: string) {
+    if (!userId) {
+      throw new BadRequestError("Admin ID is required");
+    }
+
+    return prisma.bookingRequest.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        user: true,
+        room: {
+          include: {
+            building: true,
+          },
+        },
+      },
+    });
+  }
+
   async approveBookingRequest(id: string, userId: string, userEmail?: string) {
     if (!userId) {
       throw new BadRequestError("Manager ID is required");
