@@ -1,4 +1,3 @@
-import FinancialPage from '@/pages/admin/FinancialPage';
 import DashboardPage from '@/pages/admin/DashboardPage';
 import SpacesPage from '@/pages/admin/SpacesPage';
 import UsersPage from '@/pages/admin/UsersPage';
@@ -18,7 +17,6 @@ const AdminRoute = () => {
         <Route path="/spaces" element={<SpacesPage />} />
         <Route path="/amenities" element={<AmenitiesPage />} />
         <Route path="/services" element={<ServicesPage />} />
-        <Route path="/finance" element={<FinancialPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/security" element={<SecurityPage />} />
         <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

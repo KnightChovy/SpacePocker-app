@@ -1,5 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Calendar, CircleCheckBig, MapPin, Star, Timer } from 'lucide-react';
+import {
+  Calendar,
+  CircleCheckBig,
+  CreditCard,
+  MapPin,
+  Star,
+  Timer,
+} from 'lucide-react';
+import { toast } from 'react-toastify';
 import type { BookingUser } from '@/types/user-type';
 import type { MyBookingRequest } from '@/types/booking-request-api';
 import {
@@ -12,7 +20,10 @@ import { Button } from '@/components/ui/button';
 import { useCreateFeedback } from '@/hooks/user/feedback/use-create-feedback';
 import { useGetAmenities } from '@/hooks/user/amenities/use-get-amenities';
 import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
-import type { LocalBookingRecord } from '@/stores/bookingDraft.store';
+import type {
+  LocalBookingRecord,
+  LocalPaymentMethod,
+} from '@/stores/bookingDraft.store';
 import { useBookingDraftStore } from '@/stores/bookingDraft.store';
 
 type BookingListProps = {
@@ -28,9 +39,20 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
     state => state.localBookingsById
   );
 
+  const paymentsByBookingRequestId = useBookingDraftStore(
+    state => state.paymentsByBookingRequestId
+  );
+  const setBookingPayment = useBookingDraftStore(
+    state => state.setBookingPayment
+  );
+
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [sheetMode, setSheetMode] = useState<'detail' | 'feedback'>('detail');
+  const [sheetMode, setSheetMode] = useState<'detail' | 'feedback' | 'pay'>(
+    'detail'
+  );
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  const [paymentMethod, setPaymentMethod] = useState<LocalPaymentMethod>('CARD');
 
   const selectedRequest = useMemo(() => {
     if (selectedIndex === null) return null;
@@ -41,6 +63,11 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
     if (selectedIndex === null) return null;
     return bookings[selectedIndex] ?? null;
   }, [bookings, selectedIndex]);
+
+  const selectedPaymentRecord = useMemo(() => {
+    if (!selectedRequest?.id) return undefined;
+    return paymentsByBookingRequestId[selectedRequest.id];
+  }, [paymentsByBookingRequestId, selectedRequest?.id]);
 
   const [rating, setRating] = useState<number>(5);
   const [comment, setComment] = useState<string>('');
@@ -136,6 +163,56 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
     setSheetOpen(true);
   };
 
+  const openPay = (idx: number) => {
+    setSelectedIndex(idx);
+    setSheetMode('pay');
+    setPaymentMethod('CARD');
+    setSheetOpen(true);
+  };
+
+  const pricing = useMemo(() => {
+    if (!selectedRequest)
+      return {
+        hours: 0,
+        subtotal: 0,
+        total: 0,
+      };
+
+    const start = new Date(selectedRequest.startTime);
+    const end = new Date(selectedRequest.endTime);
+    const hours = Math.max(0, (end.getTime() - start.getTime()) / 3600000);
+
+    const rate = selectedRequest.room?.pricePerHour ?? 0;
+    const roomLine = rate * hours;
+
+    const servicesLine = Object.entries(selectedExtras.services).reduce(
+      (sum, [serviceId, qty]) => {
+        const svc = serviceById.get(serviceId);
+        if (!svc) return sum;
+        return sum + svc.price * qty;
+      },
+      0
+    );
+
+    const subtotal = roomLine + servicesLine;
+    const total = subtotal;
+
+    return {
+      hours,
+      subtotal,
+      total,
+    };
+  }, [selectedExtras.services, selectedRequest, serviceById]);
+
+  const handlePay = () => {
+    if (!selectedRequest?.id) return;
+    if (selectedPaymentRecord) return;
+
+    setBookingPayment(selectedRequest.id, paymentMethod);
+    toast.success('Payment recorded!');
+    setSheetOpen(false);
+  };
+
   const handleSubmitFeedback = async () => {
     if (!selectedRequest) return;
 
@@ -184,6 +261,12 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
         const isFeedbackSubmitted =
           !!req?.roomId && submittedRoomIds.has(req.roomId);
 
+        const paymentRecord = req?.id
+          ? paymentsByBookingRequestId[req.id]
+          : undefined;
+        const isPaid = Boolean(paymentRecord);
+        const canPay = req?.status === 'APPROVED' && !isPaid;
+
         return (
           <div
             key={booking.id}
@@ -218,7 +301,13 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
                     ${booking.price.toFixed(2)}
                   </div>
                   <div className="text-xs text-text-sub-light dark:text-text-sub-dark mt-0.5">
-                    Paid via {booking.paymentMethod}
+                    {isPaid
+                      ? `Paid via ${booking.paymentMethod}`
+                      : canPay
+                        ? 'Payment required'
+                        : booking.paymentMethod !== '—'
+                          ? `Paid via ${booking.paymentMethod}`
+                          : '—'}
                   </div>
                 </div>
               </div>
@@ -249,6 +338,15 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
                 >
                   Get Detail
                 </button>
+
+                {canPay ? (
+                  <button
+                    onClick={() => openPay(idx)}
+                    className="px-5 py-2 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/90 transition-all flex items-center gap-2 ml-auto"
+                  >
+                    <CreditCard className="h-5 w-5" /> Pay
+                  </button>
+                ) : null}
 
                 {isFeedbackSubmitted ? (
                   <button
@@ -416,7 +514,7 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
                 )}
               </div>
             </>
-          ) : (
+          ) : sheetMode === 'feedback' ? (
             <>
               <SheetHeader>
                 <SheetTitle>Write Feedback</SheetTitle>
@@ -494,6 +592,115 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
                   </div>
                 ) : (
                   <div className="text-text-sub-light dark:text-text-sub-dark">
+                    No booking selected.
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <SheetHeader>
+                <SheetTitle>Payment</SheetTitle>
+              </SheetHeader>
+
+              <div className="px-4 pb-4 text-sm">
+                {selectedRequest ? (
+                  <div className="flex flex-col gap-4">
+                    <div>
+                      <div className="text-xs font-mono font-bold mb-1 text-text-sub-light dark:text-text-sub-dark">
+                        {selectedRequest.id}
+                      </div>
+                      <div className="text-base font-bold text-text-main-light dark:text-text-main-dark">
+                        {selectedRequest.room?.name ?? '—'}
+                      </div>
+                      <div className="text-xs text-text-sub-light dark:text-text-sub-dark">
+                        {new Date(selectedRequest.startTime).toLocaleString()} —{' '}
+                        {new Date(selectedRequest.endTime).toLocaleString()}
+                      </div>
+                    </div>
+
+                    {selectedPaymentRecord ? (
+                      <div className="px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-700">
+                        This booking is already marked as paid.
+                      </div>
+                    ) : null}
+
+                    <div className="grid grid-cols-1 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('CARD')}
+                        className={`rounded-xl border px-4 py-3 flex items-center justify-between transition-colors ${
+                          paymentMethod === 'CARD'
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark hover:bg-background-light dark:hover:bg-background-dark'
+                        }`}
+                      >
+                        <span className="font-semibold">Card</span>
+                        {paymentMethod === 'CARD' ? (
+                          <CircleCheckBig className="h-5 w-5 text-primary" />
+                        ) : null}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('APPLE_PAY')}
+                        className={`rounded-xl border px-4 py-3 flex items-center justify-between transition-colors ${
+                          paymentMethod === 'APPLE_PAY'
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark hover:bg-background-light dark:hover:bg-background-dark'
+                        }`}
+                      >
+                        <span className="font-semibold">Apple Pay</span>
+                        {paymentMethod === 'APPLE_PAY' ? (
+                          <CircleCheckBig className="h-5 w-5 text-primary" />
+                        ) : null}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('GOOGLE_PAY')}
+                        className={`rounded-xl border px-4 py-3 flex items-center justify-between transition-colors ${
+                          paymentMethod === 'GOOGLE_PAY'
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark hover:bg-background-light dark:hover:bg-background-dark'
+                        }`}
+                      >
+                        <span className="font-semibold">Google Pay</span>
+                        {paymentMethod === 'GOOGLE_PAY' ? (
+                          <CircleCheckBig className="h-5 w-5 text-primary" />
+                        ) : null}
+                      </button>
+                    </div>
+
+                    <div className="rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-text-sub-light dark:text-text-sub-dark">
+                          Subtotal
+                        </span>
+                        <span className="font-semibold">
+                          ${pricing.subtotal.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="h-px bg-border-light dark:bg-border-dark my-3" />
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold">Total</span>
+                        <span className="font-bold text-lg">
+                          ${pricing.total.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={Boolean(selectedPaymentRecord)}
+                      onClick={handlePay}
+                      className="px-5 py-2.5 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                    >
+                      Pay ${pricing.total.toFixed(2)}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-sm text-text-sub-light dark:text-text-sub-dark">
                     No booking selected.
                   </div>
                 )}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Search, BellRing, Plus } from 'lucide-react';
 import AppHeader from '@/components/layouts/AppHeader';
@@ -8,11 +8,13 @@ import FilterButton from '@/components/features/user/bookings/FilterButton';
 import PaginationButton from '@/components/features/user/bookings/PaginationButton';
 import BookingList from '@/components/features/user/bookings/BookingList';
 import { useGetMyBookingRequests } from '@/hooks/user/booking-requests/use-get-my-booking-requests';
+import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
 import type { BookingUser } from '@/types/user-type';
 import type {
   BookingRequestStatus,
   MyBookingRequest,
 } from '@/types/booking-request-api';
+import { useBookingDraftStore } from '@/stores/bookingDraft.store';
 
 const formatDateLabel = (iso: string) => {
   const date = new Date(iso);
@@ -48,12 +50,14 @@ const formatDurationLabel = (startIso: string, endIso: string) => {
   return `${hours}h ${minutes}m`;
 };
 
-const mapStatusToUserLabel = (status: BookingRequestStatus) => {
+const mapStatusToUserLabel = (status: BookingRequestStatus, isPaid: boolean) => {
   switch (status) {
     case 'PENDING':
       return 'Pending Approval' as const;
     case 'APPROVED':
-      return 'Awaiting Payment' as const;
+      return isPaid
+        ? ('Confirmed' as const)
+        : ('Awaiting Payment' as const);
     case 'COMPLETED':
       return 'Completed' as const;
     case 'CANCELLED':
@@ -64,8 +68,24 @@ const mapStatusToUserLabel = (status: BookingRequestStatus) => {
   }
 };
 
+const formatPaymentMethodLabel = (method?: string) => {
+  switch (method) {
+    case 'CARD':
+      return 'Card';
+    case 'APPLE_PAY':
+      return 'Apple Pay';
+    case 'GOOGLE_PAY':
+      return 'Google Pay';
+    default:
+      return '—';
+  }
+};
+
 const mapMyBookingRequestToBookingUser = (
-  request: MyBookingRequest
+  request: MyBookingRequest,
+  paymentMethod: string,
+  isPaid: boolean,
+  totalPrice: number
 ): BookingUser => {
   const room = request.room;
   const building = room?.building;
@@ -74,11 +94,7 @@ const mapMyBookingRequestToBookingUser = (
   const startIso = request.startTime;
   const endIso = request.endTime;
 
-  const pricePerHour = room?.pricePerHour ?? 0;
-  const start = new Date(startIso);
-  const end = new Date(endIso);
-  const hours = Math.max(0, (end.getTime() - start.getTime()) / 3600000);
-  const estimatedPrice = Math.round(hours * pricePerHour * 100) / 100;
+  const estimatedPrice = Math.round(totalPrice * 100) / 100;
 
   const imageUrl =
     room?.images?.[0] ||
@@ -94,13 +110,13 @@ const mapMyBookingRequestToBookingUser = (
     spaceId: room?.roomCode ?? request.roomId,
     spaceName: room?.name ?? '—',
     location,
-    status: mapStatusToUserLabel(request.status),
+    status: mapStatusToUserLabel(request.status, isPaid),
     date: formatDateLabel(startIso),
     startTime: formatTimeLabel(startIso),
     endTime: formatTimeLabel(endIso),
     duration: formatDurationLabel(startIso, endIso),
     price: Number.isFinite(estimatedPrice) ? estimatedPrice : 0,
-    paymentMethod: '—',
+    paymentMethod,
     image: imageUrl,
   };
 };
@@ -111,6 +127,47 @@ const Bookings = () => {
   }>();
   const user = useAuthStore(state => state.user);
   const [activeTab, setActiveTab] = useState<'Active' | 'Cancelled'>('Active');
+
+  const paymentsByBookingRequestId = useBookingDraftStore(
+    state => state.paymentsByBookingRequestId
+  );
+  const localBookingsById = useBookingDraftStore(state => state.localBookingsById);
+
+  const serviceCategoriesQuery = useGetServiceCategories();
+  const servicePriceById = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const cat of serviceCategoriesQuery.data ?? []) {
+      for (const svc of cat.services ?? []) {
+        map.set(svc.id, svc.price);
+      }
+    }
+    return map;
+  }, [serviceCategoriesQuery.data]);
+
+  const readPersistedBookingStorage = ():
+    | {
+        localBookingsById?: Record<
+          string,
+          {
+            amenityIds?: string[];
+            services?: Array<{ serviceId: string; quantity: number }>;
+          }
+        >;
+      }
+    | undefined => {
+    if (typeof window === 'undefined') return undefined;
+    try {
+      const raw = window.localStorage.getItem('spacepocker-booking-storage');
+      if (!raw) return undefined;
+      const parsed = JSON.parse(raw) as any;
+      const state = parsed?.state ?? parsed;
+      return {
+        localBookingsById: state?.localBookingsById,
+      };
+    } catch {
+      return undefined;
+    }
+  };
 
   const {
     data: myBookingRequests,
@@ -129,7 +186,36 @@ const Bookings = () => {
 
   const requestsForTab =
     activeTab === 'Active' ? activeRequests : cancelledRequests;
-  const bookingsForTab = requestsForTab.map(mapMyBookingRequestToBookingUser);
+  const bookingsForTab = requestsForTab.map(req => {
+    const payment = req.id ? paymentsByBookingRequestId[req.id] : undefined;
+
+    const start = new Date(req.startTime);
+    const end = new Date(req.endTime);
+    const hours = Math.max(0, (end.getTime() - start.getTime()) / 3600000);
+    const rate = req.room?.pricePerHour ?? 0;
+    const roomLine = rate * hours;
+
+    const persisted = readPersistedBookingStorage();
+    const local = req.id
+      ? (localBookingsById[req.id] ?? persisted?.localBookingsById?.[req.id])
+      : undefined;
+
+    const servicesLine = (local?.services ?? []).reduce((sum, line) => {
+      const price = servicePriceById.get(line.serviceId) ?? 0;
+      const qty = Number(line.quantity ?? 0);
+      if (!Number.isFinite(qty) || qty <= 0) return sum;
+      return sum + price * qty;
+    }, 0);
+
+    const totalPrice = roomLine + servicesLine;
+
+    return mapMyBookingRequestToBookingUser(
+      req,
+      formatPaymentMethodLabel(payment?.paymentMethod),
+      Boolean(payment),
+      totalPrice
+    );
+  });
 
   const headerActions = [
     {
