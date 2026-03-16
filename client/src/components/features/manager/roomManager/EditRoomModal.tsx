@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import { useGetAmenities } from '@/hooks/admin/amenities/use-get-amenities';
 import { useGetRoomById } from '@/hooks/manager/rooms/use-get-room-by-id';
+import { useGetServiceCategoriesManager } from '@/hooks/manager/service-categories/use-get-service-categories';
 import { useUpdateRoom } from '@/hooks/manager/rooms/use-update-room';
-import { useSyncRoomAmenities } from '@/hooks/manager/rooms/use-sync-room-amenities';
 import type {
   ApiRoomStatus,
   ApiRoomType,
@@ -27,7 +27,9 @@ type EditRoomFormData = {
   pricePerHour: string;
   securityDeposit: string;
   status: ApiRoomStatus;
+  imageUrlsText: string;
   amenityIds: string[];
+  serviceCategoryIds: string[];
 };
 
 const EditRoomModal = ({
@@ -38,8 +40,9 @@ const EditRoomModal = ({
 }: EditRoomModalProps) => {
   const { data: room, isLoading } = useGetRoomById(roomId ?? undefined);
   const { data: amenities, isLoading: isAmenitiesLoading } = useGetAmenities();
+  const { data: serviceCategories, isLoading: isServiceCategoriesLoading } =
+    useGetServiceCategoriesManager();
   const updateRoomMutation = useUpdateRoom();
-  const syncRoomAmenitiesMutation = useSyncRoomAmenities();
 
   const buildingLabel = useMemo(() => {
     if (!room?.buildingId) return '';
@@ -54,6 +57,9 @@ const EditRoomModal = ({
     const currentAmenityIds = (room.amenities ?? [])
       .map(a => a.amenity?.id)
       .filter(Boolean) as string[];
+    const currentServiceCategoryIds = (room.serviceCategories ?? [])
+      .map(category => category.category?.id)
+      .filter(Boolean) as string[];
 
     return {
       name: room.name ?? '',
@@ -66,7 +72,9 @@ const EditRoomModal = ({
       securityDeposit:
         room.securityDeposit == null ? '' : String(room.securityDeposit),
       status: room.status,
+      imageUrlsText: (room.images ?? []).join('\n'),
       amenityIds: currentAmenityIds,
+      serviceCategoryIds: currentServiceCategoryIds,
     };
   }, [room]);
 
@@ -80,7 +88,9 @@ const EditRoomModal = ({
     pricePerHour: '',
     securityDeposit: '',
     status: 'AVAILABLE',
+    imageUrlsText: '',
     amenityIds: [],
+    serviceCategoryIds: [],
   });
 
   useEffect(() => {
@@ -101,6 +111,18 @@ const EditRoomModal = ({
     });
   };
 
+  const toggleServiceCategory = (categoryId: string) => {
+    setFormData(prev => {
+      const exists = prev.serviceCategoryIds.includes(categoryId);
+      return {
+        ...prev,
+        serviceCategoryIds: exists
+          ? prev.serviceCategoryIds.filter(id => id !== categoryId)
+          : [...prev.serviceCategoryIds, categoryId],
+      };
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!roomId) return;
@@ -117,19 +139,15 @@ const EditRoomModal = ({
           : parseFloat(formData.securityDeposit),
       roomType: formData.roomType,
       status: formData.status,
+      images: formData.imageUrlsText
+        .split(/\r?\n|,/)
+        .map(url => url.trim())
+        .filter(Boolean),
+      amenities: formData.amenityIds,
+      serviceCategories: formData.serviceCategoryIds,
     };
 
     await updateRoomMutation.mutateAsync({ roomId, body });
-
-    const currentAmenityIds = (room?.amenities ?? [])
-      .map(a => a.amenity?.id)
-      .filter(Boolean) as string[];
-
-    await syncRoomAmenitiesMutation.mutateAsync({
-      roomId,
-      currentAmenityIds,
-      nextAmenityIds: formData.amenityIds,
-    });
     onClose();
   };
 
@@ -220,7 +238,7 @@ const EditRoomModal = ({
 
                     <div>
                       <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                        Status
+                        Availability / Status
                       </label>
                       <div className="relative">
                         <select
@@ -395,6 +413,67 @@ const EditRoomModal = ({
                       />
                     </div>
                   </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                      Service Categories
+                    </label>
+                    <div className="max-h-40 overflow-y-auto rounded-xl border border-slate-200/80 bg-white/70 backdrop-blur-sm shadow-sm p-3">
+                      {isServiceCategoriesLoading ? (
+                        <div className="text-sm text-slate-500">
+                          Loading service categories...
+                        </div>
+                      ) : !serviceCategories ||
+                        serviceCategories.length === 0 ? (
+                        <div className="text-sm text-slate-500">
+                          No service categories available.
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          {serviceCategories.map(category => (
+                            <label
+                              key={category.id}
+                              className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer select-none"
+                            >
+                              <input
+                                type="checkbox"
+                                className="rounded border-slate-300 text-primary focus:ring-primary/20"
+                                checked={formData.serviceCategoryIds.includes(
+                                  category.id
+                                )}
+                                onChange={() =>
+                                  toggleServiceCategory(category.id)
+                                }
+                              />
+                              <span className="truncate" title={category.name}>
+                                {category.name}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                      Image URLs
+                    </label>
+                    <textarea
+                      className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm min-h-28 resize-none"
+                      value={formData.imageUrlsText}
+                      onChange={e =>
+                        setFormData(prev => ({
+                          ...prev,
+                          imageUrlsText: e.target.value,
+                        }))
+                      }
+                      placeholder="https://example.com/room-1.jpg&#10;https://example.com/room-2.jpg"
+                    />
+                    <p className="mt-2 text-xs text-slate-500">
+                      Enter one URL per line or separate with commas.
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -408,10 +487,7 @@ const EditRoomModal = ({
                 </button>
                 <button
                   type="submit"
-                  disabled={
-                    updateRoomMutation.isPending ||
-                    syncRoomAmenitiesMutation.isPending
-                  }
+                  disabled={updateRoomMutation.isPending}
                   className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 transition-all duration-200 disabled:opacity-60 disabled:pointer-events-none"
                 >
                   Save Changes

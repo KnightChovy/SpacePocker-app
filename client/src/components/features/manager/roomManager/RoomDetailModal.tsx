@@ -7,6 +7,7 @@ import {
   Ruler,
   Hash,
   Tags,
+  Image,
 } from 'lucide-react';
 import { useGetRoomById } from '@/hooks/manager/rooms/use-get-room-by-id';
 import type { ApiRoomStatus } from '@/types/room-api';
@@ -71,6 +72,12 @@ const RoomDetailModal = ({
       .map(a => a.amenity?.name)
       .filter(Boolean) as string[];
   }, [room?.amenities]);
+
+  const serviceCategoryNames = useMemo(() => {
+    return (room?.serviceCategories ?? [])
+      .map(category => category.category?.name)
+      .filter(Boolean) as string[];
+  }, [room?.serviceCategories]);
 
   if (!isOpen || !roomId) return null;
 
@@ -206,6 +213,10 @@ const RoomDetailModal = ({
                     <p className="text-base font-semibold text-slate-800">
                       {room.roomType}
                     </p>
+                    <p className="text-sm text-slate-500">
+                      Available for booking:{' '}
+                      {room.status === 'AVAILABLE' ? 'Yes' : 'No'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -236,6 +247,58 @@ const RoomDetailModal = ({
                       >
                         {name}
                       </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                  Service Categories
+                </p>
+                {serviceCategoryNames.length === 0 ? (
+                  <p className="text-sm text-slate-500">
+                    No service categories.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {serviceCategoryNames.map(name => (
+                      <span
+                        key={name}
+                        className="px-3 py-1 rounded-full bg-primary/8 text-primary text-sm"
+                      >
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Image className="size-4 text-slate-400" />
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Images
+                  </p>
+                </div>
+                {!room.images || room.images.length === 0 ? (
+                  <p className="text-sm text-slate-500">No images.</p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {room.images.map((imageUrl, index) => (
+                      <a
+                        key={`${imageUrl}-${index}`}
+                        href={imageUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group block overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`${room.name} ${index + 1}`}
+                          className="h-28 w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                        />
+                      </a>
                     ))}
                   </div>
                 )}

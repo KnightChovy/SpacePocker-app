@@ -419,7 +419,6 @@ export default function ScheduleTimeline({
                       if (bookingWidth <= 0) {
                         return null;
                       }
-
                       return (
                         <div
                           key={booking.id}
