@@ -1,39 +1,43 @@
-import { Calendar, Clock, Eye, Edit, X } from 'lucide-react';
-import type { Booking, BookingStatus } from '@/types/types';
-import { BookingStatusLabel } from '@/types/types';
+import { Calendar, Clock, Check, X } from 'lucide-react';
+import type {
+  BookingRequestForManager,
+  BookingRequestStatus,
+} from '@/types/booking-request-api';
 
 interface BookingTableProps {
-  bookings: Booking[];
-  onView?: (booking: Booking) => void;
-  onEdit?: (booking: Booking) => void;
-  onCancel?: (id: string) => void;
+  requests: BookingRequestForManager[];
+  onApprove?: (request: BookingRequestForManager) => void | Promise<void>;
+  onReject?: (request: BookingRequestForManager) => void | Promise<void>;
+  isApproving?: boolean;
+  isRejecting?: boolean;
 }
 
-const StatusBadge = ({ status }: { status: BookingStatus }) => {
-  const config: Record<BookingStatus, { bg: string; text: string }> = {
-    confirmed: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
-    pending: { bg: 'bg-amber-50', text: 'text-amber-600' },
-    completed: { bg: 'bg-blue-50', text: 'text-blue-600' },
-    cancelled: { bg: 'bg-red-50', text: 'text-red-400' },
+const StatusBadge = ({ status }: { status: BookingRequestStatus }) => {
+  const config: Record<BookingRequestStatus, { bg: string; text: string }> = {
+    APPROVED: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
+    PENDING: { bg: 'bg-amber-50', text: 'text-amber-600' },
+    COMPLETED: { bg: 'bg-blue-50', text: 'text-blue-600' },
+    CANCELLED: { bg: 'bg-red-50', text: 'text-red-400' },
+    REJECTED: { bg: 'bg-red-50', text: 'text-red-600' },
   };
 
   const { bg, text } = config[status];
-  const label = BookingStatusLabel[status];
 
   return (
     <span
       className={`px-2.5 py-1 rounded-full text-xs font-medium ${bg} ${text}`}
     >
-      {label}
+      {status}
     </span>
   );
 };
 
 const BookingTable = ({
-  bookings,
-  onView,
-  onEdit,
-  onCancel,
+  requests,
+  onApprove,
+  onReject,
+  isApproving,
+  isRejecting,
 }: BookingTableProps) => {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -42,19 +46,16 @@ const BookingTable = ({
           <thead>
             <tr className="bg-gray-50/50 border-b border-gray-100">
               <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">
-                Booking ID
+                Request ID
               </th>
               <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Customer
+                User
               </th>
               <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Room
               </th>
               <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Schedule
-              </th>
-              <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
-                Amount
+                Time
               </th>
               <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Status
@@ -65,95 +66,89 @@ const BookingTable = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {bookings.map(booking => (
+            {requests.map(request => (
               <tr
-                key={booking.id}
+                key={request.id}
                 className="group hover:bg-primary/5 transition-colors"
               >
                 <td className="py-4 px-6 text-xs font-mono text-text-gray font-medium">
-                  {booking.bookingNumber}
+                  {request.id}
                 </td>
                 <td className="py-4 px-6">
                   <div className="flex items-center gap-3">
-                    {booking.customer.avatar ? (
-                      <img
-                        src={booking.customer.avatar}
-                        alt={booking.customer.name}
-                        className="size-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="size-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">
-                        {booking.customer.initials}
-                      </div>
-                    )}
+                    <div className="size-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">
+                      {request.user?.name
+                        ? request.user.name
+                            .split(' ')
+                            .map(n => n[0])
+                            .slice(0, 2)
+                            .join('')
+                            .toUpperCase()
+                        : 'U'}
+                    </div>
                     <div>
                       <div className="text-sm font-semibold text-text-dark">
-                        {booking.customer.name}
+                        {request.user?.name}
                       </div>
                       <div className="text-xs text-text-gray">
-                        {booking.customer.department}
+                        {request.user?.email}
                       </div>
                     </div>
                   </div>
                 </td>
                 <td className="py-4 px-6">
                   <div className="text-sm font-medium text-text-dark">
-                    {booking.room.name}
+                    {request.room?.name}
                   </div>
                   <div className="text-xs text-text-gray">
-                    {booking.room.building}
+                    {request.room?.roomCode}
                   </div>
                 </td>
                 <td className="py-4 px-6">
                   <div className="flex flex-col gap-0.5">
-                    <div
-                      className={`flex items-center gap-1.5 text-sm ${booking.status === 'completed' ? 'text-text-gray line-through' : 'text-text-dark'}`}
-                    >
+                    <div className="flex items-center gap-1.5 text-sm text-text-dark">
                       <Calendar className="size-3.5 text-gray-400" />
-                      {booking.scheduleDate}
+                      {new Date(request.startTime).toLocaleDateString()}
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-text-gray">
                       <Clock className="size-3.5 text-gray-400" />
-                      {booking.startTime} - {booking.endTime}
+                      {new Date(request.startTime).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}{' '}
+                      -{' '}
+                      {new Date(request.endTime).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </div>
                   </div>
                 </td>
-                <td
-                  className={`py-4 px-6 text-right font-mono text-sm font-bold ${booking.status === 'cancelled' ? 'text-gray-400 line-through' : 'text-text-dark'}`}
-                >
-                  ${booking.amount.toFixed(2)}
-                </td>
                 <td className="py-4 px-6">
-                  <StatusBadge status={booking.status} />
+                  <StatusBadge status={request.status} />
                 </td>
                 <td className="py-4 px-6 text-center">
                   <div className="flex items-center justify-center gap-1">
-                    <button
-                      onClick={() => onView?.(booking)}
-                      className="p-1.5 text-gray-400 hover:text-primary hover:bg-gray-100 rounded transition-colors"
-                      title="View Details"
-                    >
-                      <Eye className="size-4" />
-                    </button>
-                    {booking.status !== 'completed' &&
-                      booking.status !== 'cancelled' && (
-                        <>
-                          <button
-                            onClick={() => onEdit?.(booking)}
-                            className="p-1.5 text-gray-400 hover:text-amber-500 hover:bg-gray-100 rounded transition-colors"
-                            title="Edit Booking"
-                          >
-                            <Edit className="size-4" />
-                          </button>
-                          <button
-                            onClick={() => onCancel?.(booking.id)}
-                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-gray-100 rounded transition-colors"
-                            title="Cancel Booking"
-                          >
-                            <X className="size-4" />
-                          </button>
-                        </>
-                      )}
+                    {request.status === 'PENDING' && (
+                      <>
+                        <button
+                          onClick={() => onApprove?.(request)}
+                          className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-gray-100 rounded transition-colors disabled:opacity-50"
+                          title="Approve"
+                          disabled={isApproving || isRejecting}
+                        >
+                          <Check className="size-4" />
+                        </button>
+                        <button
+                          onClick={() => onReject?.(request)}
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-gray-100 rounded transition-colors disabled:opacity-50"
+                          title="Reject"
+                          disabled={isApproving || isRejecting}
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -165,8 +160,8 @@ const BookingTable = ({
       <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-white">
         <span className="text-xs text-gray-500">
           Showing{' '}
-          <span className="font-bold text-text-dark">1-{bookings.length}</span>{' '}
-          of <span className="font-bold text-text-dark">48</span> bookings
+          <span className="font-bold text-text-dark">1-{requests.length}</span>{' '}
+          requests
         </span>
         <div className="flex gap-2">
           <button
