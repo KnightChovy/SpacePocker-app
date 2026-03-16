@@ -8,6 +8,7 @@ import { HStack } from '@/components/ui/hstack';
 import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input';
 import { VStack } from '@/components/ui/vstack';
 import { registerSchema, type RegisterFormData } from '@/schema/auth.schema';
+import { useAuthStore } from '@/store/authStore';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { Eye, EyeOff, Lock, Mail, Phone, User } from 'lucide-react-native';
@@ -18,7 +19,7 @@ import { Alert, Pressable, Text } from 'react-native';
 export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+  const { signup } = useAuthStore();
   const {
     control,
     handleSubmit,
@@ -36,7 +37,8 @@ export default function RegisterForm() {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      // await register(data);
+      const { confirmPassword, ...registerData } = data;
+      await signup(registerData);
       router.replace('/(tabs)/home');
     } catch (e: any) {
       Alert.alert('Registration failed', e.message);

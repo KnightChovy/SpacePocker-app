@@ -9,6 +9,7 @@ import { HStack } from '@/components/ui/hstack';
 import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input';
 import { VStack } from '@/components/ui/vstack';
 import { loginSchema, type LoginFormData } from '@/schema/auth.schema';
+import { useAuthStore } from '@/store/authStore';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
@@ -19,7 +20,7 @@ const googleLogo = require('@/assets/images/google_logo.png');
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-
+  const { login } = useAuthStore();
   const {
     control,
     handleSubmit,
@@ -31,10 +32,14 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      //   await login(data);
+      await login(data);
+      console.log(data, 'dattata');
+
       router.replace('/(tabs)/home');
-    } catch (e: any) {
-      Alert.alert('Login failed', e.message);
+    } catch (err: any) {
+      console.log(err);
+
+      Alert.alert('Login failed', err.message);
     }
   };
   const handleGoogleSignIn = async () => {
