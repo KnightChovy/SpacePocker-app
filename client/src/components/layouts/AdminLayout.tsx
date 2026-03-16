@@ -18,7 +18,6 @@ export default function AdminLayout() {
     if (path.includes('/spaces')) return 'spaces';
     if (path.includes('/amenities')) return 'amenities';
     if (path.includes('/services')) return 'services';
-    if (path.includes('/finance')) return 'finance';
     if (path.includes('/settings')) return 'settings';
     if (path.includes('/security')) return 'security';
     return 'dashboard';
@@ -59,12 +58,6 @@ export default function AdminLayout() {
           label: 'Services',
           path: '/admin/services',
           icon: 'home_repair_service',
-        },
-        {
-          id: 'finance',
-          label: 'Finance',
-          path: '/admin/finance',
-          icon: 'payments',
         },
       ],
     },

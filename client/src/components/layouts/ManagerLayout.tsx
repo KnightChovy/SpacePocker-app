@@ -7,7 +7,6 @@ import {
   Users,
   BarChart3,
   Building2,
-  Settings,
   HelpCircle,
   Zap,
   UserCircle,
@@ -55,12 +54,6 @@ export default function ManagerLayout() {
           label: 'Buildings',
           path: '/manager/buildings',
           icon: <Building2 className="h-5 w-5" />,
-        },
-        {
-          id: 'analytics',
-          label: 'Analytics',
-          path: '/manager/analytics',
-          icon: <Settings className="h-5 w-5" />,
         },
         {
           id: 'service-categories',

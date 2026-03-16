@@ -101,3 +101,31 @@ export interface ApproveBookingRequestResult {
     status: BookingRequestStatus;
   };
 }
+
+export interface MyBookingRequestBuildingLite {
+  id: string;
+  buildingName?: string;
+  campus?: string;
+  address?: string;
+}
+
+export interface MyBookingRequestRoomLite {
+  id: string;
+  name: string;
+  roomCode?: string | null;
+  pricePerHour?: number;
+  images?: string[];
+  building?: MyBookingRequestBuildingLite | null;
+}
+
+export interface MyBookingRequest {
+  id: string;
+  userId: string;
+  roomId: string;
+  startTime: string;
+  endTime: string;
+  purpose?: string | null;
+  status: BookingRequestStatus;
+  createdAt: string;
+  room: MyBookingRequestRoomLite;
+}

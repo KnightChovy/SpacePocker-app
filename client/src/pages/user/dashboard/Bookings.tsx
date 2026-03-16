@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Search, BellRing, Plus } from 'lucide-react';
 import AppHeader from '@/components/layouts/AppHeader';
@@ -7,15 +7,215 @@ import { getAvatarUrl } from '@/lib/utils';
 import FilterButton from '@/components/features/user/bookings/FilterButton';
 import PaginationButton from '@/components/features/user/bookings/PaginationButton';
 import BookingList from '@/components/features/user/bookings/BookingList';
+import { useGetMyBookingRequests } from '@/hooks/user/booking-requests/use-get-my-booking-requests';
+import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
+import type { BookingUser } from '@/types/user-type';
+import type {
+  BookingRequestStatus,
+  MyBookingRequest,
+} from '@/types/booking-request-api';
+import { useBookingDraftStore } from '@/stores/bookingDraft.store';
+
+const formatDateLabel = (iso: string) => {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
+const formatTimeLabel = (iso: string) => {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const formatDurationLabel = (startIso: string, endIso: string) => {
+  const start = new Date(startIso);
+  const end = new Date(endIso);
+  const diffMs = end.getTime() - start.getTime();
+  if (Number.isNaN(diffMs) || diffMs <= 0) return '—';
+
+  const totalMinutes = Math.round(diffMs / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (minutes === 0) return `${hours}h`;
+  if (hours === 0) return `${minutes}m`;
+  return `${hours}h ${minutes}m`;
+};
+
+const mapStatusToUserLabel = (status: BookingRequestStatus, isPaid: boolean) => {
+  switch (status) {
+    case 'PENDING':
+      return 'Pending Approval' as const;
+    case 'APPROVED':
+      return isPaid
+        ? ('Confirmed' as const)
+        : ('Awaiting Payment' as const);
+    case 'COMPLETED':
+      return 'Completed' as const;
+    case 'CANCELLED':
+    case 'REJECTED':
+      return 'Cancelled' as const;
+    default:
+      return 'Pending Approval' as const;
+  }
+};
+
+const formatPaymentMethodLabel = (method?: string) => {
+  switch (method) {
+    case 'CARD':
+      return 'Card';
+    case 'APPLE_PAY':
+      return 'Apple Pay';
+    case 'GOOGLE_PAY':
+      return 'Google Pay';
+    default:
+      return '—';
+  }
+};
+
+const mapMyBookingRequestToBookingUser = (
+  request: MyBookingRequest,
+  paymentMethod: string,
+  isPaid: boolean,
+  totalPrice: number
+): BookingUser => {
+  const room = request.room;
+  const building = room?.building;
+
+  const safeId = request.id ? request.id.replace(/-/g, '').slice(0, 10) : '';
+  const startIso = request.startTime;
+  const endIso = request.endTime;
+
+  const estimatedPrice = Math.round(totalPrice * 100) / 100;
+
+  const imageUrl =
+    room?.images?.[0] ||
+    'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800';
+
+  const location =
+    building?.address ||
+    [building?.buildingName, building?.campus].filter(Boolean).join(' • ') ||
+    '—';
+
+  return {
+    id: safeId ? `#BR-${safeId.toUpperCase()}` : request.id,
+    spaceId: room?.roomCode ?? request.roomId,
+    spaceName: room?.name ?? '—',
+    location,
+    status: mapStatusToUserLabel(request.status, isPaid),
+    date: formatDateLabel(startIso),
+    startTime: formatTimeLabel(startIso),
+    endTime: formatTimeLabel(endIso),
+    duration: formatDurationLabel(startIso, endIso),
+    price: Number.isFinite(estimatedPrice) ? estimatedPrice : 0,
+    paymentMethod,
+    image: imageUrl,
+  };
+};
 
 const Bookings = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
   const user = useAuthStore(state => state.user);
-  const [activeTab, setActiveTab] = useState<'Active' | 'Past' | 'Cancelled'>(
-    'Past'
+  const [activeTab, setActiveTab] = useState<'Active' | 'Cancelled'>('Active');
+
+  const paymentsByBookingRequestId = useBookingDraftStore(
+    state => state.paymentsByBookingRequestId
   );
+  const localBookingsById = useBookingDraftStore(state => state.localBookingsById);
+
+  const serviceCategoriesQuery = useGetServiceCategories();
+  const servicePriceById = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const cat of serviceCategoriesQuery.data ?? []) {
+      for (const svc of cat.services ?? []) {
+        map.set(svc.id, svc.price);
+      }
+    }
+    return map;
+  }, [serviceCategoriesQuery.data]);
+
+  const readPersistedBookingStorage = ():
+    | {
+        localBookingsById?: Record<
+          string,
+          {
+            amenityIds?: string[];
+            services?: Array<{ serviceId: string; quantity: number }>;
+          }
+        >;
+      }
+    | undefined => {
+    if (typeof window === 'undefined') return undefined;
+    try {
+      const raw = window.localStorage.getItem('spacepocker-booking-storage');
+      if (!raw) return undefined;
+      const parsed = JSON.parse(raw) as any;
+      const state = parsed?.state ?? parsed;
+      return {
+        localBookingsById: state?.localBookingsById,
+      };
+    } catch {
+      return undefined;
+    }
+  };
+
+  const {
+    data: myBookingRequests,
+    isLoading,
+    isError,
+  } = useGetMyBookingRequests();
+
+  const cancelledStatuses: BookingRequestStatus[] = ['CANCELLED', 'REJECTED'];
+
+  const cancelledRequests = (myBookingRequests ?? []).filter(r =>
+    cancelledStatuses.includes(r.status)
+  );
+  const activeRequests = (myBookingRequests ?? []).filter(
+    r => !cancelledStatuses.includes(r.status)
+  );
+
+  const requestsForTab =
+    activeTab === 'Active' ? activeRequests : cancelledRequests;
+  const bookingsForTab = requestsForTab.map(req => {
+    const payment = req.id ? paymentsByBookingRequestId[req.id] : undefined;
+
+    const start = new Date(req.startTime);
+    const end = new Date(req.endTime);
+    const hours = Math.max(0, (end.getTime() - start.getTime()) / 3600000);
+    const rate = req.room?.pricePerHour ?? 0;
+    const roomLine = rate * hours;
+
+    const persisted = readPersistedBookingStorage();
+    const local = req.id
+      ? (localBookingsById[req.id] ?? persisted?.localBookingsById?.[req.id])
+      : undefined;
+
+    const servicesLine = (local?.services ?? []).reduce((sum, line) => {
+      const price = servicePriceById.get(line.serviceId) ?? 0;
+      const qty = Number(line.quantity ?? 0);
+      if (!Number.isFinite(qty) || qty <= 0) return sum;
+      return sum + price * qty;
+    }, 0);
+
+    const totalPrice = roomLine + servicesLine;
+
+    return mapMyBookingRequestToBookingUser(
+      req,
+      formatPaymentMethodLabel(payment?.paymentMethod),
+      Boolean(payment),
+      totalPrice
+    );
+  });
 
   const headerActions = [
     {
@@ -37,7 +237,7 @@ const Bookings = () => {
     <>
       <AppHeader
         title="My Bookings"
-        subtitle="View and manage your current and past space reservations."
+        subtitle="View and manage your space reservations."
         hideTitle={false}
         onMenuClick={() => setSidebarOpen(true)}
         showSearch={false}
@@ -54,7 +254,7 @@ const Bookings = () => {
           <div className="flex flex-col gap-6">
             <div className="border-b border-border-light dark:border-border-dark">
               <nav className="flex gap-8">
-                {(['Active', 'Past', 'Cancelled'] as const).map(tab => (
+                {(['Active', 'Cancelled'] as const).map(tab => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -67,7 +267,7 @@ const Bookings = () => {
                     {tab}{' '}
                     {tab === 'Active' && (
                       <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                        1
+                        {activeRequests.length}
                       </span>
                     )}
                   </button>
@@ -93,7 +293,17 @@ const Bookings = () => {
             </div>
           </div>
 
-          <BookingList />
+          {isLoading ? (
+            <div className="rounded-2xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark p-8 text-center text-sm text-text-sub-light dark:text-text-sub-dark">
+              Loading...
+            </div>
+          ) : isError ? (
+            <div className="rounded-2xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark p-8 text-center text-sm text-text-sub-light dark:text-text-sub-dark">
+              Failed to load bookings.
+            </div>
+          ) : (
+            <BookingList bookings={bookingsForTab} requests={requestsForTab} />
+          )}
 
           <div className="flex items-center justify-center gap-2 py-4">
             <PaginationButton icon="left" disabled />
