@@ -14,6 +14,11 @@ export class RoomRepository implements IRoomRepository {
             amenity: true,
           },
         },
+        serviceCategories: {
+          include: {
+            category: true,
+          },
+        },
       },
     });
   }
@@ -29,12 +34,38 @@ export class RoomRepository implements IRoomRepository {
     roomType: RoomType;
     area?: number;
     roomCode: string;
+    images?: string[];
+    amenities?: string[];
+    serviceCategories?: string[];
   }) {
+    const { amenities, serviceCategories, images, ...roomData } = data;
+
     return prisma.room.create({
-      data,
+      data: {
+        ...roomData,
+        images: images || [],
+        amenities:
+          amenities && amenities.length > 0
+            ? {
+                create: amenities.map((id) => ({
+                  amenity: { connect: { id } },
+                })),
+              }
+            : undefined,
+        serviceCategories:
+          serviceCategories && serviceCategories.length > 0
+            ? {
+                create: serviceCategories.map((id) => ({
+                  category: { connect: { id } },
+                })),
+              }
+            : undefined,
+      },
       include: {
         building: true,
         manager: true,
+        amenities: { include: { amenity: true } },
+        serviceCategories: { include: { category: true } },
       },
     });
   }
@@ -58,6 +89,11 @@ export class RoomRepository implements IRoomRepository {
             amenity: true,
           },
         },
+        serviceCategories: {
+          include: {
+            category: true,
+          },
+        },
       },
     });
   }
@@ -73,14 +109,40 @@ export class RoomRepository implements IRoomRepository {
       roomType?: RoomType;
       area?: number;
       status?: import('@prisma/client').RoomStatus;
+      images?: string[];
+      amenities?: string[];
+      serviceCategories?: string[];
     },
   ) {
+    const { amenities, serviceCategories, images, ...roomData } = data;
+
     return prisma.room.update({
       where: { id: roomId },
-      data,
+      data: {
+        ...roomData,
+        ...(images !== undefined && { images }),
+        ...(amenities !== undefined && {
+          amenities: {
+            deleteMany: {},
+            create: amenities.map((id) => ({
+              amenity: { connect: { id } },
+            })),
+          },
+        }),
+        ...(serviceCategories !== undefined && {
+          serviceCategories: {
+            deleteMany: {},
+            create: serviceCategories.map((id) => ({
+              category: { connect: { id } },
+            })),
+          },
+        }),
+      },
       include: {
         building: true,
         manager: true,
+        amenities: { include: { amenity: true } },
+        serviceCategories: { include: { category: true } },
       },
     });
   }
