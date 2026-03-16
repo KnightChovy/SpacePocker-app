@@ -1,4 +1,4 @@
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/layouts/AppHeader';
 import BookingList from '@/components/features/user/favorites/BookingList';
 import { ArrowLeftRight, Shuffle, BellRing, Plus } from 'lucide-react';
@@ -9,6 +9,7 @@ const Favorites = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const navigate = useNavigate();
   const user = useAuthStore(state => state.user);
 
   const headerActions = [
@@ -24,6 +25,7 @@ const Favorites = () => {
       label: 'New Booking',
       variant: 'primary' as const,
       hideOnMobile: true,
+      onClick: () => navigate('/spaces'),
     },
   ];
 

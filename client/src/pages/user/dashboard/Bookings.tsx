@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useState } from 'react';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import { Search, BellRing, Plus } from 'lucide-react';
 import AppHeader from '@/components/layouts/AppHeader';
 import { useAuthStore } from '@/stores/auth.store';
@@ -125,6 +125,7 @@ const Bookings = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const navigate = useNavigate();
   const user = useAuthStore(state => state.user);
   const [activeTab, setActiveTab] = useState<'Active' | 'Cancelled'>('Active');
 
@@ -230,6 +231,7 @@ const Bookings = () => {
       label: 'New Booking',
       variant: 'primary' as const,
       hideOnMobile: true,
+      onClick: () => navigate('/spaces'),
     },
   ];
 

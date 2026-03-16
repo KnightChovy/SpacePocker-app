@@ -1,4 +1,4 @@
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/layouts/AppHeader';
 import { Landmark, BellRing, Plus } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
@@ -8,6 +8,7 @@ const Billings = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const navigate = useNavigate();
   const user = useAuthStore(state => state.user);
 
   const headerActions = [
@@ -23,6 +24,7 @@ const Billings = () => {
       label: 'New Booking',
       variant: 'primary' as const,
       hideOnMobile: true,
+      onClick: () => navigate('/spaces'),
     },
   ];
 
