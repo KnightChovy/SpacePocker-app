@@ -406,6 +406,44 @@
 
 /**
  * @openapi
+ * /v1/api/allBookingRequest:
+ *   get:
+ *     summary: Get all booking requests for admin
+ *     description: |
+ *       Admin endpoint to retrieve all booking requests.
+ *       This endpoint does not filter by status, so it includes
+ *       PENDING, APPROVED, REJECTED, CANCELLED, and COMPLETED requests.
+ *     tags: [Booking Request]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Admin ID (UUID)
+ *       - in: header
+ *         name: authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Access token
+ *     responses:
+ *       200:
+ *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/BookingRequestListResponse"
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Only ADMIN can access
+ */
+
+/**
+ * @openapi
  * /v1/api/booking-requests/approve/{id}:
  *   patch:
  *     summary: Approve booking request and create booking

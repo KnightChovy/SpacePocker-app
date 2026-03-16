@@ -4,7 +4,6 @@ import {
   Calendar,
   Check,
   ChevronLeft,
-  CreditCard,
   HelpCircle,
   Minus,
   Plus,
@@ -24,9 +23,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useBookingDraftStore } from '@/stores/bookingDraft.store';
 
-type Step = 1 | 2 | 3 | 4;
-
-type PaymentMethod = 'CARD' | 'APPLE_PAY' | 'GOOGLE_PAY';
+type Step = 1 | 2 | 3;
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
@@ -68,8 +65,7 @@ const Stepper = ({ step }: { step: Step }) => {
   const steps: Array<{ n: Step; label: string }> = [
     { n: 1, label: 'Info' },
     { n: 2, label: 'Review' },
-    { n: 3, label: 'Payment' },
-    { n: 4, label: 'Confirm' },
+    { n: 3, label: 'Confirm' },
   ];
 
   return (
@@ -238,12 +234,6 @@ const BookingRequestWizardPage = () => {
     upsertDraft,
   ]);
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CARD');
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvc, setCvc] = useState('');
-  const [cardholderName, setCardholderName] = useState('');
-
   const [confirmedId, setConfirmedId] = useState<string | null>(null);
 
   const roomsQuery = useGetRooms({
@@ -284,6 +274,29 @@ const BookingRequestWizardPage = () => {
     return new Set(roomAmenities.map(a => a.id));
   }, [roomAmenities]);
 
+  const [amenitiesInitializedForRoomId, setAmenitiesInitializedForRoomId] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    if (!roomId) return;
+    if (amenitiesInitializedForRoomId === roomId) return;
+
+    if (selectedAmenityIds.size > 0) {
+      setAmenitiesInitializedForRoomId(roomId);
+      return;
+    }
+
+    if (roomAmenities.length > 0) {
+      setSelectedAmenityIds(new Set(roomAmenities.map(a => a.id)));
+      setAmenitiesInitializedForRoomId(roomId);
+    }
+  }, [
+    amenitiesInitializedForRoomId,
+    roomAmenities,
+    roomId,
+    selectedAmenityIds.size,
+  ]);
+
   const allAmenitiesQuery = useGetAmenities();
   const allAmenities = useMemo(
     () => allAmenitiesQuery.data ?? [],
@@ -299,9 +312,6 @@ const BookingRequestWizardPage = () => {
   const allServices: ApiService[] = useMemo(() => {
     return allServiceCategories.flatMap(c => c.services);
   }, [allServiceCategories]);
-
-  // Note: defaults & sanitization are handled via room change handler and
-  // derived calculations below, to avoid cascading render diagnostics.
 
   const startIso = useMemo(
     () => buildIsoFromDateTime(startDate, startTime),
@@ -330,16 +340,13 @@ const BookingRequestWizardPage = () => {
     );
 
     const subtotal = roomLine + servicesLine;
-    const serviceFee = subtotal * 0.075;
-    const tax = (subtotal + serviceFee) * 0.08;
-    const total = subtotal + serviceFee + tax;
+    const total = subtotal;
 
     return {
       rate,
       roomLine,
       servicesLine,
-      serviceFee,
-      tax,
+      subtotal,
       total,
     };
   }, [allServices, effectiveRoom, hours, selectedServices]);
@@ -351,7 +358,10 @@ const BookingRequestWizardPage = () => {
     const err = createBooking.error as
       | { response?: { data?: { message?: string } } }
       | undefined;
-    return err?.response?.data?.message ?? 'Payment failed. Please try again.';
+    return (
+      err?.response?.data?.message ??
+      'Failed to create booking request. Please try again.'
+    );
   }, [createBooking.error]);
 
   const canGoNextFromInfo = useMemo(() => {
@@ -409,7 +419,7 @@ const BookingRequestWizardPage = () => {
     });
   };
 
-  const handlePay = async () => {
+  const handleSubmitBookingRequest = async () => {
     if (!roomId || !startIso || !endIso) return;
 
     const servicesPayload = Object.entries(selectedServices)
@@ -419,16 +429,13 @@ const BookingRequestWizardPage = () => {
         quantity,
       }));
 
+    const selectedAmenityIdList = Array.from(selectedAmenityIds);
+
     const payload = {
       roomId,
       startTime: startIso,
       endTime: endIso,
       purpose: purpose.trim() ? purpose.trim() : undefined,
-      amenityIds:
-        selectedAmenityIds.size > 0
-          ? Array.from(selectedAmenityIds)
-          : undefined,
-      services: servicesPayload.length > 0 ? servicesPayload : undefined,
     };
 
     const makeLocalId = () => {
@@ -444,36 +451,35 @@ const BookingRequestWizardPage = () => {
       const result = await createBooking.mutateAsync(payload);
 
       addLocalBooking({
-        id: result.id,
+        bookingRequestId: result.id,
         roomId,
         startTime: startIso,
         endTime: endIso,
         purpose: payload.purpose,
-        amenityIds: payload.amenityIds ?? [],
-        services: payload.services ?? [],
+        amenityIds: selectedAmenityIdList,
+        services: servicesPayload,
         savedAt: new Date().toISOString(),
       });
       clearDraft(roomId);
 
       setConfirmedId(result.id);
-      setStep(4);
+      setStep(3);
     } catch {
-      // Backend may not support/validate extras yet; persist locally and confirm.
       const localId = makeLocalId();
       addLocalBooking({
-        id: localId,
+        bookingRequestId: localId,
         roomId,
         startTime: startIso,
         endTime: endIso,
         purpose: payload.purpose,
-        amenityIds: payload.amenityIds ?? [],
-        services: payload.services ?? [],
+        amenityIds: selectedAmenityIdList,
+        services: servicesPayload,
         savedAt: new Date().toISOString(),
       });
       clearDraft(roomId);
 
       setConfirmedId(localId);
-      setStep(4);
+      setStep(3);
     }
   };
 
@@ -482,23 +488,19 @@ const BookingRequestWizardPage = () => {
       ? 'Configure your reservation'
       : step === 2
         ? 'Review your reservation'
-        : step === 3
-          ? 'Secure Payment'
-          : 'Your booking is confirmed!';
+        : 'Booking request submitted!';
 
   const headerSubtitle =
     step === 1
       ? `Enter the details for your upcoming booking${effectiveRoom ? ` at ${effectiveRoom.name}` : ''}.`
       : step === 2
-        ? 'Please check the details below carefully before proceeding to payment.'
-        : step === 3
-          ? 'Choose your preferred payment method to complete the booking securely.'
-          : "We've saved your booking request. Your space is reserved and ready.";
+        ? 'Please check the details below carefully before submitting your booking request.'
+        : "We've saved your booking request. Your manager will review it before payment is required.";
 
   const rightCardTitle =
     step === 2
       ? 'Cost Breakdown'
-      : step === 4
+      : step === 3
         ? 'Order Summary'
         : 'Booking Summary';
 
@@ -925,113 +927,9 @@ const BookingRequestWizardPage = () => {
                   </div>
 
                   <p className="text-xs text-slate-400">
-                    By clicking "Proceed to Payment", you agree to the
+                    By clicking "Submit booking request", you agree to the
                     SpacePocker Terms of Service and Privacy Policy.
                   </p>
-                </div>
-              )}
-
-              {step === 3 && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('CARD')}
-                      className={`rounded-xl border px-4 py-4 flex flex-col items-center gap-2 transition-colors ${
-                        paymentMethod === 'CARD'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      <CreditCard className="size-5 text-primary" />
-                      <span className="text-sm font-semibold text-slate-800">
-                        Credit Card
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('APPLE_PAY')}
-                      className={`rounded-xl border px-4 py-4 flex flex-col items-center gap-2 transition-colors ${
-                        paymentMethod === 'APPLE_PAY'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="size-5 rounded bg-slate-900" />
-                      <span className="text-sm font-semibold text-slate-800">
-                        Apple Pay
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('GOOGLE_PAY')}
-                      className={`rounded-xl border px-4 py-4 flex flex-col items-center gap-2 transition-colors ${
-                        paymentMethod === 'GOOGLE_PAY'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="size-5 rounded bg-primary" />
-                      <span className="text-sm font-semibold text-slate-800">
-                        Google Pay
-                      </span>
-                    </button>
-                  </div>
-
-                  {paymentMethod === 'CARD' && (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                          Card Number
-                        </label>
-                        <input
-                          value={cardNumber}
-                          onChange={e => setCardNumber(e.target.value)}
-                          placeholder="0000 0000 0000 0000"
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                            Expiry Date
-                          </label>
-                          <input
-                            value={expiry}
-                            onChange={e => setExpiry(e.target.value)}
-                            placeholder="MM / YY"
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                            CVV / CVC
-                          </label>
-                          <input
-                            value={cvc}
-                            onChange={e => setCvc(e.target.value)}
-                            placeholder="123"
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                          Cardholder Name
-                        </label>
-                        <input
-                          value={cardholderName}
-                          onChange={e => setCardholderName(e.target.value)}
-                          placeholder="e.g. John Doe"
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <div className="size-2 rounded-full bg-green-600" />
-                        Your payment information is encrypted and secure.
-                      </div>
-                    </div>
-                  )}
 
                   {createBooking.isError && (
                     <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
@@ -1041,17 +939,17 @@ const BookingRequestWizardPage = () => {
                 </div>
               )}
 
-              {step === 4 && (
+              {step === 3 && (
                 <div className="py-8 flex flex-col items-center text-center gap-4">
                   <div className="size-16 rounded-full bg-green-100 flex items-center justify-center">
                     <Check className="size-8 text-green-700" />
                   </div>
                   <h2 className="text-3xl font-extrabold text-slate-900">
-                    Your booking is confirmed!
+                    Booking request submitted!
                   </h2>
                   <p className="text-sm text-slate-500 max-w-md">
-                    We\'ve recorded your booking request. Your space is reserved
-                    and ready.
+                    We\'ve recorded your booking request. Once your manager
+                    approves it, you can proceed with payment from My Bookings.
                   </p>
                   <div className="mt-2 px-6 py-4 rounded-2xl border border-slate-200 bg-slate-50">
                     <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -1064,10 +962,10 @@ const BookingRequestWizardPage = () => {
                   <div className="mt-4 flex items-center gap-3">
                     <button
                       type="button"
-                      onClick={() => navigate('/user/dashboard')}
+                      onClick={() => navigate('/user/bookings')}
                       className="px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20 transition-all"
                     >
-                      Go to Dashboard
+                      Go to My Bookings
                     </button>
                   </div>
                 </div>
@@ -1075,7 +973,7 @@ const BookingRequestWizardPage = () => {
             </div>
 
             {/* Footer nav */}
-            {step !== 4 && (
+            {step !== 3 && (
               <div className="mt-6 flex items-center justify-between">
                 <button
                   type="button"
@@ -1103,23 +1001,13 @@ const BookingRequestWizardPage = () => {
                 {step === 2 && (
                   <button
                     type="button"
-                    onClick={() => setStep(3)}
+                    disabled={createBooking.isPending || !canGoNextFromInfo}
+                    onClick={handleSubmitBookingRequest}
                     className="px-6 py-3 rounded-xl text-sm font-semibold text-white bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
                   >
-                    Proceed to Payment
-                  </button>
-                )}
-
-                {step === 3 && (
-                  <button
-                    type="button"
-                    disabled={createBooking.isPending || !canGoNextFromInfo}
-                    onClick={handlePay}
-                    className="px-6 py-3 rounded-xl text-sm font-semibold text-white bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20 flex items-center gap-2"
-                  >
                     {createBooking.isPending
-                      ? 'Processing...'
-                      : `Pay $${pricing.total.toFixed(2)}`}
+                      ? 'Submitting...'
+                      : 'Submit booking request'}
                   </button>
                 )}
               </div>
@@ -1174,18 +1062,6 @@ const BookingRequestWizardPage = () => {
                     <span>Services</span>
                     <span className="font-semibold text-slate-900">
                       ${pricing.servicesLine.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-slate-600">
-                    <span>Service Fee</span>
-                    <span className="font-semibold text-slate-900">
-                      ${pricing.serviceFee.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-slate-600">
-                    <span>Taxes (8%)</span>
-                    <span className="font-semibold text-slate-900">
-                      ${pricing.tax.toFixed(2)}
                     </span>
                   </div>
                   <div className="h-px bg-slate-100 my-2" />

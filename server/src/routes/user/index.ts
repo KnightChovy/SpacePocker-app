@@ -10,6 +10,7 @@ router.use(authentication);
 
 // User can get their own profile
 router.get("/users/profile", asyncHandler(userController.getUserProfile));
+router.patch("/users/profile", asyncHandler(userController.updateUserProfile));
 
 // Admin and Manager can get list of users
 router.get(

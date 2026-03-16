@@ -11,6 +11,10 @@ export interface PaginationParams {
 export interface IUserRepository {
   findByEmail(email: string): Promise<any | null>;
   findById(id: string): Promise<any | null>;
+  updateProfile(
+    id: string,
+    data: { name?: string; phoneNumber?: string | null },
+  ): Promise<any>;
   updateRole(id: string, role: "USER" | "MANAGER" | "ADMIN"): Promise<any>;
   createUser(data: {
     name: string;

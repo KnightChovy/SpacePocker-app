@@ -6,6 +6,7 @@ describe("BookingRequestController", () => {
     createBookingRequest: jest.fn(),
     getBookingRequestById: jest.fn(),
     getBookingRequestsForManager: jest.fn(),
+    getAllBookingRequestsForAdmin: jest.fn(),
     approveBookingRequest: jest.fn(),
     rejectBookingRequest: jest.fn(),
   };
@@ -82,6 +83,24 @@ describe("BookingRequestController", () => {
     expect(
       bookingRequestServiceMock.getBookingRequestsForManager,
     ).toHaveBeenCalledWith("manager-1", "manager@example.com", "PENDING");
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it("should call service getAllBookingRequestsForAdmin and return 200", async () => {
+    const req = {
+      user: { userId: "admin-1", email: "admin@example.com" },
+    } as unknown as Request;
+    const res = createMockResponse();
+
+    bookingRequestServiceMock.getAllBookingRequestsForAdmin.mockResolvedValue(
+      [{ id: "br-1" }],
+    );
+
+    await controller.getAllBookingRequestsForAdmin(req, res, jest.fn());
+
+    expect(
+      bookingRequestServiceMock.getAllBookingRequestsForAdmin,
+    ).toHaveBeenCalledWith("admin-1");
     expect(res.status).toHaveBeenCalledWith(200);
   });
 });

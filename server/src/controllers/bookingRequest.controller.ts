@@ -83,6 +83,19 @@ class BookingRequestController {
     }).send(res);
   };
 
+  getAllBookingRequestsForAdmin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    new OK({
+      message: "Get all booking requests successfully",
+      metadata: await this.bookingRequestService.getAllBookingRequestsForAdmin(
+        String(req.user?.userId),
+      ),
+    }).send(res);
+  };
+
   approveBookingRequest = async (
     req: Request,
     res: Response,

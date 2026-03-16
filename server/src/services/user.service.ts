@@ -51,4 +51,33 @@ export default class UserService {
       },
     };
   }
+
+  async updateUserProfile(
+    userId: string,
+    data: { name?: string; phoneNumber?: string | null },
+  ) {
+    if (!userId) {
+      throw new BadRequestError("User ID is required");
+    }
+
+    const hasName = data.name !== undefined;
+    const hasPhoneNumber = data.phoneNumber !== undefined;
+    if (!hasName && !hasPhoneNumber) {
+      throw new BadRequestError("No profile data provided for update");
+    }
+
+    if (hasName && (!data.name || data.name.trim() === "")) {
+      throw new BadRequestError("Name cannot be empty");
+    }
+
+    const existingUser = await this.userRepo.findById(userId);
+    if (!existingUser) {
+      throw new NotFoundError("User not found");
+    }
+
+    return this.userRepo.updateProfile(userId, {
+      name: data.name?.trim(),
+      phoneNumber: data.phoneNumber,
+    });
+  }
 }

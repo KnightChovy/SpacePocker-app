@@ -2,6 +2,7 @@ import express from "express";
 const router = express.Router();
 import accessRoutes from "./access";
 import buildingRouter from "./building";
+import bookingRoutes from "./booking";
 import bookingRequestRoutes from "./bookingRequest";
 import adminRoutes from "./admin";
 import feedbackRoutes from "./feedback";
@@ -12,6 +13,7 @@ import serviceRoutes from "./service";
 import serviceCategoryRoutes from "./serviceCategory";
 
 router.use("/v1/api", accessRoutes);
+router.use("/v1/api", bookingRoutes);
 router.use("/v1/api", bookingRequestRoutes);
 router.use("/v1/api", buildingRouter);
 router.use("/v1/api", roomRouter);
