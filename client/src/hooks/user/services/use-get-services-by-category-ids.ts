@@ -2,7 +2,10 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import axiosInstance from '@/lib/axios';
-import type { ApiService, ApiServiceCategory } from '@/types/booking-request-api';
+import type {
+  ApiService,
+  ApiServiceCategory,
+} from '@/types/booking-request-api';
 
 type ServicesByCategoryId = Record<string, ApiService[]>;
 
@@ -20,9 +23,9 @@ export const useGetServicesByCategoryIds = (categoryIds?: string[]) => {
     queryFn: async () => {
       const results = await Promise.all(
         stableIds.map(id =>
-          axiosInstance.get<{ metadata: ApiServiceCategory & { services: ApiService[] } }>(
-            `/service-categories/${id}`
-          )
+          axiosInstance.get<{
+            metadata: ApiServiceCategory & { services: ApiService[] };
+          }>(`/service-categories/${id}`)
         )
       );
 

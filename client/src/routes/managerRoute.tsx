@@ -7,6 +7,7 @@ import ManagerRoomPage from '@/pages/manager/ManagerRoomPage';
 import ManagerSchedulePage from '@/pages/manager/ManagerSchedulePage';
 import ManagerSettingsPage from '@/pages/manager/ManagerSettingsPage';
 import ManagerProfilePage from '@/pages/manager/ManagerProfilePage';
+import ManagerServiceCategoriesPage from '@/pages/manager/ManagerServiceCategoriesPage';
 import { Route, Routes } from 'react-router-dom';
 
 const ManagerRoute = () => {
@@ -19,6 +20,10 @@ const ManagerRoute = () => {
         <Route path="bookings" element={<ManagerBookingPage />} />
         <Route path="buildings" element={<ManagerBuildingPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
+        <Route
+          path="service-categories"
+          element={<ManagerServiceCategoriesPage />}
+        />
         <Route path="profile" element={<ManagerProfilePage />} />
         <Route path="settings" element={<ManagerSettingsPage />} />
       </Route>

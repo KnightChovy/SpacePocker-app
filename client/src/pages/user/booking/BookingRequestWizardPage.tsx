@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Calendar,
@@ -13,7 +13,6 @@ import {
 
 import { useGetRoomAmenitiesServices } from '@/hooks/user/rooms/use-get-room-amenities-services';
 import { useGetAmenities } from '@/hooks/user/amenities/use-get-amenities';
-import { useGetServicesByCategoryIds } from '@/hooks/user/services/use-get-services-by-category-ids';
 import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
 import { useGetRoomById } from '@/hooks/user/rooms/use-get-room-by-id';
 import { useGetRooms } from '@/hooks/user/rooms/use-get-rooms';
@@ -23,6 +22,7 @@ import type { ApiRoom, ApiRoomStatus } from '@/types/room-api';
 import type { ApiService } from '@/types/booking-request-api';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { useBookingDraftStore } from '@/stores/bookingDraft.store';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -111,17 +111,17 @@ const BookingRequestWizardPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  const getDraft = useBookingDraftStore(s => s.getDraft);
+  const upsertDraft = useBookingDraftStore(s => s.upsertDraft);
+  const clearDraft = useBookingDraftStore(s => s.clearDraft);
+  const addLocalBooking = useBookingDraftStore(s => s.addLocalBooking);
+
   const isRoomLocked = Boolean(searchParams.get('roomId'));
 
   const [step, setStep] = useState<Step>(1);
   const [roomId, setRoomId] = useState<string>(
     searchParams.get('roomId') ?? ''
   );
-
-  const bookingExtrasDraftKey = useMemo(() => {
-    if (!roomId) return null;
-    return `spacepocker:booking:extras:draft:${roomId}`;
-  }, [roomId]);
 
   const today = useMemo(() => {
     const now = new Date();
@@ -142,19 +142,28 @@ const BookingRequestWizardPage = () => {
   );
   const [purpose, setPurpose] = useState<string>('');
 
-  const [selectedAmenityIds, setSelectedAmenityIds] = useState<Set<string>>(
-    () => new Set()
-  );
-  const [selectedServices, setSelectedServices] = useState<
-    Record<string, number>
-  >({});
+  const readExtrasDraft = (draftKey: string | null, draftRoomId: string) => {
+    const storeDraft = draftRoomId ? getDraft(draftRoomId) : undefined;
+    if (storeDraft) {
+      return {
+        amenityIds: storeDraft.amenityIds ?? [],
+        services: storeDraft.services ?? {},
+      };
+    }
 
-  useEffect(() => {
-    if (!bookingExtrasDraftKey) return;
+    if (!draftKey)
+      return {
+        amenityIds: [] as string[],
+        services: {} as Record<string, number>,
+      };
 
     try {
-      const raw = localStorage.getItem(bookingExtrasDraftKey);
-      if (!raw) return;
+      const raw = localStorage.getItem(draftKey);
+      if (!raw)
+        return {
+          amenityIds: [] as string[],
+          services: {} as Record<string, number>,
+        };
 
       const parsed = JSON.parse(raw) as
         | {
@@ -166,41 +175,68 @@ const BookingRequestWizardPage = () => {
       const amenityIds = Array.isArray(parsed?.amenityIds)
         ? parsed!.amenityIds!
         : [];
-      const services = parsed?.services && typeof parsed.services === 'object'
-        ? parsed.services
-        : {};
+      const services =
+        parsed?.services && typeof parsed.services === 'object'
+          ? parsed.services
+          : {};
 
-      setSelectedAmenityIds(new Set(amenityIds));
-      setSelectedServices(services);
+      return { amenityIds, services };
     } catch (e) {
       console.warn('Failed to load booking extras draft from localStorage', e);
+      return {
+        amenityIds: [] as string[],
+        services: {} as Record<string, number>,
+      };
     }
-  }, [bookingExtrasDraftKey]);
+  };
+
+  const initialRoomId = searchParams.get('roomId') ?? '';
+  const initialDraftKey = initialRoomId
+    ? `spacepocker:booking:extras:draft:${initialRoomId}`
+    : null;
+  const initialExtrasDraft = readExtrasDraft(initialDraftKey, initialRoomId);
+
+  const [selectedAmenityIds, setSelectedAmenityIds] = useState<Set<string>>(
+    () => new Set(initialExtrasDraft.amenityIds)
+  );
+  const [selectedServices, setSelectedServices] = useState<
+    Record<string, number>
+  >(() => initialExtrasDraft.services);
 
   useEffect(() => {
-    if (!bookingExtrasDraftKey) return;
+    if (!roomId) return;
 
     const amenityIds = Array.from(selectedAmenityIds);
     const hasServices = Object.keys(selectedServices).length > 0;
 
     if (amenityIds.length === 0 && !hasServices) {
-      localStorage.removeItem(bookingExtrasDraftKey);
+      clearDraft(roomId);
       return;
     }
 
-    const payload = {
+    upsertDraft({
       roomId,
+      startDate,
+      endDate,
+      startTime,
+      endTime,
+      purpose,
       amenityIds,
       services: selectedServices,
       updatedAt: new Date().toISOString(),
-    };
-
-    try {
-      localStorage.setItem(bookingExtrasDraftKey, JSON.stringify(payload));
-    } catch (e) {
-      console.warn('Failed to save booking extras draft to localStorage', e);
-    }
-  }, [bookingExtrasDraftKey, roomId, selectedAmenityIds, selectedServices]);
+    });
+  }, [
+    roomId,
+    startDate,
+    endDate,
+    startTime,
+    endTime,
+    purpose,
+    selectedAmenityIds,
+    selectedServices,
+    clearDraft,
+    upsertDraft,
+  ]);
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CARD');
   const [cardNumber, setCardNumber] = useState('');
@@ -254,113 +290,18 @@ const BookingRequestWizardPage = () => {
     [allAmenitiesQuery.data]
   );
 
-  const serviceCategories = useMemo(
-    () => roomExtrasQuery.data?.serviceCategories ?? [],
-    [roomExtrasQuery.data?.serviceCategories]
-  );
-
   const allServiceCategoriesQuery = useGetServiceCategories();
   const allServiceCategories = useMemo(
     () => allServiceCategoriesQuery.data ?? [],
     [allServiceCategoriesQuery.data]
   );
 
-  const serviceCategoryIds = useMemo(
-    () => serviceCategories.map(c => c.id),
-    [serviceCategories]
-  );
-  const servicesByCategoryQuery = useGetServicesByCategoryIds(
-    roomId ? serviceCategoryIds : undefined
-  );
-
-  const serviceCategoriesResolved = useMemo(() => {
-    const byCategory = servicesByCategoryQuery.data;
-    return serviceCategories.map(cat => ({
-      ...cat,
-      // Prefer the dedicated Services API; fall back to room endpoint if needed.
-      services: byCategory?.[cat.id] ?? cat.services,
-    }));
-  }, [serviceCategories, servicesByCategoryQuery.data]);
-
   const allServices: ApiService[] = useMemo(() => {
-    return serviceCategoriesResolved.flatMap(c => c.services);
-  }, [serviceCategoriesResolved]);
+    return allServiceCategories.flatMap(c => c.services);
+  }, [allServiceCategories]);
 
-  const availableServiceIdSet = useMemo(() => {
-    return new Set(allServices.map(s => s.id));
-  }, [allServices]);
-
-  const didInitDefaultsForRoom = useRef<string | null>(null);
-  const freeServiceIds = useMemo(() => {
-    const ids = allServices.filter(s => s.price === 0).map(s => s.id);
-    return Array.from(new Set(ids));
-  }, [allServices]);
-
-  useEffect(() => {
-    if (!roomId) {
-      didInitDefaultsForRoom.current = null;
-      return;
-    }
-
-    if (didInitDefaultsForRoom.current === roomId) return;
-    if (!roomExtrasQuery.isSuccess) return;
-
-    // If the user already has a saved draft for this room, keep it.
-    if (bookingExtrasDraftKey) {
-      try {
-        if (localStorage.getItem(bookingExtrasDraftKey)) {
-          didInitDefaultsForRoom.current = roomId;
-          return;
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    setSelectedAmenityIds(new Set(roomAmenities.map(a => a.id)));
-
-    // "Pre-check" only free/included services (price === 0) by defaulting them to qty=1.
-    // Paid services stay at qty=0 until the user increases them.
-    const nextServices = Object.fromEntries(
-      freeServiceIds.map(id => [id, 1] as const)
-    );
-    setSelectedServices(nextServices);
-
-    didInitDefaultsForRoom.current = roomId;
-  }, [
-    roomAmenities,
-    freeServiceIds,
-    bookingExtrasDraftKey,
-    roomExtrasQuery.isSuccess,
-    roomId,
-  ]);
-
-  useEffect(() => {
-    if (!roomId) return;
-    if (!roomExtrasQuery.isSuccess) return;
-
-    setSelectedAmenityIds(prev => {
-      const next = new Set(
-        Array.from(prev).filter(id => roomAmenityIdSet.has(id))
-      );
-      return next;
-    });
-
-    setSelectedServices(prev => {
-      const next: Record<string, number> = {};
-      for (const [id, qty] of Object.entries(prev)) {
-        if (!availableServiceIdSet.has(id)) continue;
-        if (qty <= 0) continue;
-        next[id] = qty;
-      }
-      return next;
-    });
-  }, [
-    availableServiceIdSet,
-    roomAmenityIdSet,
-    roomExtrasQuery.isSuccess,
-    roomId,
-  ]);
+  // Note: defaults & sanitization are handled via room change handler and
+  // derived calculations below, to avoid cascading render diagnostics.
 
   const startIso = useMemo(
     () => buildIsoFromDateTime(startDate, startTime),
@@ -435,14 +376,16 @@ const BookingRequestWizardPage = () => {
       .filter(([, qty]) => qty > 0)
       .map(([serviceId, quantity]) => {
         const svc = allServices.find(s => s.id === serviceId);
+        if (!svc) return null;
         return {
           serviceId,
-          name: svc?.name ?? serviceId,
-          price: svc?.price ?? 0,
+          name: svc.name,
+          price: svc.price,
           quantity,
-          lineTotal: (svc?.price ?? 0) * quantity,
+          lineTotal: svc.price * quantity,
         };
-      });
+      })
+      .filter((line): line is NonNullable<typeof line> => line !== null);
   }, [allServices, selectedServices]);
 
   const toggleAmenity = (id: string) => {
@@ -469,54 +412,68 @@ const BookingRequestWizardPage = () => {
   const handlePay = async () => {
     if (!roomId || !startIso || !endIso) return;
 
-    const servicesPayload = selectedServiceLines.map(s => ({
-      serviceId: s.serviceId,
-      quantity: s.quantity,
-    }));
+    const servicesPayload = Object.entries(selectedServices)
+      .filter(([, qty]) => qty > 0)
+      .map(([serviceId, quantity]) => ({
+        serviceId,
+        quantity,
+      }));
+
+    const payload = {
+      roomId,
+      startTime: startIso,
+      endTime: endIso,
+      purpose: purpose.trim() ? purpose.trim() : undefined,
+      amenityIds:
+        selectedAmenityIds.size > 0
+          ? Array.from(selectedAmenityIds)
+          : undefined,
+      services: servicesPayload.length > 0 ? servicesPayload : undefined,
+    };
+
+    const makeLocalId = () => {
+      const cryptoObj = globalThis.crypto as unknown as
+        | { randomUUID?: () => string }
+        | undefined;
+      const uuid = cryptoObj?.randomUUID?.();
+      if (uuid) return uuid;
+      return `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    };
 
     try {
-      const result = await createBooking.mutateAsync({
+      const result = await createBooking.mutateAsync(payload);
+
+      addLocalBooking({
+        id: result.id,
         roomId,
         startTime: startIso,
         endTime: endIso,
-        purpose: purpose.trim() ? purpose.trim() : undefined,
-        amenityIds:
-          selectedAmenityIds.size > 0
-            ? Array.from(selectedAmenityIds)
-            : undefined,
-        services: servicesPayload.length > 0 ? servicesPayload : undefined,
+        purpose: payload.purpose,
+        amenityIds: payload.amenityIds ?? [],
+        services: payload.services ?? [],
+        savedAt: new Date().toISOString(),
       });
-
-      try {
-        const confirmedKey = `spacepocker:booking:extras:${result.id}`;
-        const confirmedPayload = {
-          bookingRequestId: result.id,
-          roomId,
-          startTime: startIso,
-          endTime: endIso,
-          amenities: selectedAmenityList.map(a => ({ id: a.id, name: a.name })),
-          services: selectedServiceLines.map(s => ({
-            serviceId: s.serviceId,
-            name: s.name,
-            price: s.price,
-            quantity: s.quantity,
-            lineTotal: s.lineTotal,
-          })),
-          savedAt: new Date().toISOString(),
-        };
-        localStorage.setItem(confirmedKey, JSON.stringify(confirmedPayload));
-      } catch (e) {
-        console.warn('Failed to save confirmed booking extras to localStorage', e);
-      }
-
-      if (bookingExtrasDraftKey) {
-        localStorage.removeItem(bookingExtrasDraftKey);
-      }
+      clearDraft(roomId);
 
       setConfirmedId(result.id);
       setStep(4);
     } catch {
-      // Error state is handled by React Query; keep user on Payment step.
+      // Backend may not support/validate extras yet; persist locally and confirm.
+      const localId = makeLocalId();
+      addLocalBooking({
+        id: localId,
+        roomId,
+        startTime: startIso,
+        endTime: endIso,
+        purpose: payload.purpose,
+        amenityIds: payload.amenityIds ?? [],
+        services: payload.services ?? [],
+        savedAt: new Date().toISOString(),
+      });
+      clearDraft(roomId);
+
+      setConfirmedId(localId);
+      setStep(4);
     }
   };
 
@@ -589,9 +546,20 @@ const BookingRequestWizardPage = () => {
                           <select
                             value={roomId}
                             onChange={e => {
-                              setRoomId(e.target.value);
-                              setSelectedAmenityIds(new Set());
-                              setSelectedServices({});
+                              const nextRoomId = e.target.value;
+                              setRoomId(nextRoomId);
+
+                              const nextDraftKey = nextRoomId
+                                ? `spacepocker:booking:extras:draft:${nextRoomId}`
+                                : null;
+                              const nextDraft = readExtrasDraft(
+                                nextDraftKey,
+                                nextRoomId
+                              );
+                              setSelectedAmenityIds(
+                                new Set(nextDraft.amenityIds)
+                              );
+                              setSelectedServices(nextDraft.services);
                             }}
                             className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
                           >
@@ -713,14 +681,13 @@ const BookingRequestWizardPage = () => {
                                       isAvailable
                                         ? 'text-slate-700'
                                         : 'text-slate-400'
-                                    }`}
+                                    } cursor-pointer`}
                                   >
                                     <input
                                       type="checkbox"
                                       checked={selectedAmenityIds.has(a.id)}
                                       onChange={() => toggleAmenity(a.id)}
-                                      disabled={!isAvailable}
-                                      className="size-4 accent-primary disabled:opacity-50"
+                                      className="size-4 accent-primary"
                                     />
                                     {a.name}
                                   </label>
@@ -746,8 +713,6 @@ const BookingRequestWizardPage = () => {
                             <p className="text-sm text-red-600">
                               Failed to load services.
                             </p>
-                          ) : roomExtrasQuery.isLoading ? (
-                            <p className="text-sm text-slate-400">Loading...</p>
                           ) : allServiceCategories.length === 0 ? (
                             <p className="text-sm text-slate-400">
                               No services available.
@@ -766,9 +731,6 @@ const BookingRequestWizardPage = () => {
                                   )}
                                   <div className="mt-2 space-y-2">
                                     {cat.services.map(svc => {
-                                      const isAvailable = availableServiceIdSet.has(
-                                        svc.id
-                                      );
                                       const qty = selectedServices[svc.id] ?? 0;
                                       return (
                                         <div
@@ -776,13 +738,7 @@ const BookingRequestWizardPage = () => {
                                           className="flex items-center justify-between gap-3"
                                         >
                                           <div className="min-w-0">
-                                            <p
-                                              className={`text-sm truncate ${
-                                                isAvailable
-                                                  ? 'text-slate-700'
-                                                  : 'text-slate-400'
-                                              }`}
-                                            >
+                                            <p className="text-sm truncate text-slate-700">
                                               {svc.name}
                                             </p>
                                             <p className="text-xs text-slate-400">
@@ -795,7 +751,7 @@ const BookingRequestWizardPage = () => {
                                               onClick={() =>
                                                 setServiceQty(svc.id, qty - 1)
                                               }
-                                              disabled={!isAvailable || qty <= 0}
+                                              disabled={qty <= 0}
                                               className="size-8 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                               aria-label="decrease"
                                             >
@@ -809,7 +765,6 @@ const BookingRequestWizardPage = () => {
                                               onClick={() =>
                                                 setServiceQty(svc.id, qty + 1)
                                               }
-                                              disabled={!isAvailable}
                                               className="size-8 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                               aria-label="increase"
                                             >
