@@ -127,7 +127,8 @@ const Bookings = () => {
     r => !cancelledStatuses.includes(r.status)
   );
 
-  const requestsForTab = activeTab === 'Active' ? activeRequests : cancelledRequests;
+  const requestsForTab =
+    activeTab === 'Active' ? activeRequests : cancelledRequests;
   const bookingsForTab = requestsForTab.map(mapMyBookingRequestToBookingUser);
 
   const headerActions = [

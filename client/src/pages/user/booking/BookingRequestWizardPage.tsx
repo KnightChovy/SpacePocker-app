@@ -300,7 +300,12 @@ const BookingRequestWizardPage = () => {
       setSelectedAmenityIds(new Set(roomAmenities.map(a => a.id)));
       setAmenitiesInitializedForRoomId(roomId);
     }
-  }, [amenitiesInitializedForRoomId, roomAmenities, roomId, selectedAmenityIds.size]);
+  }, [
+    amenitiesInitializedForRoomId,
+    roomAmenities,
+    roomId,
+    selectedAmenityIds.size,
+  ]);
 
   const allAmenitiesQuery = useGetAmenities();
   const allAmenities = useMemo(

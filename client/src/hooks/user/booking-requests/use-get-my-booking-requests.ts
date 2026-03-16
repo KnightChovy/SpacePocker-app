@@ -10,10 +10,9 @@ export const useGetMyBookingRequests = (status?: BookingRequestStatus) => {
   return useQuery({
     queryKey: ['booking-requests', 'user', 'my', { status }],
     queryFn: async () => {
-      const response = await axiosInstance.get<{ metadata: MyBookingRequest[] }>(
-        '/my-booking-requests',
-        { params: status ? { status } : undefined }
-      );
+      const response = await axiosInstance.get<{
+        metadata: MyBookingRequest[];
+      }>('/my-booking-requests', { params: status ? { status } : undefined });
 
       return response.data.metadata;
     },
