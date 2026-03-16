@@ -5,6 +5,20 @@ import { OK } from "../core/success.response";
 class UserController {
   constructor(private userService: UserService) {}
 
+  updateUserProfile = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    new OK({
+      message: "Update user profile successfully",
+      metadata: await this.userService.updateUserProfile(
+        String(req.user?.userId),
+        req.body,
+      ),
+    }).send(res);
+  };
+
   getUserProfile = async (req: Request, res: Response, next: NextFunction) => {
     new OK({
       message: "Get user profile successfully",

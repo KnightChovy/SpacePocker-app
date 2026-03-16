@@ -22,6 +22,12 @@ router.get(
   authorizeRoles("MANAGER", "ADMIN"),
   asyncHandler(bookingRequestController.getBookingRequestsForManager),
 );
+router.get(
+  "/allBookingRequest",
+  authentication,
+  authorizeRoles("ADMIN"),
+  asyncHandler(bookingRequestController.getAllBookingRequestsForAdmin),
+);
 router.patch(
   "/booking-requests/approve/:id",
   authentication,

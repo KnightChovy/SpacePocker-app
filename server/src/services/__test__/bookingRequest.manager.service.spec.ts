@@ -96,6 +96,35 @@ describe("BookingRequestService Manager Flow", () => {
     });
   });
 
+  describe("getAllBookingRequestsForAdmin()", () => {
+    it("should throw BadRequestError if admin userId is missing", async () => {
+      await expect(service.getAllBookingRequestsForAdmin("")).rejects.toThrow(
+        BadRequestError,
+      );
+    });
+
+    it("should return all booking requests without status filter", async () => {
+      prismaMock.bookingRequest.findMany.mockResolvedValue([{ id: "br-1" }]);
+
+      const result = await service.getAllBookingRequestsForAdmin("admin-1");
+
+      expect(prismaMock.bookingRequest.findMany).toHaveBeenCalledWith({
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          user: true,
+          room: {
+            include: {
+              building: true,
+            },
+          },
+        },
+      });
+      expect(result).toEqual([{ id: "br-1" }]);
+    });
+  });
+
   describe("approveBookingRequest()", () => {
     const managerId = "manager-1";
     const requestId = "br-1";
