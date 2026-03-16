@@ -1,5 +1,5 @@
 import React from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/layouts/AppHeader';
 import NotificationRow from '@/components/features/user/settings/NotificationRow';
 import { useAuthStore } from '@/stores/auth.store';
@@ -12,6 +12,7 @@ const Settings: React.FC = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const navigate = useNavigate();
   const user = useAuthStore(state => state.user);
 
   const headerActions = [
@@ -27,6 +28,7 @@ const Settings: React.FC = () => {
       label: 'New Booking',
       variant: 'primary' as const,
       hideOnMobile: true,
+      onClick: () => navigate('/spaces'),
     },
   ];
 

@@ -4,8 +4,6 @@ import AppSidebar from './AppSidebar';
 import {
   LayoutDashboard,
   CalendarDays,
-  Bookmark,
-  CreditCard,
   Settings,
   LogOut,
 } from 'lucide-react';
@@ -23,8 +21,6 @@ const UserLayout: React.FC = () => {
     const path = location.pathname;
     if (path.includes('/dashboard')) return 'dashboard';
     if (path.includes('/bookings')) return 'bookings';
-    if (path.includes('/favorites')) return 'favorites';
-    if (path.includes('/billing')) return 'billing';
     if (path.includes('/settings')) return 'settings';
     return 'dashboard';
   };
@@ -56,18 +52,6 @@ const UserLayout: React.FC = () => {
           label: 'My Bookings',
           path: '/user/bookings',
           icon: <CalendarDays />,
-        },
-        {
-          id: 'favorites',
-          label: 'Favorites',
-          path: '/user/favorites',
-          icon: <Bookmark />,
-        },
-        {
-          id: 'billing',
-          label: 'Billing',
-          path: '/user/billing',
-          icon: <CreditCard />,
         },
         {
           id: 'settings',

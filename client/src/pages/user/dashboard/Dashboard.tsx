@@ -1,4 +1,4 @@
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import { USER_STATS, SPACESUSER } from '@/data/constant';
 import { Calendar, BellRing, Plus } from 'lucide-react';
 import AppHeader from '@/components/layouts/AppHeader';
@@ -12,6 +12,7 @@ const Dashboard = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
+  const navigate = useNavigate();
   const user = useAuthStore(state => state.user);
 
   const headerActions = [
@@ -27,6 +28,7 @@ const Dashboard = () => {
       label: 'New Booking',
       variant: 'primary' as const,
       hideOnMobile: true,
+      onClick: () => navigate('/spaces'),
     },
   ];
 
