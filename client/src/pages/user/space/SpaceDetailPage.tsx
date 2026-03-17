@@ -13,6 +13,15 @@ import { useGetBuildingById } from '@/hooks/user/buildings/use-get-building-by-i
 import { ChevronLeft, Heart, MapPin, Share } from 'lucide-react';
 import { useGetRoomAmenitiesServices } from '@/hooks/user/rooms/use-get-room-amenities-services';
 
+const parseCoordinate = (value: unknown): number | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+};
+
 const SpaceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -61,10 +70,12 @@ const SpaceDetailPage: React.FC = () => {
   }, [building, room?.building?.address, room?.building?.campus]);
 
   const coordinates = useMemo(() => {
-    const lat = building?.latitude ?? room?.building?.latitude;
-    const lng = building?.longitude ?? room?.building?.longitude;
+    const lat = parseCoordinate(building?.latitude ?? room?.building?.latitude);
+    const lng = parseCoordinate(
+      building?.longitude ?? room?.building?.longitude
+    );
 
-    if (typeof lat !== 'number' || typeof lng !== 'number') return undefined;
+    if (lat === undefined || lng === undefined) return undefined;
     return { lat, lng };
   }, [
     building?.latitude,
@@ -153,7 +164,12 @@ const SpaceDetailPage: React.FC = () => {
             <SpaceDetailAmenities amenities={amenitiesDetail} />
             <SpaceDetailLocation
               location={locationText}
-              locationDescription={building?.address ?? building?.campus}
+              locationDescription={
+                building?.address ??
+                room?.building?.address ??
+                building?.campus ??
+                room?.building?.campus
+              }
               coordinates={coordinates}
             />
           </div>

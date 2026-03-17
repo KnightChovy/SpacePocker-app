@@ -15,6 +15,14 @@ export interface ApiRoomAmenity {
   amenity: ApiAmenity;
 }
 
+export interface ApiRoomServiceCategory {
+  category: {
+    id: string;
+    name: string;
+    description?: string | null;
+  };
+}
+
 export interface ApiBuilding {
   id: string;
   buildingName: string;
@@ -50,6 +58,7 @@ export interface ApiRoom {
   building?: ApiBuilding;
   manager?: ApiManager;
   amenities?: ApiRoomAmenity[];
+  serviceCategories?: ApiRoomServiceCategory[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -102,6 +111,10 @@ export interface CreateRoomPayload {
   roomType: ApiRoomType;
   area?: number;
   roomCode: string;
+  status?: ApiRoomStatus;
+  images?: string[];
+  amenities?: string[];
+  serviceCategories?: string[];
 }
 
 export interface UpdateRoomPayload {
@@ -113,4 +126,7 @@ export interface UpdateRoomPayload {
   roomType?: ApiRoomType;
   area?: number;
   status?: ApiRoomStatus;
+  images?: string[];
+  amenities?: string[];
+  serviceCategories?: string[];
 }

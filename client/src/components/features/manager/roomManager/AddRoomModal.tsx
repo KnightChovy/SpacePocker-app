@@ -1,24 +1,33 @@
 import { useEffect, useMemo, useState } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import { useGetAmenities } from '@/hooks/admin/amenities/use-get-amenities';
+import { useGetServiceCategoriesManager } from '@/hooks/manager/service-categories/use-get-service-categories';
+import type { ApiRoomStatus } from '@/types/room-api';
 
 interface RoomFormData {
   name: string;
   description: string;
   buildingId: string;
   roomType: 'MEETING' | 'CLASSROOM' | 'EVENT' | 'OTHER';
+  status: ApiRoomStatus;
   capacity: string;
   area: string;
   pricePerHour: string;
   securityDeposit: string;
   roomCode: string;
+  imageUrlsText: string;
   amenityIds: string[];
+  serviceCategoryIds: string[];
 }
+
+type AddRoomSubmitData = RoomFormData & {
+  imageUrls: string[];
+};
 
 interface AddRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (data: RoomFormData) => void;
+  onAdd: (data: AddRoomSubmitData) => void;
   buildings: Array<{ id: string; name: string }>;
 }
 
@@ -29,6 +38,8 @@ const AddRoomModal = ({
   buildings,
 }: AddRoomModalProps) => {
   const { data: amenities, isLoading: isAmenitiesLoading } = useGetAmenities();
+  const { data: serviceCategories, isLoading: isServiceCategoriesLoading } =
+    useGetServiceCategoriesManager();
 
   const defaultBuildingId = useMemo(() => buildings[0]?.id || '', [buildings]);
   const initialFormState = useMemo<RoomFormData>(
@@ -37,12 +48,15 @@ const AddRoomModal = ({
       description: '',
       buildingId: defaultBuildingId,
       roomType: 'MEETING',
+      status: 'AVAILABLE',
       capacity: '',
       area: '',
       pricePerHour: '',
       securityDeposit: '',
       roomCode: '',
+      imageUrlsText: '',
       amenityIds: [],
+      serviceCategoryIds: [],
     }),
     [defaultBuildingId]
   );
@@ -51,12 +65,15 @@ const AddRoomModal = ({
     description: '',
     buildingId: defaultBuildingId,
     roomType: 'MEETING',
+    status: 'AVAILABLE',
     capacity: '',
     area: '',
     pricePerHour: '',
     securityDeposit: '',
     roomCode: '',
+    imageUrlsText: '',
     amenityIds: [],
+    serviceCategoryIds: [],
   });
 
   useEffect(() => {
@@ -73,7 +90,13 @@ const AddRoomModal = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAdd(formData);
+    onAdd({
+      ...formData,
+      imageUrls: formData.imageUrlsText
+        .split(/\r?\n|,/)
+        .map(url => url.trim())
+        .filter(Boolean),
+    });
   };
 
   const toggleAmenity = (amenityId: string) => {
@@ -84,6 +107,18 @@ const AddRoomModal = ({
         amenityIds: exists
           ? prev.amenityIds.filter(id => id !== amenityId)
           : [...prev.amenityIds, amenityId],
+      };
+    });
+  };
+
+  const toggleServiceCategory = (categoryId: string) => {
+    setFormData(prev => {
+      const exists = prev.serviceCategoryIds.includes(categoryId);
+      return {
+        ...prev,
+        serviceCategoryIds: exists
+          ? prev.serviceCategoryIds.filter(id => id !== categoryId)
+          : [...prev.serviceCategoryIds, categoryId],
       };
     });
   };
@@ -186,28 +221,50 @@ const AddRoomModal = ({
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                      Room Type
+                      Availability
                     </label>
                     <div className="relative">
                       <select
                         className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 appearance-none cursor-pointer backdrop-blur-sm transition-all duration-200 shadow-sm"
-                        value={formData.roomType}
+                        value={formData.status}
                         onChange={e =>
                           setFormData({
                             ...formData,
-                            roomType: e.target
-                              .value as RoomFormData['roomType'],
+                            status: e.target.value as ApiRoomStatus,
                           })
                         }
                         required
                       >
-                        <option value="MEETING">Meeting</option>
-                        <option value="CLASSROOM">Classroom</option>
-                        <option value="EVENT">Event</option>
-                        <option value="OTHER">Other</option>
+                        <option value="AVAILABLE">Available</option>
+                        <option value="UNAVAILABLE">Unavailable</option>
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none size-4" />
                     </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                    Room Type
+                  </label>
+                  <div className="relative">
+                    <select
+                      className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 appearance-none cursor-pointer backdrop-blur-sm transition-all duration-200 shadow-sm"
+                      value={formData.roomType}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          roomType: e.target.value as RoomFormData['roomType'],
+                        })
+                      }
+                      required
+                    >
+                      <option value="MEETING">Meeting</option>
+                      <option value="CLASSROOM">Classroom</option>
+                      <option value="EVENT">Event</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none size-4" />
                   </div>
                 </div>
 
@@ -239,6 +296,46 @@ const AddRoomModal = ({
                             />
                             <span className="truncate" title={a.name}>
                               {a.name}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                    Service Categories
+                  </label>
+                  <div className="max-h-36 overflow-y-auto rounded-xl border border-slate-200/80 bg-white/70 backdrop-blur-sm shadow-sm p-3">
+                    {isServiceCategoriesLoading ? (
+                      <div className="text-sm text-slate-500">
+                        Loading service categories...
+                      </div>
+                    ) : !serviceCategories || serviceCategories.length === 0 ? (
+                      <div className="text-sm text-slate-500">
+                        No service categories available.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        {serviceCategories.map(category => (
+                          <label
+                            key={category.id}
+                            className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer select-none"
+                          >
+                            <input
+                              type="checkbox"
+                              className="rounded border-slate-300 text-primary focus:ring-primary/20"
+                              checked={formData.serviceCategoryIds.includes(
+                                category.id
+                              )}
+                              onChange={() =>
+                                toggleServiceCategory(category.id)
+                              }
+                            />
+                            <span className="truncate" title={category.name}>
+                              {category.name}
                             </span>
                           </label>
                         ))}
@@ -349,6 +446,26 @@ const AddRoomModal = ({
                       setFormData({ ...formData, roomCode: e.target.value })
                     }
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                    Image URLs
+                  </label>
+                  <textarea
+                    className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm min-h-28 resize-none"
+                    placeholder="https://example.com/room-1.jpg&#10;https://example.com/room-2.jpg"
+                    value={formData.imageUrlsText}
+                    onChange={e =>
+                      setFormData({
+                        ...formData,
+                        imageUrlsText: e.target.value,
+                      })
+                    }
+                  />
+                  <p className="mt-2 text-xs text-slate-500">
+                    Enter one URL per line or separate with commas.
+                  </p>
                 </div>
               </div>
             </div>
