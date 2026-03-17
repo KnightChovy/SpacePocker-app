@@ -20,16 +20,25 @@ jest.mock("../../auth/authUtils", () => ({
   createTokenPair: jest.fn(),
 }));
 
+import jwt from "jsonwebtoken";
+jest.mock("jsonwebtoken", () => ({
+  sign: jest.fn(),
+  verify: jest.fn(),
+}));
+
 describe("AccessService", () => {
   let userRepo: any;
   let keyRepo: any;
   let keyTokenService: any;
+  let mailService: any;
   let accessService: AccessService;
 
   beforeEach(() => {
     userRepo = {
       findByEmail: jest.fn(),
       findById: jest.fn(),
+      findByIdWithPassword: jest.fn(),
+      updatePassword: jest.fn(),
       createUser: jest.fn(),
     };
 
@@ -43,7 +52,16 @@ describe("AccessService", () => {
       createKeyToken: jest.fn(),
     };
 
-    accessService = new AccessService(userRepo, keyRepo, keyTokenService);
+    mailService = {
+      sendPasswordResetOtpEmail: jest.fn(),
+    };
+
+    accessService = new AccessService(
+      userRepo,
+      keyRepo,
+      keyTokenService,
+      mailService,
+    );
 
     jest.clearAllMocks();
   });
@@ -296,6 +314,182 @@ describe("AccessService", () => {
           refreshToken: "NEW_REFRESH",
         },
       });
+    });
+  });
+
+  describe("forgotPassword()", () => {
+    it("should throw if email is missing", async () => {
+      await expect(accessService.forgotPassword({ email: "" })).rejects.toBeInstanceOf(
+        BadRequestError,
+      );
+    });
+
+    it("should return generic success when user not found", async () => {
+      userRepo.findByEmail.mockResolvedValue(null);
+
+      const result = await accessService.forgotPassword({
+        email: "missing@gmail.com",
+      });
+
+      expect(result).toEqual({
+        sent: true,
+        message: "If this email exists, an OTP has been sent",
+      });
+      expect(mailService.sendPasswordResetOtpEmail).not.toHaveBeenCalled();
+    });
+
+    it("should generate otpToken and send OTP email when user exists", async () => {
+      process.env.PASSWORD_RESET_OTP_SECRET = "otp-secret";
+
+      userRepo.findByEmail.mockResolvedValue({
+        id: "u1",
+        email: "a@gmail.com",
+        name: "A",
+      });
+      (jwt.sign as jest.Mock).mockReturnValue("OTP_TOKEN");
+      (bcrypt.hash as jest.Mock).mockResolvedValue("OTP_HASH");
+
+      const result = await accessService.forgotPassword({
+        email: "a@gmail.com",
+      });
+
+      expect(jwt.sign).toHaveBeenCalled();
+      expect(mailService.sendPasswordResetOtpEmail).toHaveBeenCalledWith({
+        to: "a@gmail.com",
+        customerName: "A",
+        otp: expect.any(String),
+      });
+      expect(result).toEqual({
+        sent: true,
+        message: "If this email exists, an OTP has been sent",
+        otpToken: "OTP_TOKEN",
+      });
+    });
+  });
+
+  describe("verifyForgotPasswordOtp()", () => {
+    it("should throw if otpToken or otp missing", async () => {
+      await expect(
+        accessService.verifyForgotPasswordOtp({ otpToken: "", otp: "123456" }),
+      ).rejects.toBeInstanceOf(BadRequestError);
+    });
+
+    it("should throw when otpToken invalid", async () => {
+      process.env.PASSWORD_RESET_OTP_SECRET = "otp-secret";
+      (jwt.verify as jest.Mock).mockImplementation(() => {
+        throw new Error("invalid");
+      });
+
+      await expect(
+        accessService.verifyForgotPasswordOtp({
+          otpToken: "bad-token",
+          otp: "123456",
+        }),
+      ).rejects.toBeInstanceOf(BadRequestError);
+    });
+
+    it("should throw when otp is wrong", async () => {
+      process.env.PASSWORD_RESET_OTP_SECRET = "otp-secret";
+      (jwt.verify as jest.Mock).mockReturnValue({
+        userId: "u1",
+        email: "a@gmail.com",
+        otpHash: "OTP_HASH",
+        purpose: "password-otp",
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        accessService.verifyForgotPasswordOtp({
+          otpToken: "otp-token",
+          otp: "000000",
+        }),
+      ).rejects.toBeInstanceOf(BadRequestError);
+    });
+
+    it("should verify OTP and return resetToken", async () => {
+      process.env.PASSWORD_RESET_OTP_SECRET = "otp-secret";
+      process.env.PASSWORD_RESET_SECRET = "reset-secret";
+      (jwt.verify as jest.Mock).mockReturnValue({
+        userId: "u1",
+        email: "a@gmail.com",
+        otpHash: "OTP_HASH",
+        purpose: "password-otp",
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (jwt.sign as jest.Mock).mockReturnValue("RESET_TOKEN");
+
+      const result = await accessService.verifyForgotPasswordOtp({
+        otpToken: "otp-token",
+        otp: "123456",
+      });
+
+      expect(result).toEqual({
+        verified: true,
+        resetToken: "RESET_TOKEN",
+      });
+    });
+  });
+
+  describe("resetPassword()", () => {
+    it("should throw when required fields are missing", async () => {
+      await expect(
+        accessService.resetPassword({
+          token: "",
+          newPassword: "123",
+          confirmNewPassword: "123",
+        }),
+      ).rejects.toBeInstanceOf(BadRequestError);
+    });
+
+    it("should throw when password confirmation mismatch", async () => {
+      await expect(
+        accessService.resetPassword({
+          token: "token",
+          newPassword: "123",
+          confirmNewPassword: "456",
+        }),
+      ).rejects.toBeInstanceOf(BadRequestError);
+    });
+
+    it("should throw when token invalid", async () => {
+      process.env.PASSWORD_RESET_SECRET = "secret";
+      (jwt.verify as jest.Mock).mockImplementation(() => {
+        throw new Error("invalid");
+      });
+
+      await expect(
+        accessService.resetPassword({
+          token: "bad-token",
+          newPassword: "123456",
+          confirmNewPassword: "123456",
+        }),
+      ).rejects.toBeInstanceOf(BadRequestError);
+    });
+
+    it("should reset password successfully", async () => {
+      process.env.PASSWORD_RESET_SECRET = "secret";
+      (jwt.verify as jest.Mock).mockReturnValue({
+        userId: "u1",
+        purpose: "password-reset",
+      });
+      userRepo.findByIdWithPassword.mockResolvedValue({
+        id: "u1",
+        password: "OLD_HASH",
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+      (bcrypt.hash as jest.Mock).mockResolvedValue("NEW_HASH");
+      userRepo.updatePassword.mockResolvedValue({ id: "u1" });
+      keyRepo.deleteTokenByUserId.mockResolvedValue(true);
+
+      const result = await accessService.resetPassword({
+        token: "valid-token",
+        newPassword: "New@123456",
+        confirmNewPassword: "New@123456",
+      });
+
+      expect(userRepo.updatePassword).toHaveBeenCalledWith("u1", "NEW_HASH");
+      expect(keyRepo.deleteTokenByUserId).toHaveBeenCalledWith("u1");
+      expect(result).toEqual({ reset: true, userId: "u1" });
     });
   });
 });

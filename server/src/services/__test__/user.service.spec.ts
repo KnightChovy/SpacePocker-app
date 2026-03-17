@@ -1,6 +1,12 @@
 import UserService from "../user.service";
 import { IUserRepository } from "../../interface/user.repository.interface";
 import { BadRequestError, NotFoundError } from "../../core/error.response";
+import bcrypt from "bcrypt";
+
+jest.mock("bcrypt", () => ({
+  compare: jest.fn(),
+  hash: jest.fn(),
+}));
 
 describe("UserService", () => {
   let userService: UserService;
@@ -10,7 +16,9 @@ describe("UserService", () => {
     mockUserRepo = {
       findByEmail: jest.fn(),
       findById: jest.fn(),
+      findByIdWithPassword: jest.fn(),
       updateProfile: jest.fn(),
+      updatePassword: jest.fn(),
       updateRole: jest.fn(),
       createUser: jest.fn(),
       findMany: jest.fn(),
@@ -313,6 +321,83 @@ describe("UserService", () => {
         phoneNumber: "0123456789",
       });
       expect(result).toHaveProperty("name", "New Name");
+    });
+  });
+
+  describe("changePassword()", () => {
+    it("should throw when currentPassword is missing", async () => {
+      await expect(
+        userService.changePassword("user-1", {
+          currentPassword: "",
+          newPassword: "New@123",
+          confirmNewPassword: "New@123",
+        }),
+      ).rejects.toThrow(BadRequestError);
+    });
+
+    it("should throw when new password does not match confirm password", async () => {
+      await expect(
+        userService.changePassword("user-1", {
+          currentPassword: "Old@123",
+          newPassword: "New@123",
+          confirmNewPassword: "Other@123",
+        }),
+      ).rejects.toThrow(BadRequestError);
+    });
+
+    it("should throw when user not found", async () => {
+      mockUserRepo.findByIdWithPassword.mockResolvedValue(null);
+
+      await expect(
+        userService.changePassword("user-1", {
+          currentPassword: "Old@123",
+          newPassword: "New@123",
+          confirmNewPassword: "New@123",
+        }),
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    it("should throw when current password is invalid", async () => {
+      mockUserRepo.findByIdWithPassword.mockResolvedValue({
+        id: "user-1",
+        password: "HASH",
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        userService.changePassword("user-1", {
+          currentPassword: "Wrong@123",
+          newPassword: "New@123",
+          confirmNewPassword: "New@123",
+        }),
+      ).rejects.toThrow(BadRequestError);
+    });
+
+    it("should change password successfully", async () => {
+      mockUserRepo.findByIdWithPassword.mockResolvedValue({
+        id: "user-1",
+        password: "OLD_HASH",
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue("NEW_HASH");
+      mockUserRepo.updatePassword.mockResolvedValue({
+        id: "user-1",
+      });
+
+      const result = await userService.changePassword("user-1", {
+        currentPassword: "Old@123",
+        newPassword: "New@123",
+        confirmNewPassword: "New@123",
+      });
+
+      expect(mockUserRepo.updatePassword).toHaveBeenCalledWith(
+        "user-1",
+        "NEW_HASH",
+      );
+      expect(result).toEqual({
+        userId: "user-1",
+        changed: true,
+      });
     });
   });
 });

@@ -39,6 +39,20 @@ class UserController {
       }),
     }).send(res);
   };
+
+  changePassword = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    new OK({
+      message: "Change password successfully",
+      metadata: await this.userService.changePassword(
+        String(req.user?.userId),
+        req.body,
+      ),
+    }).send(res);
+  };
 }
 
 export default UserController;

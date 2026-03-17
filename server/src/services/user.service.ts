@@ -1,5 +1,6 @@
 import { IUserRepository } from "../interface/user.repository.interface";
 import { BadRequestError, NotFoundError } from "../core/error.response";
+import bcrypt from "bcrypt";
 
 export default class UserService {
   constructor(private userRepo: IUserRepository) {}
@@ -79,5 +80,50 @@ export default class UserService {
       name: data.name?.trim(),
       phoneNumber: data.phoneNumber,
     });
+  }
+
+  async changePassword(
+    userId: string,
+    data: {
+      currentPassword: string;
+      newPassword: string;
+      confirmNewPassword: string;
+    },
+  ) {
+    if (!userId) {
+      throw new BadRequestError("User ID is required");
+    }
+
+    const { currentPassword, newPassword, confirmNewPassword } = data;
+
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      throw new BadRequestError("currentPassword, newPassword and confirmNewPassword are required");
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      throw new BadRequestError("New password and confirm password do not match");
+    }
+
+    if (currentPassword === newPassword) {
+      throw new BadRequestError("New password must be different from current password");
+    }
+
+    const user = await this.userRepo.findByIdWithPassword(userId);
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      throw new BadRequestError("Current password is incorrect");
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.userRepo.updatePassword(userId, passwordHash);
+
+    return {
+      userId,
+      changed: true,
+    };
   }
 }

@@ -63,4 +63,36 @@ export default class MailService {
       `,
     });
   }
+
+  async sendPasswordResetOtpEmail(input: {
+    to: string;
+    customerName?: string;
+    otp: string;
+  }) {
+    const greetingName = input.customerName || "ban";
+
+    await this.transporter.sendMail({
+      from: this.getFromAddress(),
+      to: input.to,
+      subject: "Yeu cau dat lai mat khau - SpacePocker",
+      text: [
+        `Xin chao ${greetingName},`,
+        "",
+        "Chung toi da nhan duoc yeu cau quen mat khau cua ban.",
+        "Ma OTP de dat lai mat khau la:",
+        input.otp,
+        "",
+        "Ma OTP co hieu luc trong 10 phut.",
+        "Neu ban khong yeu cau, vui long bo qua email nay.",
+      ].join("\n"),
+      html: `
+        <p>Xin chao <strong>${greetingName}</strong>,</p>
+        <p>Chung toi da nhan duoc yeu cau quen mat khau cua ban.</p>
+        <p>Ma OTP de dat lai mat khau la:</p>
+        <p style="font-size: 24px; font-weight: 700; letter-spacing: 4px;"><strong>${input.otp}</strong></p>
+        <p>Ma OTP co hieu luc trong <strong>10 phut</strong>.</p>
+        <p>Neu ban khong yeu cau, vui long bo qua email nay.</p>
+      `,
+    });
+  }
 }
