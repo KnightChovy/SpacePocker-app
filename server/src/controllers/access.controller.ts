@@ -34,6 +34,31 @@ class AccessController {
       metadata: await this.accessService.login(req.body),
     }).send(res);
   };
+
+  forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+    new OK({
+      message: 'Forgot password request handled successfully',
+      metadata: await this.accessService.forgotPassword(req.body),
+    }).send(res);
+  };
+
+  verifyForgotPasswordOtp = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    new OK({
+      message: 'Verify OTP successfully',
+      metadata: await this.accessService.verifyForgotPasswordOtp(req.body),
+    }).send(res);
+  };
+
+  resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+    new OK({
+      message: 'Reset password successfully',
+      metadata: await this.accessService.resetPassword(req.body),
+    }).send(res);
+  };
 }
 
 export default AccessController;

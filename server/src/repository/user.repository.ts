@@ -26,6 +26,18 @@ export class UserRepository implements IUserRepository {
     });
   }
 
+  findByIdWithPassword(id: string) {
+    return prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        password: true,
+      },
+    });
+  }
+
   updateRole(id: string, role: Role) {
     return prisma.user.update({
       where: { id },
@@ -48,6 +60,18 @@ export class UserRepository implements IUserRepository {
         role: true,
         createdAt: true,
         updatedAt: true,
+      },
+    });
+  }
+
+  updatePassword(id: string, password: string) {
+    return prisma.user.update({
+      where: { id },
+      data: { password },
+      select: {
+        id: true,
+        email: true,
+        name: true,
       },
     });
   }
