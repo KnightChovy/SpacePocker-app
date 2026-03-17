@@ -20,7 +20,7 @@ type AuthActions = {
   clearError: () => void;
 };
 
-export const useAuthStore = create<AuthState & AuthActions>(set => ({
+export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   user: null,
   accessToken: null,
   isLoggedIn: false,
@@ -94,8 +94,12 @@ export const useAuthStore = create<AuthState & AuthActions>(set => ({
 
   logout: async () => {
     try {
+      const { user } = get();
       const refreshToken = await SecureStore.getItemAsync('refresh_token');
-      await authService.logout(refreshToken ?? undefined);
+      await authService.logout(
+        user?.id ?? undefined,
+        refreshToken ?? undefined
+      );
     } catch (e) {
       console.log('[logout] server error (ignored):', e);
     } finally {

@@ -17,8 +17,8 @@ const authService = {
     const res = await axiosClient.post<SignUpResponse>('/signup', payload);
     return res.data;
   },
-  logout: async (refreshToken?: string): Promise<void> => {
-    await axiosClient.post('/logout', null, {
+  logout: async (userId?: string, refreshToken?: string): Promise<void> => {
+    await axiosClient.post('/logout', userId ? { userId } : null, {
       headers: refreshToken ? { 'x-refresh-token': refreshToken } : undefined,
     });
   },

@@ -1,5 +1,4 @@
 import { Button, ButtonSpinner, ButtonText } from '@/components/ui/button';
-import { Divider } from '@/components/ui/divider';
 import {
   FormControl,
   FormControlError,
@@ -15,11 +14,11 @@ import { router } from 'expo-router';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert, Image, Pressable, Text } from 'react-native';
-const googleLogo = require('@/assets/images/google_logo.png');
+import { Alert, Pressable, Text } from 'react-native';
+
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+
   const { login } = useAuthStore();
   const {
     control,
@@ -42,17 +41,7 @@ export default function LoginForm() {
       Alert.alert('Login failed', err.message);
     }
   };
-  const handleGoogleSignIn = async () => {
-    setGoogleLoading(true);
-    try {
-      //   await loginWithGoogle();
-      router.replace('/(tabs)/home');
-    } catch (e: any) {
-      Alert.alert('Google sign in failed', e.message);
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
+
   return (
     <VStack space="lg">
       <Text className="text-typography-900 text-2xl font-bold mb-1 text-center">
@@ -61,31 +50,6 @@ export default function LoginForm() {
       <Text className="text-typography-400 text-sm mb-6 text-center">
         Please sign in to access your dashboard
       </Text>
-      <Button
-        variant="outline"
-        onPress={handleGoogleSignIn}
-        isDisabled={googleLoading}
-        className="h-14 rounded-2xl border-outline-200 bg-white mb-2"
-      >
-        {googleLoading ? (
-          <ButtonSpinner color="#5B5BD6" />
-        ) : (
-          <HStack className="items-center gap-2">
-            <Image source={googleLogo} className="w-5 h-5" />
-            <ButtonText className="text-typography-700 font-semibold">
-              Sign in with Google
-            </ButtonText>
-          </HStack>
-        )}
-      </Button>
-
-      <HStack className="items-center my-3">
-        <Divider className="flex-1" />
-        <Text className="text-typography-400 text-xs mx-3 tracking-widest">
-          OR CONTINUE WITH
-        </Text>
-        <Divider className="flex-1" />
-      </HStack>
 
       <FormControl isInvalid={!!errors.email}>
         <Controller
