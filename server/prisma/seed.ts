@@ -4,7 +4,7 @@ import path from "node:path";
 import dotenv from "dotenv";
 
 import bcrypt from "bcrypt";
-import { Role, RoomStatus, RoomType } from "@prisma/client";
+import { BookingStatus, Role, RoomStatus, RoomType } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
@@ -43,10 +43,17 @@ const SEED_ADMIN_NAME = process.env.SEED_ADMIN_NAME || "System Admin";
 const SEED_MANAGER_EMAIL =
   process.env.SEED_MANAGER_EMAIL || "manager@example.com";
 const SEED_MANAGER_NAME = process.env.SEED_MANAGER_NAME || "Default Manager";
+const SEED_TEST_USER_EMAIL =
+  process.env.SEED_TEST_USER_EMAIL || "payment.tester@example.com";
+const SEED_TEST_USER_PASSWORD =
+  process.env.SEED_TEST_USER_PASSWORD || "User@123";
+const SEED_TEST_USER_NAME = process.env.SEED_TEST_USER_NAME || "Payment Tester";
 
 type CreatedIds = {
   managerId: string;
   buildingId: string;
+  testUserId: string;
+  testBookingRequestId: string;
   roomIdsByCode: Record<string, string>;
   serviceCategoryIdsByName: Record<string, string>;
   amenityIdsByName: Record<string, string>;
@@ -87,6 +94,27 @@ async function ensureManager() {
   });
 
   return manager.id;
+}
+
+async function ensureTestUser() {
+  const existing = await prisma.user.findUnique({
+    where: { email: SEED_TEST_USER_EMAIL },
+    select: { id: true },
+  });
+  if (existing) return existing.id;
+
+  const passwordHash = await bcrypt.hash(SEED_TEST_USER_PASSWORD, 10);
+  const user = await prisma.user.create({
+    data: {
+      name: SEED_TEST_USER_NAME,
+      email: SEED_TEST_USER_EMAIL,
+      role: Role.USER,
+      password: passwordHash,
+    },
+    select: { id: true },
+  });
+
+  return user.id;
 }
 
 async function ensureAmenities(): Promise<Record<string, string>> {
@@ -313,9 +341,60 @@ async function ensureRoomServiceCategories(
   });
 }
 
+async function ensureTestBookingRequest(
+  managerId: string,
+  testUserId: string,
+  roomIdsByCode: Record<string, string>,
+) {
+  const roomId = roomIdsByCode["MEET-101"] || Object.values(roomIdsByCode)[0];
+  if (!roomId) {
+    throw new Error("Cannot create test booking request: room not found");
+  }
+
+  const now = new Date();
+  const startTime = new Date(now);
+  startTime.setDate(startTime.getDate() + 1);
+  startTime.setHours(9, 0, 0, 0);
+
+  const endTime = new Date(startTime);
+  endTime.setHours(11, 0, 0, 0);
+
+  const purpose = "Seeded request for payment flow test";
+
+  const existing = await prisma.bookingRequest.findFirst({
+    where: {
+      userId: testUserId,
+      roomId,
+      startTime,
+      endTime,
+      purpose,
+      status: BookingStatus.APPROVED,
+    },
+    select: { id: true },
+  });
+
+  if (existing) return existing.id;
+
+  const created = await prisma.bookingRequest.create({
+    data: {
+      userId: testUserId,
+      roomId,
+      startTime,
+      endTime,
+      purpose,
+      status: BookingStatus.APPROVED,
+      approvedBy: managerId,
+    },
+    select: { id: true },
+  });
+
+  return created.id;
+}
+
 async function main(): Promise<CreatedIds> {
   await ensureAdminUser();
   const managerId = await ensureManager();
+  const testUserId = await ensureTestUser();
 
   const amenityIdsByName = await ensureAmenities();
   const buildingId = await ensureBuilding(managerId);
@@ -326,10 +405,17 @@ async function main(): Promise<CreatedIds> {
 
   await ensureRoomAmenities(roomIdsByCode, amenityIdsByName);
   await ensureRoomServiceCategories(roomIdsByCode, serviceCategoryIdsByName);
+  const testBookingRequestId = await ensureTestBookingRequest(
+    managerId,
+    testUserId,
+    roomIdsByCode,
+  );
 
   return {
     managerId,
     buildingId,
+    testUserId,
+    testBookingRequestId,
     roomIdsByCode,
     serviceCategoryIdsByName,
     amenityIdsByName,
@@ -342,6 +428,10 @@ main()
     console.log({
       managerId: ids.managerId,
       buildingId: ids.buildingId,
+      testUserId: ids.testUserId,
+      testBookingRequestId: ids.testBookingRequestId,
+      testUserEmail: SEED_TEST_USER_EMAIL,
+      testUserPassword: SEED_TEST_USER_PASSWORD,
       rooms: ids.roomIdsByCode,
       serviceCategories: ids.serviceCategoryIdsByName,
     });
