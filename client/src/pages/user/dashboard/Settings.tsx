@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/layouts/AppHeader';
-import NotificationRow from '@/components/features/user/settings/NotificationRow';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
 import PersonalInfoSection from '@/components/features/user/settings/PersonalInfoSection';
 import AccountSecuritySection from '@/components/features/user/settings/AccountSecuritySection';
-import { Save, BellRing, Plus } from 'lucide-react';
+import BookingNotificationsBell from '@/components/features/user/dashboard/BookingNotificationsBell';
+import { Save, Plus } from 'lucide-react';
 import { useGetUserProfile } from '@/hooks/user/profile/use-get-user-profile';
 import { useUpdateUserProfile } from '@/hooks/user/profile/use-update-user-profile';
 import type { UserRole } from '@/types/auth-type';
@@ -100,12 +100,6 @@ const Settings: React.FC = () => {
 
   const headerActions = [
     {
-      id: 'notifications',
-      icon: <BellRing />,
-      badge: true,
-      variant: 'ghost' as const,
-    },
-    {
       id: 'new-booking',
       icon: <Plus className="w-5 h-5" />,
       label: 'New Booking',
@@ -124,6 +118,7 @@ const Settings: React.FC = () => {
         onMenuClick={() => setSidebarOpen(true)}
         showSearch={false}
         actions={headerActions}
+        rightExtra={<BookingNotificationsBell />}
         profile={{
           name: baseProfile.name || 'User',
           subtitle: baseProfile.role || 'USER',
@@ -145,34 +140,6 @@ const Settings: React.FC = () => {
           />
 
           <AccountSecuritySection />
-
-          <section className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark shadow-sm">
-            <div className="p-6 border-b border-border-light dark:border-border-dark">
-              <h2 className="text-lg font-bold">Notifications</h2>
-              <p className="text-sm text-text-sub-light dark:text-text-sub-dark mt-1">
-                Choose what we can contact you about.
-              </p>
-            </div>
-            <div className="p-6 md:p-8 flex flex-col gap-6">
-              <NotificationRow
-                title="Booking Reminders"
-                desc="Receive notifications for upcoming bookings."
-                options={['Email', 'SMS']}
-                checked={['Email', 'SMS']}
-              />
-              <NotificationRow
-                title="Promotions and Offers"
-                desc="Receive emails about new features and special offers."
-                options={['Email']}
-              />
-              <NotificationRow
-                title="Security Alerts"
-                desc="Get notified about suspicious logins."
-                options={['Always On']}
-                disabled
-              />
-            </div>
-          </section>
 
           <div className="fixed bottom-6 right-8 z-50">
             <button

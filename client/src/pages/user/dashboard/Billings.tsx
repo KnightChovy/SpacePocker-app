@@ -1,6 +1,7 @@
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/layouts/AppHeader';
-import { Landmark, BellRing, Plus } from 'lucide-react';
+import BookingNotificationsBell from '@/components/features/user/dashboard/BookingNotificationsBell';
+import { Landmark, Plus } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
 
@@ -12,12 +13,6 @@ const Billings = () => {
   const user = useAuthStore(state => state.user);
 
   const headerActions = [
-    {
-      id: 'notifications',
-      icon: <BellRing />,
-      badge: true,
-      variant: 'ghost' as const,
-    },
     {
       id: 'new-booking',
       icon: <Plus className="w-5 h-5" />,
@@ -37,6 +32,7 @@ const Billings = () => {
         onMenuClick={() => setSidebarOpen(true)}
         showSearch={false}
         actions={headerActions}
+        rightExtra={<BookingNotificationsBell />}
         profile={{
           name: user?.name || 'User',
           subtitle: user?.role || 'USER',
