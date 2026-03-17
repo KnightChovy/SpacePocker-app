@@ -7,6 +7,8 @@ import {
   NotFoundError,
   ConflictRequestError,
 } from "../../core/error.response";
+import MailQueueService from "../mailQueue.service";
+import VnpayService from "../vnpay.service";
 
 jest.mock("../../lib/prisma", () => ({
   prisma: {
@@ -55,6 +57,8 @@ describe("BookingRequestService", () => {
   let mockBookingRequestRepo: jest.Mocked<IBookingRequestRepository>;
   let mockRoomRepo: jest.Mocked<IRoomRepository>;
   let mockBookingRepo: jest.Mocked<IBookingRepository>;
+  let mockMailQueueService: jest.Mocked<MailQueueService>;
+  let mockVnpayService: jest.Mocked<VnpayService>;
 
   const mockRoom = {
     id: "r-001",
@@ -123,10 +127,20 @@ describe("BookingRequestService", () => {
     mockBookingRepo = {
       findOverlappingApprovedBookings: jest.fn(),
     };
+    mockMailQueueService = {
+      publishBookingConfirmedEmailJob: jest.fn(),
+    } as unknown as jest.Mocked<MailQueueService>;
+    mockVnpayService = {
+      createPaymentUrl: jest.fn(),
+      verifyQuery: jest.fn(),
+      extractBookingRequestId: jest.fn(),
+    } as unknown as jest.Mocked<VnpayService>;
     bookingRequestService = new BookingRequestService(
       mockBookingRequestRepo,
       mockRoomRepo,
       mockBookingRepo,
+      mockMailQueueService,
+      mockVnpayService,
     );
     prismaMock.roomAmenity.findMany.mockResolvedValue([]);
     prismaMock.roomServiceCategory.findMany.mockResolvedValue([]);
