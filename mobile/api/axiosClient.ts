@@ -19,7 +19,9 @@ axiosClient.interceptors.request.use(
 
     if (accessToken) {
       config.headers['authorization'] = `Bearer ${accessToken}`;
-      config.headers['x-client-id'] = user?.id;
+      if (user?.id) {
+        config.headers['x-client-id'] = user.id;
+      }
     }
     return config;
   },
@@ -40,16 +42,12 @@ axiosClient.interceptors.response.use(
 
         if (!refreshToken) throw new Error('No refresh token');
 
-        const res = await axios.post(
-          `${baseApi}/refresh-token`,
-          null, // ✅ body = null
-          {
-            headers: {
-              'x-refresh-token': refreshToken,
-              'x-client-id': user?.id,
-            },
-          }
-        );
+        const res = await axios.post(`${baseApi}/auth/refresh-token`, null, {
+          headers: {
+            'x-refresh-token': refreshToken,
+            'x-client-id': user?.id,
+          },
+        });
 
         const { accessToken, refreshToken: newRefreshToken } =
           res.data.metadata.tokens;
