@@ -24,28 +24,15 @@ export type LocalBookingRecord = {
   savedAt: string;
 };
 
-export type LocalPaymentMethod = 'CARD' | 'APPLE_PAY' | 'GOOGLE_PAY';
-
-export type LocalPaymentRecord = {
-  paymentMethod: LocalPaymentMethod;
-  paidAt: string;
-};
-
 interface BookingDraftState {
   draftsByRoomId: Record<string, BookingDraft>;
   localBookingsById: Record<string, LocalBookingRecord>;
-  paymentsByBookingRequestId: Record<string, LocalPaymentRecord>;
 
   getDraft: (roomId: string) => BookingDraft | undefined;
   upsertDraft: (draft: BookingDraft) => void;
   clearDraft: (roomId: string) => void;
 
   addLocalBooking: (record: LocalBookingRecord) => void;
-
-  setBookingPayment: (
-    bookingRequestId: string,
-    paymentMethod: LocalPaymentMethod
-  ) => void;
 }
 
 export const useBookingDraftStore = create<BookingDraftState>()(
@@ -53,7 +40,6 @@ export const useBookingDraftStore = create<BookingDraftState>()(
     (set, get) => ({
       draftsByRoomId: {},
       localBookingsById: {},
-      paymentsByBookingRequestId: {},
 
       getDraft: (roomId: string) => get().draftsByRoomId[roomId],
 
@@ -79,27 +65,12 @@ export const useBookingDraftStore = create<BookingDraftState>()(
             [record.bookingRequestId]: record,
           },
         })),
-
-      setBookingPayment: (
-        bookingRequestId: string,
-        paymentMethod: LocalPaymentMethod
-      ) =>
-        set(state => ({
-          paymentsByBookingRequestId: {
-            ...state.paymentsByBookingRequestId,
-            [bookingRequestId]: {
-              paymentMethod,
-              paidAt: new Date().toISOString(),
-            },
-          },
-        })),
     }),
     {
       name: 'spacepocker-booking-storage',
       partialize: state => ({
         draftsByRoomId: state.draftsByRoomId,
         localBookingsById: state.localBookingsById,
-        paymentsByBookingRequestId: state.paymentsByBookingRequestId,
       }),
     }
   )

@@ -1,9 +1,4 @@
-import {
-  PlusCircle,
-  Wrench,
-  UserPlus,
-  type LucideIcon,
-} from 'lucide-react';
+import { PlusCircle, Wrench, UserPlus, type LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface ActionItemProps {

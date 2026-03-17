@@ -9,6 +9,7 @@ import {
 } from 'recharts';
 import { Card } from '@/components/common/Card';
 import type { ChartDataItem } from '@/types/types';
+import { formatVND } from '@/lib/utils';
 
 interface RevenueOverviewProps {
   data: ChartDataItem[];
@@ -53,7 +54,7 @@ export const RevenueOverview: React.FC<RevenueOverviewProps> = ({ data }) => {
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 12, fill: '#9CA3AF' }}
-              tickFormatter={(value: number) => `$${value / 1000}k`}
+              tickFormatter={(value: number) => formatVND(value)}
             />
             <Tooltip
               contentStyle={{
@@ -63,7 +64,7 @@ export const RevenueOverview: React.FC<RevenueOverviewProps> = ({ data }) => {
               }}
               formatter={value =>
                 value !== undefined
-                  ? [`$${value.toLocaleString()}`, 'Revenue']
+                  ? [formatVND(Number(value)), 'Revenue']
                   : null
               }
             />

@@ -1,15 +1,93 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import AppHeader from '@/components/layouts/AppHeader';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
 import { Save, Pencil, Mail, Phone, Shield } from 'lucide-react';
+import { useGetUserProfile } from '@/hooks/user/profile/use-get-user-profile';
+import { useUpdateUserProfile } from '@/hooks/user/profile/use-update-user-profile';
+import type { UserRole } from '@/types/auth-type';
 
 const ManagerProfilePage: React.FC = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
   const user = useAuthStore(state => state.user);
+  const setUser = useAuthStore(state => state.setUser);
+  const profileQuery = useGetUserProfile();
+  const updateProfile = useUpdateUserProfile();
+
+  const [draft, setDraft] = useState<{ name?: string; phone?: string }>({});
+
+  const baseProfile = useMemo(
+    () => ({
+      id: profileQuery.data?.id ?? user?.id ?? '',
+      name: profileQuery.data?.name ?? user?.name ?? '',
+      email: profileQuery.data?.email ?? user?.email ?? '',
+      phone: profileQuery.data?.phoneNumber ?? user?.phone ?? '',
+      role: (profileQuery.data?.role ?? user?.role ?? 'MANAGER') as
+        | UserRole
+        | 'MANAGER',
+    }),
+    [
+      profileQuery.data?.email,
+      profileQuery.data?.id,
+      profileQuery.data?.name,
+      profileQuery.data?.phoneNumber,
+      profileQuery.data?.role,
+      user?.email,
+      user?.id,
+      user?.name,
+      user?.phone,
+      user?.role,
+    ]
+  );
+
+  const form = useMemo(
+    () => ({
+      name: draft.name ?? baseProfile.name,
+      email: baseProfile.email,
+      phone: draft.phone ?? baseProfile.phone,
+      role: baseProfile.role,
+    }),
+    [
+      baseProfile.email,
+      baseProfile.name,
+      baseProfile.phone,
+      baseProfile.role,
+      draft.name,
+      draft.phone,
+    ]
+  );
+
+  const hasChanged = useMemo(
+    () =>
+      form.name.trim() !== baseProfile.name.trim() ||
+      form.phone.trim() !== baseProfile.phone.trim(),
+    [baseProfile.name, baseProfile.phone, form.name, form.phone]
+  );
+
+  const handleSaveChanges = async () => {
+    const nextName = form.name.trim();
+    const nextPhone = form.phone.trim();
+
+    if (!nextName) return;
+
+    const updatedProfile = await updateProfile.mutateAsync({
+      name: nextName,
+      phoneNumber: nextPhone === '' ? null : nextPhone,
+    });
+
+    setUser({
+      id: updatedProfile.id,
+      name: updatedProfile.name,
+      email: updatedProfile.email,
+      phone: updatedProfile.phoneNumber ?? '',
+      role: updatedProfile.role,
+    });
+
+    setDraft({});
+  };
 
   const headerActions = [
     {
@@ -17,6 +95,8 @@ const ManagerProfilePage: React.FC = () => {
       icon: <Save className="h-5 w-5" />,
       label: 'Save Changes',
       variant: 'primary' as const,
+      onClick: handleSaveChanges,
+      disabled: !hasChanged || updateProfile.isPending || !form.name.trim(),
     },
   ];
 
@@ -28,9 +108,9 @@ const ManagerProfilePage: React.FC = () => {
         onMenuClick={() => setSidebarOpen(true)}
         actions={headerActions}
         profile={{
-          name: user?.name || 'Manager',
-          subtitle: user?.role || 'MANAGER',
-          avatarUrl: getAvatarUrl(user?.name, 'Manager'),
+          name: baseProfile.name || 'Manager',
+          subtitle: baseProfile.role || 'MANAGER',
+          avatarUrl: getAvatarUrl(baseProfile.name, 'Manager'),
           showDropdown: true,
         }}
       />
@@ -52,20 +132,20 @@ const ManagerProfilePage: React.FC = () => {
               </div>
               <div className="flex-1 text-center md:text-left">
                 <h3 className="text-2xl font-bold text-white">
-                  {user?.name || 'Manager'}
+                  {form.name || 'Manager'}
                 </h3>
                 <p className="text-indigo-100 mt-2 flex items-center justify-center md:justify-start gap-2">
                   <Mail className="h-4 w-4" />
-                  {user?.email || 'manager@spacepocker.com'}
+                  {form.email || 'manager@spacepocker.com'}
                 </p>
                 <p className="text-indigo-100 mt-1 flex items-center justify-center md:justify-start gap-2">
                   <Phone className="h-4 w-4" />
-                  {user?.phone || 'Not provided'}
+                  {form.phone || 'Not provided'}
                 </p>
               </div>
               <div className="px-5 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
                 <span className="text-sm font-bold text-white uppercase tracking-wider">
-                  {user?.role || 'MANAGER'}
+                  {form.role || 'MANAGER'}
                 </span>
               </div>
             </div>
@@ -99,7 +179,10 @@ const ManagerProfilePage: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  defaultValue={user?.name || ''}
+                  value={form.name}
+                  onChange={e =>
+                    setDraft(prev => ({ ...prev, name: e.target.value }))
+                  }
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
                 />
               </div>
@@ -109,8 +192,9 @@ const ManagerProfilePage: React.FC = () => {
                 </label>
                 <input
                   type="email"
-                  defaultValue={user?.email || ''}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
+                  value={form.email}
+                  disabled
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed"
                 />
               </div>
               <div>
@@ -119,7 +203,10 @@ const ManagerProfilePage: React.FC = () => {
                 </label>
                 <input
                   type="tel"
-                  defaultValue={user?.phone || ''}
+                  value={form.phone}
+                  onChange={e =>
+                    setDraft(prev => ({ ...prev, phone: e.target.value }))
+                  }
                   placeholder="Enter phone number"
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
                 />
@@ -130,7 +217,7 @@ const ManagerProfilePage: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  value={user?.role || 'MANAGER'}
+                  value={form.role || 'MANAGER'}
                   disabled
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed"
                 />
@@ -265,9 +352,15 @@ const ManagerProfilePage: React.FC = () => {
           <button className="px-6 py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
             Cancel
           </button>
-          <button className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-sm font-semibold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2">
+          <button
+            onClick={handleSaveChanges}
+            disabled={
+              !hasChanged || updateProfile.isPending || !form.name.trim()
+            }
+            className="px-6 py-3 bg-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2"
+          >
             <Save className="h-4 w-4" />
-            Save Changes
+            {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </main>

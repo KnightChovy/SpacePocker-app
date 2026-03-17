@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Transaction } from '@/types/admin-types';
+import { formatVND } from '@/lib/utils';
 
 interface Props {
   transactions: Transaction[];
@@ -66,7 +67,7 @@ const TransactionTable: React.FC<Props> = ({ transactions }) => {
                   {trx.date}
                 </td>
                 <td className="px-8 py-5 text-sm font-bold text-gray-900 text-right">
-                  ${trx.amount.toFixed(2)}
+                  {formatVND(trx.amount)}
                 </td>
                 <td className="px-8 py-5 text-center">
                   <span

@@ -123,11 +123,9 @@ const ManagerSettingsPage: React.FC = () => {
                 </label>
                 <input
                   type="email"
-                  value={settings.siteEmail}
-                  onChange={e =>
-                    handleSettingChange('siteEmail', e.target.value)
-                  }
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
+                  value={user?.email || settings.siteEmail}
+                  disabled
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed"
                 />
               </div>
               <div>
@@ -141,9 +139,6 @@ const ManagerSettingsPage: React.FC = () => {
                   }
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
                 >
-                  <option value="USD">USD - US Dollar</option>
-                  <option value="EUR">EUR - Euro</option>
-                  <option value="GBP">GBP - British Pound</option>
                   <option value="VND">VND - Vietnamese Dong</option>
                 </select>
               </div>

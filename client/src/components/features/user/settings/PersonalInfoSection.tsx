@@ -1,13 +1,25 @@
 import InputField from './InputField';
 import { Pencil } from 'lucide-react';
 import { getAvatarUrl } from '@/lib/utils';
-import type { USER_DATA } from '@/types/auth-type';
+import type { UserRole } from '@/types/auth-type';
 
 interface PersonalInfoSectionProps {
-  user: USER_DATA | null;
+  name: string;
+  email: string;
+  phone: string;
+  role: UserRole | '';
+  onNameChange: (value: string) => void;
+  onPhoneChange: (value: string) => void;
 }
 
-const PersonalInfoSection = ({ user }: PersonalInfoSectionProps) => {
+const PersonalInfoSection = ({
+  name,
+  email,
+  phone,
+  role,
+  onNameChange,
+  onPhoneChange,
+}: PersonalInfoSectionProps) => {
   return (
     <section className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark shadow-sm overflow-hidden">
       <div className="p-6 border-b border-border-light dark:border-border-dark">
@@ -21,7 +33,7 @@ const PersonalInfoSection = ({ user }: PersonalInfoSectionProps) => {
           <div className="relative">
             <div
               className="h-24 w-24 rounded-full bg-cover bg-center border-2 border-primary/20"
-              style={{ backgroundImage: `url('${getAvatarUrl(user?.name)}')` }}
+              style={{ backgroundImage: `url('${getAvatarUrl(name)}')` }}
             ></div>
             <button className="absolute bottom-0 right-0 bg-primary hover:bg-primary-dark text-white p-1.5 rounded-full border-2 border-surface-light dark:border-surface-dark transition-colors shadow-sm">
               <Pencil className="h-4 w-4 block" />
@@ -49,23 +61,22 @@ const PersonalInfoSection = ({ user }: PersonalInfoSectionProps) => {
           <InputField
             label="Full Name"
             icon="person"
-            defaultValue={user?.name || ''}
+            value={name}
+            onChange={onNameChange}
           />
-          <InputField
-            label="Role / Title"
-            icon="work"
-            defaultValue={user?.role || ''}
-          />
+          <InputField label="Role / Title" icon="work" value={role} disabled />
           <InputField
             label="Email Address"
             icon="mail"
-            defaultValue={user?.email || ''}
+            value={email}
             type="email"
+            disabled
           />
           <InputField
             label="Phone Number"
             icon="call"
-            defaultValue={user?.phone || ''}
+            value={phone}
+            onChange={onPhoneChange}
             type="tel"
           />
         </div>

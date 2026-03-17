@@ -22,6 +22,7 @@ import type { ApiService } from '@/types/booking-request-api';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useBookingDraftStore } from '@/stores/bookingDraft.store';
+import { formatVND } from '@/lib/utils';
 
 type Step = 1 | 2 | 3;
 
@@ -744,7 +745,7 @@ const BookingRequestWizardPage = () => {
                                               {svc.name}
                                             </p>
                                             <p className="text-xs text-slate-400">
-                                              ${svc.price.toFixed(2)}
+                                              {formatVND(svc.price)}
                                             </p>
                                           </div>
                                           <div className="flex items-center gap-2">
@@ -900,7 +901,7 @@ const BookingRequestWizardPage = () => {
                                 {s.name} (x{s.quantity})
                               </span>
                               <span className="font-semibold text-slate-900">
-                                ${s.lineTotal.toFixed(2)}
+                                {formatVND(s.lineTotal)}
                               </span>
                             </div>
                           ))}
@@ -1052,16 +1053,16 @@ const BookingRequestWizardPage = () => {
                 <div className="mt-4 space-y-2 text-sm">
                   <div className="flex items-center justify-between text-slate-600">
                     <span>
-                      Rate ({hours} hrs x ${pricing.rate.toFixed(2)})
+                      Rate ({hours} hrs x {formatVND(pricing.rate)})
                     </span>
                     <span className="font-semibold text-slate-900">
-                      ${pricing.roomLine.toFixed(2)}
+                      {formatVND(pricing.roomLine)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-slate-600">
                     <span>Services</span>
                     <span className="font-semibold text-slate-900">
-                      ${pricing.servicesLine.toFixed(2)}
+                      {formatVND(pricing.servicesLine)}
                     </span>
                   </div>
                   <div className="h-px bg-slate-100 my-2" />
@@ -1069,11 +1070,11 @@ const BookingRequestWizardPage = () => {
                     <div>
                       <p className="text-xs text-slate-500">Total Amount</p>
                       <p className="text-2xl font-extrabold text-slate-900">
-                        ${pricing.total.toFixed(2)}
+                        {formatVND(pricing.total)}
                       </p>
                     </div>
                     <div className="px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-bold">
-                      USD
+                      VND
                     </div>
                   </div>
                 </div>

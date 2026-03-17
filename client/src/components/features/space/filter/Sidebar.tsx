@@ -80,7 +80,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           Need a dedicated space?
         </p>
         <p className="text-xs text-slate-600 mb-3">
-          Get unlimited access to over 500 premium spaces starting at $199/mo.
+          Get unlimited access to over 500 premium spaces starting at 199.000
+          ₫/mo.
         </p>
         <button className="w-full py-2 bg-primary text-white text-xs font-bold rounded-lg shadow-sm hover:bg-primary-dark transition-colors">
           View Plans

@@ -1,5 +1,6 @@
 import { SPACESUSER } from '@/data/constant';
-import { Heart, MapPin, Star } from 'lucide-react';
+import { MapPin, Star } from 'lucide-react';
+import { formatVND } from '@/lib/utils';
 
 const BookingList = () => {
   return (
@@ -14,11 +15,6 @@ const BookingList = () => {
               className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
               style={{ backgroundImage: `url('${space.image}')` }}
             ></div>
-            <div className="absolute top-3 right-3 z-10">
-              <button className="w-9 h-9 rounded-full bg-white/95 dark:bg-surface-dark/95 backdrop-blur-sm flex items-center justify-center shadow-md text-red-500 hover:scale-110 transition-transform active:scale-95">
-                <Heart className="h-5 w-5" />
-              </button>
-            </div>
             <div className="absolute top-3 left-3 z-10">
               <label className="flex items-center gap-2 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-sm px-3 py-1.5 rounded-lg cursor-pointer hover:bg-white dark:hover:bg-surface-dark shadow-sm transition-colors border border-transparent hover:border-primary/20">
                 <input
@@ -69,7 +65,7 @@ const BookingList = () => {
                   Starting from
                 </span>
                 <span className="text-xl font-black">
-                  ${space.pricePerHour}
+                  {formatVND(space.pricePerHour)}
                   <span className="text-sm font-medium text-text-sub-light dark:text-text-sub-dark">
                     /hr
                   </span>

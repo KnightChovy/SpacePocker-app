@@ -244,7 +244,7 @@ const EditBookingModal = ({
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                  Amount ($)
+                  Amount (VND)
                 </label>
                 <input
                   className="w-full px-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 transition-all shadow-sm text-slate-800"

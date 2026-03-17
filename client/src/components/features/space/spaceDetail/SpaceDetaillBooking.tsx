@@ -9,7 +9,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn, formatVND } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
 
 interface SpaceDetailBookingProps {
@@ -128,7 +128,7 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
       <div className="flex items-baseline justify-between">
         <div className="flex items-baseline gap-1">
           <span className="text-3xl font-extrabold text-gray-900">
-            ${price}
+            {formatVND(price)}
           </span>
           <span className="text-gray-500 font-medium">/ hour</span>
         </div>
@@ -243,15 +243,15 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
       <div className="space-y-3 pt-2">
         <div className="flex justify-between text-sm text-gray-600">
           <span className="underline decoration-gray-300 underline-offset-4">
-            ${price} x {hours} hour{hours !== 1 ? 's' : ''}
+            {formatVND(price)} x {hours} hour{hours !== 1 ? 's' : ''}
           </span>
-          <span>${(price * hours).toFixed(2)}</span>
+          <span>{formatVND(price * hours)}</span>
         </div>
 
         <div className="h-px bg-gray-100 my-2"></div>
         <div className="flex justify-between text-lg font-bold text-gray-900">
           <span>Total</span>
-          <span>${totalPrice.toFixed(2)}</span>
+          <span>{formatVND(totalPrice)}</span>
         </div>
       </div>
 
