@@ -1,5 +1,6 @@
 import { MoreVertical } from 'lucide-react';
 import type { Room } from '@/types/types';
+import { formatVND } from '@/lib/utils';
 
 interface RoomTableProps {
   rooms: Room[];
@@ -98,7 +99,7 @@ const RoomTable = ({ rooms }: RoomTableProps) => {
                   <StatusBadge status={room.status as RoomStatus} />
                 </td>
                 <td className="py-4 px-6 text-right font-mono text-sm font-bold text-text-dark">
-                  ${room.pricePerHour.toFixed(2)}
+                  {formatVND(room.pricePerHour)}
                 </td>
                 <td className="py-4 px-6 text-center">
                   <button className="text-gray-400 hover:text-primary p-1 rounded hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">

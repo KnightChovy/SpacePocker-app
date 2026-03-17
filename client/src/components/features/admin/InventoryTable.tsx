@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Space } from '@/types/admin-types';
+import { formatVND } from '@/lib/utils';
 
 interface InventoryTableProps {
   spaces: Space[];
@@ -162,7 +163,7 @@ const SpaceRow: React.FC<{ space: Space }> = ({ space }) => {
         <CategoryBadge category={space.category} />
       </td>
       <td className="py-4 px-6 font-bold text-gray-900">
-        ${space.price.toFixed(2)}{' '}
+        {formatVND(space.price)}{' '}
         <span className="text-[10px] font-normal text-text-secondary">
           /{space.priceUnit}
         </span>

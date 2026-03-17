@@ -23,6 +23,7 @@ import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get
 import { bookingPaymentApi } from '@/apis/booking-payment.api';
 import type { LocalBookingRecord } from '@/stores/bookingDraft.store';
 import { useBookingDraftStore } from '@/stores/bookingDraft.store';
+import { formatVND } from '@/lib/utils';
 
 type BookingListProps = {
   bookings: BookingUser[];
@@ -291,7 +292,7 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
                 </div>
                 <div className="text-left sm:text-right">
                   <div className="text-xl font-bold">
-                    ${booking.price.toFixed(2)}
+                    {formatVND(booking.price)}
                   </div>
                   <div className="text-xs text-text-sub-light dark:text-text-sub-dark mt-0.5">
                     {req?.status === 'COMPLETED'
@@ -622,14 +623,14 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
                           Subtotal
                         </span>
                         <span className="font-semibold">
-                          ${pricing.subtotal.toFixed(2)}
+                          {formatVND(pricing.subtotal)}
                         </span>
                       </div>
                       <div className="h-px bg-border-light dark:bg-border-dark my-3" />
                       <div className="flex items-center justify-between">
                         <span className="font-bold">Total</span>
                         <span className="font-bold text-lg">
-                          ${pricing.total.toFixed(2)}
+                          {formatVND(pricing.total)}
                         </span>
                       </div>
                     </div>
@@ -645,7 +646,7 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
                     >
                       {isPaymentLoading
                         ? 'Processing...'
-                        : `Pay $${pricing.total.toFixed(2)}`}
+                        : `Pay ${formatVND(pricing.total)}`}
                     </button>
                   </div>
                 ) : (

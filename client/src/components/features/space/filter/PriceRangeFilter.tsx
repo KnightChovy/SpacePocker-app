@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatVND } from '@/lib/utils';
 
 interface PriceRangeFilterProps {
   priceRange: [number, number];
@@ -41,11 +42,11 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
       </div>
       <div className="flex justify-between items-center text-sm font-medium text-slate-600">
         <div className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
-          ${priceRange[0]}
+          {formatVND(priceRange[0])}
         </div>
         <span className="text-slate-300">-</span>
         <div className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
-          ${clampedUpper}
+          {formatVND(clampedUpper)}
           {clampedUpper >= safeMax ? '+' : ''}
         </div>
       </div>

@@ -2,7 +2,7 @@
   "defaultSettings": {
     "siteName": "SPACEPOCKER",
     "siteEmail": "admin@spacepocker.com",
-    "currency": "USD",
+    "currency": "VND",
     "timezone": "UTC-5",
     "maintenanceMode": false,
     "allowNewRegistrations": true,

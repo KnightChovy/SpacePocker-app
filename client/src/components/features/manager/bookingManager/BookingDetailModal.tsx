@@ -1,6 +1,7 @@
 import { X, Calendar, Clock, User, MapPin, DollarSign } from 'lucide-react';
 import type { Booking, BookingStatus } from '@/types/types';
 import { BookingStatusLabel } from '@/types/types';
+import { formatVND } from '@/lib/utils';
 
 interface BookingDetailModalProps {
   isOpen: boolean;
@@ -146,7 +147,7 @@ const BookingDetailModal = ({
                   Total Amount
                 </p>
                 <p className="text-2xl font-bold text-slate-800">
-                  ${booking.amount.toFixed(2)}
+                  {formatVND(booking.amount)}
                 </p>
               </div>
             </div>

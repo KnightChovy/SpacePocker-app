@@ -5,6 +5,21 @@ export interface AuthError {
   status?: number;
 }
 
+export interface UserProfileResponse {
+  id: string;
+  name: string;
+  email: string;
+  phoneNumber: string | null;
+  role: 'USER' | 'MANAGER' | 'ADMIN';
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface UpdateUserProfilePayload {
+  name?: string;
+  phoneNumber?: string | null;
+}
+
 const login = async ({
   email,
   password,
@@ -58,4 +73,21 @@ const refreshToken = async ({
   return response.data.metadata;
 };
 
-export const authAPI = { login, signup, logout, refreshToken };
+const getProfile = async () => {
+  const response = await axiosInstance.get('/users/profile');
+  return response.data.metadata as UserProfileResponse;
+};
+
+const updateProfile = async (payload: UpdateUserProfilePayload) => {
+  const response = await axiosInstance.patch('/users/profile', payload);
+  return response.data.metadata as UserProfileResponse;
+};
+
+export const authAPI = {
+  login,
+  signup,
+  logout,
+  refreshToken,
+  getProfile,
+  updateProfile,
+};

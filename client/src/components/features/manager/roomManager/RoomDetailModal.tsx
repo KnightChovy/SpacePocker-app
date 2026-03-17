@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useGetRoomById } from '@/hooks/manager/rooms/use-get-room-by-id';
 import type { ApiRoomStatus } from '@/types/room-api';
+import { formatVND } from '@/lib/utils';
 
 interface RoomDetailModalProps {
   isOpen: boolean;
@@ -176,11 +177,11 @@ const RoomDetailModal = ({
                       Price
                     </p>
                     <p className="text-base font-semibold text-slate-800">
-                      ${room.pricePerHour}/hr
+                      {formatVND(room.pricePerHour)}/hr
                     </p>
                     {room.securityDeposit != null && (
                       <p className="text-sm text-slate-500">
-                        Deposit: ${room.securityDeposit}
+                        Deposit: {formatVND(room.securityDeposit)}
                       </p>
                     )}
                   </div>

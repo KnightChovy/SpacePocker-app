@@ -2,7 +2,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
-import logoGoogle from '/logoGoogle.jpg';
 import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -74,21 +73,6 @@ const LoginPage = () => {
             <p className="text-[#4d4c9a] dark:text-gray-400 text-base font-normal">
               Please enter your details to sign in.
             </p>
-          </div>
-
-          <Button className="group flex w-full cursor-pointer items-center justify-center rounded-xl h-14 px-5 bg-white dark:bg-[#1c1e31] border border-[#e5e7eb] dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#252840] hover:border-[#d1d5db] dark:hover:border-gray-600 shadow-[0_10px_20px_-10px_rgba(99,102,241,0.3)] hover:shadow-[0_20px_25px_-12px_rgba(99,102,241,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-300 gap-3 relative overflow-hidden">
-            <img alt="Google Logo" className="w-5 h-5" src={logoGoogle} />
-            <span className="text-[#0e0d1b] dark:text-white font-semibold text-base">
-              Sign in with Google
-            </span>
-          </Button>
-
-          <div className="relative flex py-1 items-center">
-            <div className="grow border-t border-gray-200 dark:border-gray-700"></div>
-            <span className="shrink-0 mx-4 text-gray-400 text-sm font-medium">
-              Or sign in with email
-            </span>
-            <div className="grow border-t border-gray-200 dark:border-gray-700"></div>
           </div>
 
           <form

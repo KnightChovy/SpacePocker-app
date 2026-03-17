@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { formatVND } from '@/lib/utils';
 
 const data = [
   { name: 'Jan', value: 3000 },
@@ -34,7 +35,7 @@ const CustomTooltip = ({
   if (active && payload && payload.length) {
     return (
       <div className="bg-gray-900 text-white px-3 py-2 rounded-xl shadow-xl text-xs font-bold flex items-center gap-2 border border-gray-700">
-        <span>${payload[0].value.toLocaleString()}</span>
+        <span>{formatVND(payload[0].value)}</span>
         <span className="text-emerald-400">▲ 14%</span>
       </div>
     );

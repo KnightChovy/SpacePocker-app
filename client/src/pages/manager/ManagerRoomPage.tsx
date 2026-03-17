@@ -24,7 +24,7 @@ import RoomDetailModal from '@/components/features/manager/roomManager/RoomDetai
 import EditRoomModal from '@/components/features/manager/roomManager/EditRoomModal';
 import DeleteRoomConfirmModal from '@/components/features/manager/roomManager/DeleteRoomConfirmModal';
 import { useAuthStore } from '@/stores/auth.store';
-import { getAvatarUrl } from '@/lib/utils';
+import { formatVND, getAvatarUrl } from '@/lib/utils';
 
 const StatusBadge = ({ status }: { status: ApiRoomStatus }) => {
   const config: Record<string, { bg: string; text: string; label: string }> = {
@@ -98,7 +98,7 @@ const RoomRow = ({
       </td>
       <td className="py-4 px-4">
         <span className="text-sm font-medium text-text-dark">
-          ${room.pricePerHour}/hr
+          {formatVND(room.pricePerHour)}/hr
         </span>
       </td>
       <td className="py-4 px-4">

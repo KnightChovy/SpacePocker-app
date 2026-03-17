@@ -1,11 +1,59 @@
-import { SPACES } from '@/data/constant';
+import { useMemo } from 'react';
 import SpaceCard from './SpaceCard';
 import { ChevronDown, Shuffle } from 'lucide-react';
 import { Button } from '../ui/button';
+import { useGetRooms } from '@/hooks/user/rooms/use-get-rooms';
+import type { ApiRoom } from '@/types/room-api';
+import type { Space } from '@/types/types';
 
-const FeatureSpaceSection = () => {
+interface FeatureSpaceSectionProps {
+  searchQuery?: string;
+  sectionId?: string;
+}
+
+const FeatureSpaceSection = ({
+  searchQuery = '',
+  sectionId,
+}: FeatureSpaceSectionProps) => {
+  const roomsQuery = useGetRooms({
+    status: 'AVAILABLE',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+    limit: 8,
+    offset: 0,
+  });
+
+  const spaces = useMemo<Space[]>(() => {
+    const rooms: ApiRoom[] = roomsQuery.data?.rooms ?? [];
+
+    return rooms.map(room => ({
+      id: room.id,
+      name: room.name,
+      description: room.description ?? 'Great space for your next booking.',
+      price: room.pricePerHour,
+      rating: 0,
+      capacity: room.capacity,
+      imageUrl: room.images?.[0] ?? '',
+      images: room.images ?? [],
+      location: room.building?.address ?? room.building?.campus,
+    }));
+  }, [roomsQuery.data?.rooms]);
+
+  const filteredSpaces = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    if (!normalizedQuery) return spaces;
+
+    return spaces.filter(space => {
+      return (
+        space.name.toLowerCase().includes(normalizedQuery) ||
+        space.description.toLowerCase().includes(normalizedQuery) ||
+        space.location?.toLowerCase().includes(normalizedQuery)
+      );
+    });
+  }, [searchQuery, spaces]);
+
   return (
-    <section className="py-12 pb-24">
+    <section id={sectionId} className="py-12 pb-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div className="max-w-xl">
@@ -29,11 +77,25 @@ const FeatureSpaceSection = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {SPACES.map(space => (
-            <SpaceCard key={space.id} space={space} />
-          ))}
-        </div>
+        {roomsQuery.isLoading ? (
+          <div className="py-16 text-center text-slate-500">
+            Loading spaces...
+          </div>
+        ) : roomsQuery.isError ? (
+          <div className="py-16 text-center text-red-600">
+            Failed to load spaces. Please try again.
+          </div>
+        ) : filteredSpaces.length === 0 ? (
+          <div className="py-16 text-center text-slate-500">
+            No spaces found for your search.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredSpaces.map(space => (
+              <SpaceCard key={space.id} space={space} />
+            ))}
+          </div>
+        )}
 
         <div className="mt-8 flex justify-center sm:hidden">
           <Button className="flex w-full items-center justify-center rounded-xl border border-gray-200 bg-white py-3 text-sm font-bold text-[#0e0d1b] shadow-sm">

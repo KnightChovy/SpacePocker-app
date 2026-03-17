@@ -90,7 +90,7 @@ export const BOOKINGS: ScheduleBooking[] = [
 export const stats: StatItem[] = [
   {
     label: 'Total Revenue',
-    value: '$48,250',
+    value: '48.250.000 ₫',
     trend: 12.5,
     type: 'revenue',
   },
@@ -406,7 +406,7 @@ import type {
 export const statsData: StatSummary[] = [
   {
     label: 'Total Revenue',
-    value: '$124,500',
+    value: '124.500.000 ₫',
     change: 12.5,
     icon: 'payments',
     trend: 'up',

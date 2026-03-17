@@ -6,7 +6,7 @@ import StatCard from '@/components/features/user/dashboard/StatCard';
 import QuickActionButton from '@/components/features/user/dashboard/QuickActionButton';
 import BookingList from '@/components/features/user/dashboard/BookingList';
 import { useAuthStore } from '@/stores/auth.store';
-import { getAvatarUrl } from '@/lib/utils';
+import { formatVND, getAvatarUrl } from '@/lib/utils';
 
 const Dashboard = () => {
   const { setSidebarOpen } = useOutletContext<{
@@ -85,7 +85,7 @@ const Dashboard = () => {
             <StatCard
               icon="payments"
               title="Credits Available"
-              value={`$${USER_STATS.credits.toFixed(2)}`}
+              value={formatVND(USER_STATS.credits)}
               topUp
               colorClass="amber"
             />
@@ -144,7 +144,7 @@ const Dashboard = () => {
                         </div>
                         <div className="flex items-center gap-1">
                           <span className="text-xs font-bold">
-                            ${space.pricePerHour}
+                            {formatVND(space.pricePerHour)}
                           </span>
                           <span className="text-[10px] text-text-sub-light dark:text-text-sub-dark">
                             / hour

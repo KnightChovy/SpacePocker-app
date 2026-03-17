@@ -1,7 +1,13 @@
-import { Calendar, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+
+interface HeroProps {
+  searchQuery: string;
+  onSearchQueryChange: (value: string) => void;
+  onSearchSubmit?: () => void;
+}
 
 const BACKGROUND_IMAGES = [
   'https://lh3.googleusercontent.com/aida-public/AB6AXuCwlPPMsf9lghdgPlt1bq56qVptcqi1bkMFjNHUyE4TPrQiOjR7JLsXdDAMhJn13nJq6P6OZqz7C0-9x5cEBJhqU-V_pmyD6SxjSOTTFZ5Ue2LFMBsqb4HbegPzXxkAn5or-4GwajEddanVttCumKFnSd9c1Sjb4Dl1hXPNX-HUf1Rp1kgj2UV3r897jjX4KH8ditSiJzuWO5OLmOY-fF5XhySVffajiAfUHOn4mDoSPHcTian4qESRqNpPKyK4XPlsPNr9mD1MKD08',
@@ -9,7 +15,11 @@ const BACKGROUND_IMAGES = [
   'https://lh3.googleusercontent.com/aida-public/AB6AXuAhMv8qNFwG35b9XGVy9xWT2EGsCulDlda03EZowocuP9z_37zxsILgVRLMNKw1B8nEwgRggbCEZDwAaeGVJ_jscWx7tsHKkdTSjqZoHLnCG3U1ABeZeH1KBrxAWSPyNseqL2MpEYtxEj0RnN6vEub0MVXCSmNVk4ityVECZ1x7a5cRlUP6LNx6Ie7bur6Fc5jkL9yE5loJqEU5KcdQTLvQbiloVyWxRPu7jWfGOjUnbtDZiLjNgSVtiw5T7j0bvdo7kx1p1ksVvU1S',
 ];
 
-const Hero = () => {
+const Hero = ({
+  searchQuery,
+  onSearchQueryChange,
+  onSearchSubmit,
+}: HeroProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
@@ -72,15 +82,15 @@ const Hero = () => {
             <Input
               className="w-full bg-transparent border-0 focus:ring-0 text-sm font-medium placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0"
               placeholder="San Francisco, CA"
+              value={searchQuery}
+              onChange={event => onSearchQueryChange(event.target.value)}
             />
           </div>
-          <div className="hidden md:flex items-center px-4 py-3 border-r border-slate-200 min-w-45">
-            <Calendar className="text-slate-400 mr-3 h-5 w-5" />
-            <span className="text-sm font-medium text-slate-600">
-              Add dates
-            </span>
-          </div>
-          <Button className="bg-primary text-white px-10 py-6 rounded-xl font-bold text-base shadow-lg shadow-primary/30 hover:bg-indigo-700 transition-all active:scale-95 w-full md:w-auto">
+          <Button
+            className="bg-primary text-white px-10 py-6 rounded-xl font-bold text-base shadow-lg shadow-primary/30 hover:bg-indigo-700 transition-all active:scale-95 w-full md:w-auto"
+            type="button"
+            onClick={onSearchSubmit}
+          >
             Search
           </Button>
         </div>

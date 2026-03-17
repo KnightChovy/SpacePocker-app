@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Space } from '@/types/types';
-import { Heart } from 'lucide-react';
 import { Button } from '../ui/button';
+import { formatVND } from '@/lib/utils';
 
 const SpaceCard: React.FC<{ space: Space }> = ({ space }) => {
   return (
@@ -12,9 +12,6 @@ const SpaceCard: React.FC<{ space: Space }> = ({ space }) => {
           alt={space.name}
           className="h-full w-full object-cover"
         />
-        <div className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/90 flex items-center justify-center text-slate-400 hover:text-red-500 cursor-pointer shadow-sm">
-          <Heart className="h-5 w-5" />
-        </div>
       </div>
 
       <div className="p-5">
@@ -33,7 +30,7 @@ const SpaceCard: React.FC<{ space: Space }> = ({ space }) => {
         <div className="flex items-center justify-between pt-4 border-t border-slate-50">
           <div>
             <span className="text-lg font-extrabold text-secondary">
-              ${space.price}
+              {formatVND(space.price)}
             </span>
             <span className="text-xs text-slate-400 font-medium"> / hour</span>
           </div>

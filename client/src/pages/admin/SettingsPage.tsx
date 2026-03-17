@@ -141,9 +141,6 @@ const SettingsPage: React.FC = () => {
                   }
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
                 >
-                  <option value="USD">USD - US Dollar</option>
-                  <option value="EUR">EUR - Euro</option>
-                  <option value="GBP">GBP - British Pound</option>
                   <option value="VND">VND - Vietnamese Dong</option>
                 </select>
               </div>

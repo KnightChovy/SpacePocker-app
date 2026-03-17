@@ -384,11 +384,11 @@ const AddRoomModal = ({
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                    Price Per Hour ($)
+                    Price Per Hour (VND)
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
-                      $
+                      ₫
                     </span>
                     <input
                       className="w-full pl-9 pr-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
@@ -410,11 +410,11 @@ const AddRoomModal = ({
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                    Security Deposit ($)
+                    Security Deposit (VND)
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
-                      $
+                      ₫
                     </span>
                     <input
                       className="w-full pl-9 pr-4 py-3 bg-white/70 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all duration-200 shadow-sm"
