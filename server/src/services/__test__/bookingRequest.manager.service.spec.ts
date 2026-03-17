@@ -4,6 +4,8 @@ import {
   ConflictRequestError,
   ForbiddenError,
 } from "../../core/error.response";
+import MailQueueService from "../mailQueue.service";
+import VnpayService from "../vnpay.service";
 
 jest.mock("../../lib/prisma", () => ({
   prisma: {
@@ -44,11 +46,21 @@ describe("BookingRequestService Manager Flow", () => {
     const bookingRepo: any = {
       findOverlappingApprovedBookings: jest.fn(),
     };
+    const mailQueueService: jest.Mocked<MailQueueService> = {
+      publishBookingConfirmedEmailJob: jest.fn(),
+    } as unknown as jest.Mocked<MailQueueService>;
+    const vnpayService: jest.Mocked<VnpayService> = {
+      createPaymentUrl: jest.fn(),
+      verifyQuery: jest.fn(),
+      extractBookingRequestId: jest.fn(),
+    } as unknown as jest.Mocked<VnpayService>;
 
     service = new BookingRequestService(
       bookingRequestRepo,
       roomRepo,
       bookingRepo,
+      mailQueueService,
+      vnpayService,
     );
     jest.clearAllMocks();
   });
@@ -96,6 +108,35 @@ describe("BookingRequestService Manager Flow", () => {
     });
   });
 
+  describe("getAllBookingRequestsForAdmin()", () => {
+    it("should throw BadRequestError if admin userId is missing", async () => {
+      await expect(service.getAllBookingRequestsForAdmin("")).rejects.toThrow(
+        BadRequestError,
+      );
+    });
+
+    it("should return all booking requests without status filter", async () => {
+      prismaMock.bookingRequest.findMany.mockResolvedValue([{ id: "br-1" }]);
+
+      const result = await service.getAllBookingRequestsForAdmin("admin-1");
+
+      expect(prismaMock.bookingRequest.findMany).toHaveBeenCalledWith({
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          user: true,
+          room: {
+            include: {
+              building: true,
+            },
+          },
+        },
+      });
+      expect(result).toEqual([{ id: "br-1" }]);
+    });
+  });
+
   describe("approveBookingRequest()", () => {
     const managerId = "manager-1";
     const requestId = "br-1";
@@ -114,17 +155,6 @@ describe("BookingRequestService Manager Flow", () => {
       ...bookingRequest,
       status: "APPROVED",
       approvedBy: managerId,
-    };
-
-    const createdBooking = {
-      id: "booking-1",
-      userId: "user-1",
-      roomId: "room-1",
-      status: "APPROVED",
-      startTime: bookingRequest.startTime,
-      endTime: bookingRequest.endTime,
-      purpose: bookingRequest.purpose,
-      createdAt: new Date("2026-03-10T10:01:00.000Z"),
     };
 
     const tx: any = {
@@ -162,7 +192,6 @@ describe("BookingRequestService Manager Flow", () => {
       tx.bookingRequest.findFirst.mockResolvedValue(null);
       tx.booking.findFirst.mockResolvedValue(null);
       tx.bookingRequest.updateMany.mockResolvedValue({ count: 1 });
-      tx.booking.create.mockResolvedValue(createdBooking);
     });
 
     it("should approve and create booking successfully", async () => {
@@ -183,10 +212,9 @@ describe("BookingRequestService Manager Flow", () => {
           approvedBy: managerId,
         },
       });
-      expect(tx.booking.create).toHaveBeenCalled();
       expect(result).toEqual({
         bookingRequest: approvedRequest,
-        booking: createdBooking,
+        booking: null,
       });
     });
 

@@ -10,6 +10,12 @@ router.post(
   authentication,
   asyncHandler(bookingRequestController.createBookingRequest),
 );
+router.post(
+  "/booking-requests/:id/payment-url",
+  authentication,
+  authorizeRoles("USER"),
+  asyncHandler(bookingRequestController.createBookingRequestPaymentUrl),
+);
 router.get(
   "/my-booking-requests",
   authentication,
@@ -21,6 +27,12 @@ router.get(
   authentication,
   authorizeRoles("MANAGER", "ADMIN"),
   asyncHandler(bookingRequestController.getBookingRequestsForManager),
+);
+router.get(
+  "/allBookingRequest",
+  authentication,
+  authorizeRoles("ADMIN"),
+  asyncHandler(bookingRequestController.getAllBookingRequestsForAdmin),
 );
 router.patch(
   "/booking-requests/approve/:id",
@@ -38,6 +50,14 @@ router.get(
   "/booking-requests/:id",
   authentication,
   asyncHandler(bookingRequestController.getBookingRequestById),
+);
+router.get(
+  "/payment/vnpay-return",
+  asyncHandler(bookingRequestController.handleVnpayReturn),
+);
+router.get(
+  "/payment/vnpay-ipn",
+  asyncHandler(bookingRequestController.handleVnpayIpn),
 );
 
 export default router;

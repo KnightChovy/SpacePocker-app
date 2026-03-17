@@ -31,6 +31,17 @@
  *         updatedAt:
  *           type: string
  *           format: date-time
+ *
+ *     UpdateUserProfileRequest:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *           example: "Nguyen Vu Len"
+ *         phoneNumber:
+ *           type: string
+ *           nullable: true
+ *           example: "0901234567"
  */
 
 /**
@@ -69,6 +80,54 @@
  *                   example: "Get user profile successfully"
  *                 metadata:
  *                   $ref: '#/components/schemas/UserProfileResponse'
+ *       404:
+ *         description: User not found
+ */
+
+/**
+ * @openapi
+ * /v1/api/users/profile:
+ *   patch:
+ *     tags:
+ *       - User
+ *     summary: Update user profile
+ *     description: Update profile of the logged-in user
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *       - in: header
+ *         name: authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Access token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateUserProfileRequest'
+ *     responses:
+ *       200:
+ *         description: User profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Update user profile successfully"
+ *                 metadata:
+ *                   $ref: '#/components/schemas/UserProfileResponse'
+ *       400:
+ *         description: Bad request
  *       404:
  *         description: User not found
  */

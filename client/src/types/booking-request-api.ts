@@ -31,6 +31,39 @@ export interface CreateBookingRequestPayload {
   services?: Array<{ serviceId: string; quantity: number }>;
 }
 
+export type BookingRequestStatus =
+  | 'PENDING'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'CANCELLED'
+  | 'COMPLETED';
+
+export interface BookingRequestUserLite {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface BookingRequestRoomLite {
+  id: string;
+  name: string;
+  roomCode?: string | null;
+}
+
+export interface BookingRequestForManager {
+  id: string;
+  userId: string;
+  roomId: string;
+  startTime: string;
+  endTime: string;
+  purpose?: string | null;
+  status: BookingRequestStatus;
+  approvedBy?: string | null;
+  createdAt: string;
+  user: BookingRequestUserLite;
+  room: BookingRequestRoomLite;
+}
+
 export interface BookingRequestAmenity {
   id: string;
   name: string;
@@ -56,4 +89,43 @@ export interface CreateBookingRequestResult {
   amenities: BookingRequestAmenity[];
   services: BookingRequestServiceLine[];
   totalCost: number;
+}
+
+export interface ApproveBookingRequestResult {
+  bookingRequest: {
+    id: string;
+    status: BookingRequestStatus;
+  } | null;
+  booking: {
+    id: string;
+    status: BookingRequestStatus;
+  };
+}
+
+export interface MyBookingRequestBuildingLite {
+  id: string;
+  buildingName?: string;
+  campus?: string;
+  address?: string;
+}
+
+export interface MyBookingRequestRoomLite {
+  id: string;
+  name: string;
+  roomCode?: string | null;
+  pricePerHour?: number;
+  images?: string[];
+  building?: MyBookingRequestBuildingLite | null;
+}
+
+export interface MyBookingRequest {
+  id: string;
+  userId: string;
+  roomId: string;
+  startTime: string;
+  endTime: string;
+  purpose?: string | null;
+  status: BookingRequestStatus;
+  createdAt: string;
+  room: MyBookingRequestRoomLite;
 }

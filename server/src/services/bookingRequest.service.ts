@@ -9,12 +9,16 @@ import { IRoomRepository } from "../interface/room.repository.interface";
 import { IBookingRepository } from "../interface/booking.repository.interface";
 import { BookingStatus, Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
+import MailQueueService from "./mailQueue.service";
+import VnpayService from "./vnpay.service";
 
 export default class BookingRequestService {
   constructor(
     private bookingRequestRepo: IBookingRequestRepository,
     private roomRepo: IRoomRepository,
     private bookingRepo: IBookingRepository,
+    private mailQueueService: MailQueueService,
+    private vnpayService: VnpayService,
   ) {}
 
   private async resolveManagerId(userId: string, userEmail?: string) {
@@ -310,6 +314,26 @@ export default class BookingRequestService {
     });
   }
 
+  async getAllBookingRequestsForAdmin(userId: string) {
+    if (!userId) {
+      throw new BadRequestError("Admin ID is required");
+    }
+
+    return prisma.bookingRequest.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        user: true,
+        room: {
+          include: {
+            building: true,
+          },
+        },
+      },
+    });
+  }
+
   async approveBookingRequest(id: string, userId: string, userEmail?: string) {
     if (!userId) {
       throw new BadRequestError("Manager ID is required");
@@ -420,24 +444,13 @@ export default class BookingRequestService {
           );
         }
 
-        const booking = await tx.booking.create({
-          data: {
-            userId: bookingRequest.userId,
-            roomId: bookingRequest.roomId,
-            startTime: bookingRequest.startTime,
-            endTime: bookingRequest.endTime,
-            purpose: bookingRequest.purpose,
-            status: "APPROVED",
-          },
-        });
-
         const approvedRequest = await tx.bookingRequest.findUnique({
           where: { id },
         });
 
         return {
           bookingRequest: approvedRequest,
-          booking,
+          booking: null,
         };
       },
       {
@@ -512,5 +525,212 @@ export default class BookingRequestService {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       },
     );
+  }
+
+  private calculateRoomAmount(
+    roomPricePerHour: number,
+    startTime: Date,
+    endTime: Date,
+  ) {
+    const diffMs = endTime.getTime() - startTime.getTime();
+
+    if (diffMs <= 0) {
+      throw new Error("End time must be after start time");
+    }
+
+    const hours = diffMs / (1000 * 60 * 60);
+
+    const roundedHours = Math.ceil(hours); // làm tròn lên
+
+    return roomPricePerHour * roundedHours;
+  }
+
+  async createPaymentUrlForApprovedBookingRequest(input: {
+    bookingRequestId: string;
+    userId: string;
+    ipAddr: string;
+    locale?: "vn" | "en";
+  }) {
+    const bookingRequest = await prisma.bookingRequest.findUnique({
+      where: { id: input.bookingRequestId },
+      include: {
+        room: {
+          select: {
+            pricePerHour: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!bookingRequest) {
+      throw new NotFoundError("Booking request with id not found");
+    }
+    if (bookingRequest.userId !== input.userId) {
+      throw new ForbiddenError(
+        "You are not allowed to pay this booking request",
+      );
+    }
+    if (bookingRequest.status !== "APPROVED") {
+      throw new BadRequestError(
+        "Booking request must be approved before payment",
+      );
+    }
+
+    const existedBooking = await prisma.booking.findFirst({
+      where: {
+        userId: bookingRequest.userId,
+        roomId: bookingRequest.roomId,
+        startTime: bookingRequest.startTime,
+        endTime: bookingRequest.endTime,
+      },
+      select: { id: true },
+    });
+
+    if (existedBooking) {
+      throw new ConflictRequestError("Booking request has already been paid");
+    }
+
+    const amount = this.calculateRoomAmount(
+      bookingRequest.room.pricePerHour,
+      bookingRequest.startTime,
+      bookingRequest.endTime,
+    );
+
+    const { paymentUrl, txnRef } = this.vnpayService.createPaymentUrl({
+      bookingRequestId: bookingRequest.id,
+      amount,
+      ipAddr: input.ipAddr,
+      locale: input.locale,
+      orderInfo: `Thanh toan booking ${bookingRequest.id}`,
+    });
+
+    return {
+      paymentUrl,
+      txnRef,
+      amount,
+      bookingRequestId: bookingRequest.id,
+      roomName: bookingRequest.room.name,
+    };
+  }
+
+  private async createBookingFromPayment(
+    tx: Prisma.TransactionClient,
+    bookingRequestId: string,
+  ) {
+    const bookingRequest = await tx.bookingRequest.findUnique({
+      where: { id: bookingRequestId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        room: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!bookingRequest) {
+      throw new NotFoundError("Booking request with id not found");
+    }
+
+    const existingBooking = await tx.booking.findFirst({
+      where: {
+        userId: bookingRequest.userId,
+        roomId: bookingRequest.roomId,
+        startTime: bookingRequest.startTime,
+        endTime: bookingRequest.endTime,
+      },
+    });
+
+    if (existingBooking) {
+      return {
+        booking: existingBooking,
+        bookingRequest,
+        created: false,
+      };
+    }
+
+    if (bookingRequest.status !== "APPROVED") {
+      throw new ConflictRequestError(
+        "Booking request is not eligible for payment confirmation",
+      );
+    }
+
+    const booking = await tx.booking.create({
+      data: {
+        userId: bookingRequest.userId,
+        roomId: bookingRequest.roomId,
+        startTime: bookingRequest.startTime,
+        endTime: bookingRequest.endTime,
+        purpose: bookingRequest.purpose,
+        status: "APPROVED",
+      },
+    });
+
+    return {
+      booking,
+      bookingRequest,
+      created: true,
+    };
+  }
+
+  async processVnpayPayment(rawQuery: Record<string, string>) {
+    const isChecksumValid = this.vnpayService.verifyQuery(rawQuery);
+    if (!isChecksumValid) {
+      return {
+        success: false,
+        code: "97",
+        message: "Invalid checksum",
+      };
+    }
+
+    const txnRef = rawQuery.vnp_TxnRef || "";
+    const responseCode = rawQuery.vnp_ResponseCode || "";
+    const transactionStatus = rawQuery.vnp_TransactionStatus || "";
+    const bookingRequestId = this.vnpayService.extractBookingRequestId(txnRef);
+
+    if (responseCode !== "00" || transactionStatus !== "00") {
+      return {
+        success: false,
+        code: responseCode || transactionStatus || "99",
+        message: "Payment failed",
+        bookingRequestId,
+      };
+    }
+
+    const result = await prisma.$transaction(
+      async (tx) => this.createBookingFromPayment(tx, bookingRequestId),
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      },
+    );
+
+    if (result.created) {
+      await this.mailQueueService.publishBookingConfirmedEmailJob({
+        to: result.bookingRequest.user.email,
+        customerName: result.bookingRequest.user.name,
+        bookingId: result.booking.id,
+        roomName: result.bookingRequest.room.name,
+        startTime: result.booking.startTime.toISOString(),
+        endTime: result.booking.endTime.toISOString(),
+      });
+    }
+
+    return {
+      success: true,
+      code: "00",
+      message: "Payment confirmed",
+      bookingRequestId,
+      bookingId: result.booking.id,
+      alreadyProcessed: !result.created,
+    };
   }
 }

@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Calendar,
   Check,
   ChevronLeft,
-  CreditCard,
   HelpCircle,
   Minus,
   Plus,
@@ -13,7 +12,6 @@ import {
 
 import { useGetRoomAmenitiesServices } from '@/hooks/user/rooms/use-get-room-amenities-services';
 import { useGetAmenities } from '@/hooks/user/amenities/use-get-amenities';
-import { useGetServicesByCategoryIds } from '@/hooks/user/services/use-get-services-by-category-ids';
 import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
 import { useGetRoomById } from '@/hooks/user/rooms/use-get-room-by-id';
 import { useGetRooms } from '@/hooks/user/rooms/use-get-rooms';
@@ -23,10 +21,9 @@ import type { ApiRoom, ApiRoomStatus } from '@/types/room-api';
 import type { ApiService } from '@/types/booking-request-api';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { useBookingDraftStore } from '@/stores/bookingDraft.store';
 
-type Step = 1 | 2 | 3 | 4;
-
-type PaymentMethod = 'CARD' | 'APPLE_PAY' | 'GOOGLE_PAY';
+type Step = 1 | 2 | 3;
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
@@ -68,8 +65,7 @@ const Stepper = ({ step }: { step: Step }) => {
   const steps: Array<{ n: Step; label: string }> = [
     { n: 1, label: 'Info' },
     { n: 2, label: 'Review' },
-    { n: 3, label: 'Payment' },
-    { n: 4, label: 'Confirm' },
+    { n: 3, label: 'Confirm' },
   ];
 
   return (
@@ -111,17 +107,17 @@ const BookingRequestWizardPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  const getDraft = useBookingDraftStore(s => s.getDraft);
+  const upsertDraft = useBookingDraftStore(s => s.upsertDraft);
+  const clearDraft = useBookingDraftStore(s => s.clearDraft);
+  const addLocalBooking = useBookingDraftStore(s => s.addLocalBooking);
+
   const isRoomLocked = Boolean(searchParams.get('roomId'));
 
   const [step, setStep] = useState<Step>(1);
   const [roomId, setRoomId] = useState<string>(
     searchParams.get('roomId') ?? ''
   );
-
-  const bookingExtrasDraftKey = useMemo(() => {
-    if (!roomId) return null;
-    return `spacepocker:booking:extras:draft:${roomId}`;
-  }, [roomId]);
 
   const today = useMemo(() => {
     const now = new Date();
@@ -142,19 +138,28 @@ const BookingRequestWizardPage = () => {
   );
   const [purpose, setPurpose] = useState<string>('');
 
-  const [selectedAmenityIds, setSelectedAmenityIds] = useState<Set<string>>(
-    () => new Set()
-  );
-  const [selectedServices, setSelectedServices] = useState<
-    Record<string, number>
-  >({});
+  const readExtrasDraft = (draftKey: string | null, draftRoomId: string) => {
+    const storeDraft = draftRoomId ? getDraft(draftRoomId) : undefined;
+    if (storeDraft) {
+      return {
+        amenityIds: storeDraft.amenityIds ?? [],
+        services: storeDraft.services ?? {},
+      };
+    }
 
-  useEffect(() => {
-    if (!bookingExtrasDraftKey) return;
+    if (!draftKey)
+      return {
+        amenityIds: [] as string[],
+        services: {} as Record<string, number>,
+      };
 
     try {
-      const raw = localStorage.getItem(bookingExtrasDraftKey);
-      if (!raw) return;
+      const raw = localStorage.getItem(draftKey);
+      if (!raw)
+        return {
+          amenityIds: [] as string[],
+          services: {} as Record<string, number>,
+        };
 
       const parsed = JSON.parse(raw) as
         | {
@@ -166,47 +171,68 @@ const BookingRequestWizardPage = () => {
       const amenityIds = Array.isArray(parsed?.amenityIds)
         ? parsed!.amenityIds!
         : [];
-      const services = parsed?.services && typeof parsed.services === 'object'
-        ? parsed.services
-        : {};
+      const services =
+        parsed?.services && typeof parsed.services === 'object'
+          ? parsed.services
+          : {};
 
-      setSelectedAmenityIds(new Set(amenityIds));
-      setSelectedServices(services);
+      return { amenityIds, services };
     } catch (e) {
       console.warn('Failed to load booking extras draft from localStorage', e);
+      return {
+        amenityIds: [] as string[],
+        services: {} as Record<string, number>,
+      };
     }
-  }, [bookingExtrasDraftKey]);
+  };
+
+  const initialRoomId = searchParams.get('roomId') ?? '';
+  const initialDraftKey = initialRoomId
+    ? `spacepocker:booking:extras:draft:${initialRoomId}`
+    : null;
+  const initialExtrasDraft = readExtrasDraft(initialDraftKey, initialRoomId);
+
+  const [selectedAmenityIds, setSelectedAmenityIds] = useState<Set<string>>(
+    () => new Set(initialExtrasDraft.amenityIds)
+  );
+  const [selectedServices, setSelectedServices] = useState<
+    Record<string, number>
+  >(() => initialExtrasDraft.services);
 
   useEffect(() => {
-    if (!bookingExtrasDraftKey) return;
+    if (!roomId) return;
 
     const amenityIds = Array.from(selectedAmenityIds);
     const hasServices = Object.keys(selectedServices).length > 0;
 
     if (amenityIds.length === 0 && !hasServices) {
-      localStorage.removeItem(bookingExtrasDraftKey);
+      clearDraft(roomId);
       return;
     }
 
-    const payload = {
+    upsertDraft({
       roomId,
+      startDate,
+      endDate,
+      startTime,
+      endTime,
+      purpose,
       amenityIds,
       services: selectedServices,
       updatedAt: new Date().toISOString(),
-    };
-
-    try {
-      localStorage.setItem(bookingExtrasDraftKey, JSON.stringify(payload));
-    } catch (e) {
-      console.warn('Failed to save booking extras draft to localStorage', e);
-    }
-  }, [bookingExtrasDraftKey, roomId, selectedAmenityIds, selectedServices]);
-
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CARD');
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvc, setCvc] = useState('');
-  const [cardholderName, setCardholderName] = useState('');
+    });
+  }, [
+    roomId,
+    startDate,
+    endDate,
+    startTime,
+    endTime,
+    purpose,
+    selectedAmenityIds,
+    selectedServices,
+    clearDraft,
+    upsertDraft,
+  ]);
 
   const [confirmedId, setConfirmedId] = useState<string | null>(null);
 
@@ -248,15 +274,33 @@ const BookingRequestWizardPage = () => {
     return new Set(roomAmenities.map(a => a.id));
   }, [roomAmenities]);
 
+  const [amenitiesInitializedForRoomId, setAmenitiesInitializedForRoomId] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    if (!roomId) return;
+    if (amenitiesInitializedForRoomId === roomId) return;
+
+    if (selectedAmenityIds.size > 0) {
+      setAmenitiesInitializedForRoomId(roomId);
+      return;
+    }
+
+    if (roomAmenities.length > 0) {
+      setSelectedAmenityIds(new Set(roomAmenities.map(a => a.id)));
+      setAmenitiesInitializedForRoomId(roomId);
+    }
+  }, [
+    amenitiesInitializedForRoomId,
+    roomAmenities,
+    roomId,
+    selectedAmenityIds.size,
+  ]);
+
   const allAmenitiesQuery = useGetAmenities();
   const allAmenities = useMemo(
     () => allAmenitiesQuery.data ?? [],
     [allAmenitiesQuery.data]
-  );
-
-  const serviceCategories = useMemo(
-    () => roomExtrasQuery.data?.serviceCategories ?? [],
-    [roomExtrasQuery.data?.serviceCategories]
   );
 
   const allServiceCategoriesQuery = useGetServiceCategories();
@@ -265,102 +309,9 @@ const BookingRequestWizardPage = () => {
     [allServiceCategoriesQuery.data]
   );
 
-  const serviceCategoryIds = useMemo(
-    () => serviceCategories.map(c => c.id),
-    [serviceCategories]
-  );
-  const servicesByCategoryQuery = useGetServicesByCategoryIds(
-    roomId ? serviceCategoryIds : undefined
-  );
-
-  const serviceCategoriesResolved = useMemo(() => {
-    const byCategory = servicesByCategoryQuery.data;
-    return serviceCategories.map(cat => ({
-      ...cat,
-      // Prefer the dedicated Services API; fall back to room endpoint if needed.
-      services: byCategory?.[cat.id] ?? cat.services,
-    }));
-  }, [serviceCategories, servicesByCategoryQuery.data]);
-
   const allServices: ApiService[] = useMemo(() => {
-    return serviceCategoriesResolved.flatMap(c => c.services);
-  }, [serviceCategoriesResolved]);
-
-  const availableServiceIdSet = useMemo(() => {
-    return new Set(allServices.map(s => s.id));
-  }, [allServices]);
-
-  const didInitDefaultsForRoom = useRef<string | null>(null);
-  const freeServiceIds = useMemo(() => {
-    const ids = allServices.filter(s => s.price === 0).map(s => s.id);
-    return Array.from(new Set(ids));
-  }, [allServices]);
-
-  useEffect(() => {
-    if (!roomId) {
-      didInitDefaultsForRoom.current = null;
-      return;
-    }
-
-    if (didInitDefaultsForRoom.current === roomId) return;
-    if (!roomExtrasQuery.isSuccess) return;
-
-    // If the user already has a saved draft for this room, keep it.
-    if (bookingExtrasDraftKey) {
-      try {
-        if (localStorage.getItem(bookingExtrasDraftKey)) {
-          didInitDefaultsForRoom.current = roomId;
-          return;
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    setSelectedAmenityIds(new Set(roomAmenities.map(a => a.id)));
-
-    // "Pre-check" only free/included services (price === 0) by defaulting them to qty=1.
-    // Paid services stay at qty=0 until the user increases them.
-    const nextServices = Object.fromEntries(
-      freeServiceIds.map(id => [id, 1] as const)
-    );
-    setSelectedServices(nextServices);
-
-    didInitDefaultsForRoom.current = roomId;
-  }, [
-    roomAmenities,
-    freeServiceIds,
-    bookingExtrasDraftKey,
-    roomExtrasQuery.isSuccess,
-    roomId,
-  ]);
-
-  useEffect(() => {
-    if (!roomId) return;
-    if (!roomExtrasQuery.isSuccess) return;
-
-    setSelectedAmenityIds(prev => {
-      const next = new Set(
-        Array.from(prev).filter(id => roomAmenityIdSet.has(id))
-      );
-      return next;
-    });
-
-    setSelectedServices(prev => {
-      const next: Record<string, number> = {};
-      for (const [id, qty] of Object.entries(prev)) {
-        if (!availableServiceIdSet.has(id)) continue;
-        if (qty <= 0) continue;
-        next[id] = qty;
-      }
-      return next;
-    });
-  }, [
-    availableServiceIdSet,
-    roomAmenityIdSet,
-    roomExtrasQuery.isSuccess,
-    roomId,
-  ]);
+    return allServiceCategories.flatMap(c => c.services);
+  }, [allServiceCategories]);
 
   const startIso = useMemo(
     () => buildIsoFromDateTime(startDate, startTime),
@@ -389,16 +340,13 @@ const BookingRequestWizardPage = () => {
     );
 
     const subtotal = roomLine + servicesLine;
-    const serviceFee = subtotal * 0.075;
-    const tax = (subtotal + serviceFee) * 0.08;
-    const total = subtotal + serviceFee + tax;
+    const total = subtotal;
 
     return {
       rate,
       roomLine,
       servicesLine,
-      serviceFee,
-      tax,
+      subtotal,
       total,
     };
   }, [allServices, effectiveRoom, hours, selectedServices]);
@@ -410,7 +358,10 @@ const BookingRequestWizardPage = () => {
     const err = createBooking.error as
       | { response?: { data?: { message?: string } } }
       | undefined;
-    return err?.response?.data?.message ?? 'Payment failed. Please try again.';
+    return (
+      err?.response?.data?.message ??
+      'Failed to create booking request. Please try again.'
+    );
   }, [createBooking.error]);
 
   const canGoNextFromInfo = useMemo(() => {
@@ -435,14 +386,16 @@ const BookingRequestWizardPage = () => {
       .filter(([, qty]) => qty > 0)
       .map(([serviceId, quantity]) => {
         const svc = allServices.find(s => s.id === serviceId);
+        if (!svc) return null;
         return {
           serviceId,
-          name: svc?.name ?? serviceId,
-          price: svc?.price ?? 0,
+          name: svc.name,
+          price: svc.price,
           quantity,
-          lineTotal: (svc?.price ?? 0) * quantity,
+          lineTotal: svc.price * quantity,
         };
-      });
+      })
+      .filter((line): line is NonNullable<typeof line> => line !== null);
   }, [allServices, selectedServices]);
 
   const toggleAmenity = (id: string) => {
@@ -466,57 +419,67 @@ const BookingRequestWizardPage = () => {
     });
   };
 
-  const handlePay = async () => {
+  const handleSubmitBookingRequest = async () => {
     if (!roomId || !startIso || !endIso) return;
 
-    const servicesPayload = selectedServiceLines.map(s => ({
-      serviceId: s.serviceId,
-      quantity: s.quantity,
-    }));
+    const servicesPayload = Object.entries(selectedServices)
+      .filter(([, qty]) => qty > 0)
+      .map(([serviceId, quantity]) => ({
+        serviceId,
+        quantity,
+      }));
+
+    const selectedAmenityIdList = Array.from(selectedAmenityIds);
+
+    const payload = {
+      roomId,
+      startTime: startIso,
+      endTime: endIso,
+      purpose: purpose.trim() ? purpose.trim() : undefined,
+    };
+
+    const makeLocalId = () => {
+      const cryptoObj = globalThis.crypto as unknown as
+        | { randomUUID?: () => string }
+        | undefined;
+      const uuid = cryptoObj?.randomUUID?.();
+      if (uuid) return uuid;
+      return `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    };
 
     try {
-      const result = await createBooking.mutateAsync({
+      const result = await createBooking.mutateAsync(payload);
+
+      addLocalBooking({
+        bookingRequestId: result.id,
         roomId,
         startTime: startIso,
         endTime: endIso,
-        purpose: purpose.trim() ? purpose.trim() : undefined,
-        amenityIds:
-          selectedAmenityIds.size > 0
-            ? Array.from(selectedAmenityIds)
-            : undefined,
-        services: servicesPayload.length > 0 ? servicesPayload : undefined,
+        purpose: payload.purpose,
+        amenityIds: selectedAmenityIdList,
+        services: servicesPayload,
+        savedAt: new Date().toISOString(),
       });
-
-      try {
-        const confirmedKey = `spacepocker:booking:extras:${result.id}`;
-        const confirmedPayload = {
-          bookingRequestId: result.id,
-          roomId,
-          startTime: startIso,
-          endTime: endIso,
-          amenities: selectedAmenityList.map(a => ({ id: a.id, name: a.name })),
-          services: selectedServiceLines.map(s => ({
-            serviceId: s.serviceId,
-            name: s.name,
-            price: s.price,
-            quantity: s.quantity,
-            lineTotal: s.lineTotal,
-          })),
-          savedAt: new Date().toISOString(),
-        };
-        localStorage.setItem(confirmedKey, JSON.stringify(confirmedPayload));
-      } catch (e) {
-        console.warn('Failed to save confirmed booking extras to localStorage', e);
-      }
-
-      if (bookingExtrasDraftKey) {
-        localStorage.removeItem(bookingExtrasDraftKey);
-      }
+      clearDraft(roomId);
 
       setConfirmedId(result.id);
-      setStep(4);
+      setStep(3);
     } catch {
-      // Error state is handled by React Query; keep user on Payment step.
+      const localId = makeLocalId();
+      addLocalBooking({
+        bookingRequestId: localId,
+        roomId,
+        startTime: startIso,
+        endTime: endIso,
+        purpose: payload.purpose,
+        amenityIds: selectedAmenityIdList,
+        services: servicesPayload,
+        savedAt: new Date().toISOString(),
+      });
+      clearDraft(roomId);
+
+      setConfirmedId(localId);
+      setStep(3);
     }
   };
 
@@ -525,23 +488,19 @@ const BookingRequestWizardPage = () => {
       ? 'Configure your reservation'
       : step === 2
         ? 'Review your reservation'
-        : step === 3
-          ? 'Secure Payment'
-          : 'Your booking is confirmed!';
+        : 'Booking request submitted!';
 
   const headerSubtitle =
     step === 1
       ? `Enter the details for your upcoming booking${effectiveRoom ? ` at ${effectiveRoom.name}` : ''}.`
       : step === 2
-        ? 'Please check the details below carefully before proceeding to payment.'
-        : step === 3
-          ? 'Choose your preferred payment method to complete the booking securely.'
-          : "We've saved your booking request. Your space is reserved and ready.";
+        ? 'Please check the details below carefully before submitting your booking request.'
+        : "We've saved your booking request. Your manager will review it before payment is required.";
 
   const rightCardTitle =
     step === 2
       ? 'Cost Breakdown'
-      : step === 4
+      : step === 3
         ? 'Order Summary'
         : 'Booking Summary';
 
@@ -589,9 +548,20 @@ const BookingRequestWizardPage = () => {
                           <select
                             value={roomId}
                             onChange={e => {
-                              setRoomId(e.target.value);
-                              setSelectedAmenityIds(new Set());
-                              setSelectedServices({});
+                              const nextRoomId = e.target.value;
+                              setRoomId(nextRoomId);
+
+                              const nextDraftKey = nextRoomId
+                                ? `spacepocker:booking:extras:draft:${nextRoomId}`
+                                : null;
+                              const nextDraft = readExtrasDraft(
+                                nextDraftKey,
+                                nextRoomId
+                              );
+                              setSelectedAmenityIds(
+                                new Set(nextDraft.amenityIds)
+                              );
+                              setSelectedServices(nextDraft.services);
                             }}
                             className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
                           >
@@ -713,14 +683,13 @@ const BookingRequestWizardPage = () => {
                                       isAvailable
                                         ? 'text-slate-700'
                                         : 'text-slate-400'
-                                    }`}
+                                    } cursor-pointer`}
                                   >
                                     <input
                                       type="checkbox"
                                       checked={selectedAmenityIds.has(a.id)}
                                       onChange={() => toggleAmenity(a.id)}
-                                      disabled={!isAvailable}
-                                      className="size-4 accent-primary disabled:opacity-50"
+                                      className="size-4 accent-primary"
                                     />
                                     {a.name}
                                   </label>
@@ -746,8 +715,6 @@ const BookingRequestWizardPage = () => {
                             <p className="text-sm text-red-600">
                               Failed to load services.
                             </p>
-                          ) : roomExtrasQuery.isLoading ? (
-                            <p className="text-sm text-slate-400">Loading...</p>
                           ) : allServiceCategories.length === 0 ? (
                             <p className="text-sm text-slate-400">
                               No services available.
@@ -766,9 +733,6 @@ const BookingRequestWizardPage = () => {
                                   )}
                                   <div className="mt-2 space-y-2">
                                     {cat.services.map(svc => {
-                                      const isAvailable = availableServiceIdSet.has(
-                                        svc.id
-                                      );
                                       const qty = selectedServices[svc.id] ?? 0;
                                       return (
                                         <div
@@ -776,13 +740,7 @@ const BookingRequestWizardPage = () => {
                                           className="flex items-center justify-between gap-3"
                                         >
                                           <div className="min-w-0">
-                                            <p
-                                              className={`text-sm truncate ${
-                                                isAvailable
-                                                  ? 'text-slate-700'
-                                                  : 'text-slate-400'
-                                              }`}
-                                            >
+                                            <p className="text-sm truncate text-slate-700">
                                               {svc.name}
                                             </p>
                                             <p className="text-xs text-slate-400">
@@ -795,7 +753,7 @@ const BookingRequestWizardPage = () => {
                                               onClick={() =>
                                                 setServiceQty(svc.id, qty - 1)
                                               }
-                                              disabled={!isAvailable || qty <= 0}
+                                              disabled={qty <= 0}
                                               className="size-8 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                               aria-label="decrease"
                                             >
@@ -809,7 +767,6 @@ const BookingRequestWizardPage = () => {
                                               onClick={() =>
                                                 setServiceQty(svc.id, qty + 1)
                                               }
-                                              disabled={!isAvailable}
                                               className="size-8 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                               aria-label="increase"
                                             >
@@ -970,113 +927,9 @@ const BookingRequestWizardPage = () => {
                   </div>
 
                   <p className="text-xs text-slate-400">
-                    By clicking "Proceed to Payment", you agree to the
+                    By clicking "Submit booking request", you agree to the
                     SpacePocker Terms of Service and Privacy Policy.
                   </p>
-                </div>
-              )}
-
-              {step === 3 && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('CARD')}
-                      className={`rounded-xl border px-4 py-4 flex flex-col items-center gap-2 transition-colors ${
-                        paymentMethod === 'CARD'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      <CreditCard className="size-5 text-primary" />
-                      <span className="text-sm font-semibold text-slate-800">
-                        Credit Card
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('APPLE_PAY')}
-                      className={`rounded-xl border px-4 py-4 flex flex-col items-center gap-2 transition-colors ${
-                        paymentMethod === 'APPLE_PAY'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="size-5 rounded bg-slate-900" />
-                      <span className="text-sm font-semibold text-slate-800">
-                        Apple Pay
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('GOOGLE_PAY')}
-                      className={`rounded-xl border px-4 py-4 flex flex-col items-center gap-2 transition-colors ${
-                        paymentMethod === 'GOOGLE_PAY'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="size-5 rounded bg-primary" />
-                      <span className="text-sm font-semibold text-slate-800">
-                        Google Pay
-                      </span>
-                    </button>
-                  </div>
-
-                  {paymentMethod === 'CARD' && (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                          Card Number
-                        </label>
-                        <input
-                          value={cardNumber}
-                          onChange={e => setCardNumber(e.target.value)}
-                          placeholder="0000 0000 0000 0000"
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                            Expiry Date
-                          </label>
-                          <input
-                            value={expiry}
-                            onChange={e => setExpiry(e.target.value)}
-                            placeholder="MM / YY"
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                            CVV / CVC
-                          </label>
-                          <input
-                            value={cvc}
-                            onChange={e => setCvc(e.target.value)}
-                            placeholder="123"
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                          Cardholder Name
-                        </label>
-                        <input
-                          value={cardholderName}
-                          onChange={e => setCardholderName(e.target.value)}
-                          placeholder="e.g. John Doe"
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <div className="size-2 rounded-full bg-green-600" />
-                        Your payment information is encrypted and secure.
-                      </div>
-                    </div>
-                  )}
 
                   {createBooking.isError && (
                     <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
@@ -1086,17 +939,17 @@ const BookingRequestWizardPage = () => {
                 </div>
               )}
 
-              {step === 4 && (
+              {step === 3 && (
                 <div className="py-8 flex flex-col items-center text-center gap-4">
                   <div className="size-16 rounded-full bg-green-100 flex items-center justify-center">
                     <Check className="size-8 text-green-700" />
                   </div>
                   <h2 className="text-3xl font-extrabold text-slate-900">
-                    Your booking is confirmed!
+                    Booking request submitted!
                   </h2>
                   <p className="text-sm text-slate-500 max-w-md">
-                    We\'ve recorded your booking request. Your space is reserved
-                    and ready.
+                    We\'ve recorded your booking request. Once your manager
+                    approves it, you can proceed with payment from My Bookings.
                   </p>
                   <div className="mt-2 px-6 py-4 rounded-2xl border border-slate-200 bg-slate-50">
                     <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -1109,10 +962,10 @@ const BookingRequestWizardPage = () => {
                   <div className="mt-4 flex items-center gap-3">
                     <button
                       type="button"
-                      onClick={() => navigate('/user/dashboard')}
+                      onClick={() => navigate('/user/bookings')}
                       className="px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20 transition-all"
                     >
-                      Go to Dashboard
+                      Go to My Bookings
                     </button>
                   </div>
                 </div>
@@ -1120,7 +973,7 @@ const BookingRequestWizardPage = () => {
             </div>
 
             {/* Footer nav */}
-            {step !== 4 && (
+            {step !== 3 && (
               <div className="mt-6 flex items-center justify-between">
                 <button
                   type="button"
@@ -1148,23 +1001,13 @@ const BookingRequestWizardPage = () => {
                 {step === 2 && (
                   <button
                     type="button"
-                    onClick={() => setStep(3)}
+                    disabled={createBooking.isPending || !canGoNextFromInfo}
+                    onClick={handleSubmitBookingRequest}
                     className="px-6 py-3 rounded-xl text-sm font-semibold text-white bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
                   >
-                    Proceed to Payment
-                  </button>
-                )}
-
-                {step === 3 && (
-                  <button
-                    type="button"
-                    disabled={createBooking.isPending || !canGoNextFromInfo}
-                    onClick={handlePay}
-                    className="px-6 py-3 rounded-xl text-sm font-semibold text-white bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20 flex items-center gap-2"
-                  >
                     {createBooking.isPending
-                      ? 'Processing...'
-                      : `Pay $${pricing.total.toFixed(2)}`}
+                      ? 'Submitting...'
+                      : 'Submit booking request'}
                   </button>
                 )}
               </div>
@@ -1219,18 +1062,6 @@ const BookingRequestWizardPage = () => {
                     <span>Services</span>
                     <span className="font-semibold text-slate-900">
                       ${pricing.servicesLine.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-slate-600">
-                    <span>Service Fee</span>
-                    <span className="font-semibold text-slate-900">
-                      ${pricing.serviceFee.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-slate-600">
-                    <span>Taxes (8%)</span>
-                    <span className="font-semibold text-slate-900">
-                      ${pricing.tax.toFixed(2)}
                     </span>
                   </div>
                   <div className="h-px bg-slate-100 my-2" />

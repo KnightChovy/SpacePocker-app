@@ -1,0 +1,27 @@
+import { getRabbitChannel } from "../lib/rabbitmq";
+
+export const BOOKING_MAIL_QUEUE = "booking.confirmed.mail.queue";
+
+export type BookingConfirmedMailJob = {
+  to: string;
+  customerName: string;
+  bookingId: string;
+  roomName: string;
+  startTime: string;
+  endTime: string;
+};
+
+export default class MailQueueService {
+  async publishBookingConfirmedEmailJob(payload: BookingConfirmedMailJob) {
+    const channel = await getRabbitChannel();
+    await channel.assertQueue(BOOKING_MAIL_QUEUE, { durable: true });
+    channel.sendToQueue(
+      BOOKING_MAIL_QUEUE,
+      Buffer.from(JSON.stringify(payload)),
+      {
+        persistent: true,
+        contentType: "application/json",
+      },
+    );
+  }
+}

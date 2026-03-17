@@ -7,10 +7,10 @@ import {
   Users,
   BarChart3,
   Building2,
-  Settings,
   HelpCircle,
   Zap,
   UserCircle,
+  Tags,
   LogOut,
 } from 'lucide-react';
 import { useLogout } from '@/hooks/auth/use-logout';
@@ -56,10 +56,10 @@ export default function ManagerLayout() {
           icon: <Building2 className="h-5 w-5" />,
         },
         {
-          id: 'analytics',
-          label: 'Analytics',
-          path: '/manager/analytics',
-          icon: <Settings className="h-5 w-5" />,
+          id: 'service-categories',
+          label: 'Service Categories',
+          path: '/manager/service-categories',
+          icon: <Tags className="h-5 w-5" />,
         },
         {
           id: 'profile',
