@@ -35,10 +35,10 @@ const LandingPage = () => {
             </div>
           </div>
         </section>
-              <FeatureSpaceSection
-                searchQuery={searchQuery}
-                sectionId="popular-near-you"
-              />
+        <FeatureSpaceSection
+          searchQuery={searchQuery}
+          sectionId="popular-near-you"
+        />
 
         <CTASection />
       </main>

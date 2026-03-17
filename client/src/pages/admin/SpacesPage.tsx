@@ -20,7 +20,9 @@ const StatusBadge = ({ status }: { status: BookingRequestStatus }) => {
 
   const { bg, text } = config[status];
   return (
-    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${bg} ${text}`}>
+    <span
+      className={`px-2.5 py-1 rounded-full text-xs font-medium ${bg} ${text}`}
+    >
       {status}
     </span>
   );
@@ -310,15 +312,21 @@ const SpacesPage: React.FC = () => {
                               {new Date(request.startTime).toLocaleDateString()}
                             </div>
                             <div className="text-xs text-text-gray">
-                              {new Date(request.startTime).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}{' '}
+                              {new Date(request.startTime).toLocaleTimeString(
+                                [],
+                                {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                }
+                              )}{' '}
                               -{' '}
-                              {new Date(request.endTime).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
+                              {new Date(request.endTime).toLocaleTimeString(
+                                [],
+                                {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                }
+                              )}
                             </div>
                           </div>
                         </td>
