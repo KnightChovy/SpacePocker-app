@@ -20,7 +20,6 @@ const Dashboard = () => {
 
   const bookingRequestsQuery = useGetMyBookingRequests();
 
-
   const dashboardBookings = useMemo<DashboardBookingItem[]>(() => {
     const requests = bookingRequestsQuery.data ?? [];
 
@@ -88,8 +87,6 @@ const Dashboard = () => {
       estimatedCredits,
     };
   }, [bookingRequestsQuery.data]);
-
- 
 
   const headerActions = [
     {
@@ -168,8 +165,6 @@ const Dashboard = () => {
               isLoading={bookingRequestsQuery.isLoading}
               isError={bookingRequestsQuery.isError}
             />
-
-            
           </div>
         </div>
       </div>
