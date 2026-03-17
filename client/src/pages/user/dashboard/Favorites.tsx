@@ -1,7 +1,8 @@
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/layouts/AppHeader';
 import BookingList from '@/components/features/user/favorites/BookingList';
-import { ArrowLeftRight, Shuffle, BellRing, Plus } from 'lucide-react';
+import BookingNotificationsBell from '@/components/features/user/dashboard/BookingNotificationsBell';
+import { ArrowLeftRight, Shuffle, Plus } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
 
@@ -13,12 +14,6 @@ const Favorites = () => {
   const user = useAuthStore(state => state.user);
 
   const headerActions = [
-    {
-      id: 'notifications',
-      icon: <BellRing />,
-      badge: true,
-      variant: 'ghost' as const,
-    },
     {
       id: 'new-booking',
       icon: <Plus className="w-5 h-5" />,
@@ -38,6 +33,7 @@ const Favorites = () => {
         onMenuClick={() => setSidebarOpen(true)}
         showSearch={false}
         actions={headerActions}
+        rightExtra={<BookingNotificationsBell />}
         profile={{
           name: user?.name || 'User',
           subtitle: user?.role || 'USER',

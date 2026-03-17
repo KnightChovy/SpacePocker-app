@@ -1,12 +1,15 @@
 import { useOutletContext, useNavigate } from 'react-router-dom';
-import { USER_STATS, SPACESUSER } from '@/data/constant';
-import { Calendar, BellRing, Plus } from 'lucide-react';
+import { Calendar, Plus } from 'lucide-react';
 import AppHeader from '@/components/layouts/AppHeader';
 import StatCard from '@/components/features/user/dashboard/StatCard';
-import QuickActionButton from '@/components/features/user/dashboard/QuickActionButton';
-import BookingList from '@/components/features/user/dashboard/BookingList';
+import BookingNotificationsBell from '@/components/features/user/dashboard/BookingNotificationsBell';
+import BookingList, {
+  type DashboardBookingItem,
+} from '@/components/features/user/dashboard/BookingList';
 import { useAuthStore } from '@/stores/auth.store';
 import { formatVND, getAvatarUrl } from '@/lib/utils';
+import { useGetMyBookingRequests } from '@/hooks/user/booking-requests/use-get-my-booking-requests';
+import { useMemo } from 'react';
 
 const Dashboard = () => {
   const { setSidebarOpen } = useOutletContext<{
@@ -15,13 +18,80 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const user = useAuthStore(state => state.user);
 
+  const bookingRequestsQuery = useGetMyBookingRequests();
+
+
+  const dashboardBookings = useMemo<DashboardBookingItem[]>(() => {
+    const requests = bookingRequestsQuery.data ?? [];
+
+    return [...requests]
+      .sort(
+        (a, b) =>
+          new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+      )
+      .slice(0, 3)
+      .map(request => {
+        const start = new Date(request.startTime);
+        const end = new Date(request.endTime);
+
+        return {
+          id: request.id,
+          spaceName: request.room?.name ?? 'Unknown Space',
+          location:
+            request.room?.building?.buildingName ||
+            request.room?.building?.campus ||
+            request.room?.building?.address ||
+            'Unknown location',
+          status: request.status,
+          date: Number.isNaN(start.getTime())
+            ? 'Unknown date'
+            : start.toLocaleDateString(),
+          startTime: Number.isNaN(start.getTime())
+            ? '—'
+            : start.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+          endTime: Number.isNaN(end.getTime())
+            ? '—'
+            : end.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+          image: request.room?.images?.[0] ?? '',
+        };
+      });
+  }, [bookingRequestsQuery.data]);
+
+  const stats = useMemo(() => {
+    const requests = bookingRequestsQuery.data ?? [];
+
+    const totalBookings = requests.length;
+    const totalHours = requests.reduce((sum, request) => {
+      const start = new Date(request.startTime).getTime();
+      const end = new Date(request.endTime).getTime();
+      if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return sum;
+      return sum + (end - start) / (1000 * 60 * 60);
+    }, 0);
+
+    const estimatedCredits = requests.reduce((sum, request) => {
+      const start = new Date(request.startTime).getTime();
+      const end = new Date(request.endTime).getTime();
+      if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return sum;
+      const hours = (end - start) / (1000 * 60 * 60);
+      return sum + hours * (request.room?.pricePerHour ?? 0);
+    }, 0);
+
+    return {
+      totalBookings,
+      totalHours,
+      estimatedCredits,
+    };
+  }, [bookingRequestsQuery.data]);
+
+ 
+
   const headerActions = [
-    {
-      id: 'notifications',
-      icon: <BellRing />,
-      badge: true,
-      variant: 'ghost' as const,
-    },
     {
       id: 'new-booking',
       icon: <Plus className="w-5 h-5" />,
@@ -41,6 +111,7 @@ const Dashboard = () => {
         showSearch={true}
         searchPlaceholder="Search for spaces, bookings..."
         actions={headerActions}
+        rightExtra={<BookingNotificationsBell />}
         profile={{
           name: user?.name || 'User',
           subtitle: user?.role || 'USER',
@@ -72,90 +143,33 @@ const Dashboard = () => {
             <StatCard
               icon="event"
               title="Total Bookings"
-              value={USER_STATS.totalBookings.toString()}
+              value={stats.totalBookings.toString()}
               trend="+12%"
               colorClass="blue"
             />
             <StatCard
               icon="timer"
               title="Hours Spent"
-              value={USER_STATS.hoursSpent.toString()}
+              value={`${Math.round(stats.totalHours)}h`}
               colorClass="purple"
             />
             <StatCard
               icon="payments"
               title="Credits Available"
-              value={formatVND(USER_STATS.credits)}
+              value={formatVND(stats.estimatedCredits)}
               topUp
               colorClass="amber"
             />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-            <BookingList />
+            <BookingList
+              bookings={dashboardBookings}
+              isLoading={bookingRequestsQuery.isLoading}
+              isError={bookingRequestsQuery.isError}
+            />
 
-            <div className="flex flex-col gap-6">
-              <div className="bg-primary/5 dark:bg-primary/10 rounded-2xl p-6 border border-primary/10 dark:border-primary/20">
-                <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <QuickActionButton
-                    icon="location"
-                    label="Book Again"
-                    color="text-primary"
-                  />
-                  <QuickActionButton
-                    icon="receipt"
-                    label="Invoices"
-                    color="text-purple-500"
-                  />
-                  <QuickActionButton
-                    icon="star"
-                    label="Saved"
-                    color="text-amber-500"
-                  />
-                  <QuickActionButton
-                    icon="map"
-                    label="Browse Map"
-                    color="text-teal-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-bold mb-4">Recommended for You</h3>
-                <div className="flex flex-col gap-3">
-                  {[SPACESUSER[3], SPACESUSER[4]].map((space, i) => (
-                    <div
-                      key={i}
-                      className="group flex gap-3 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark hover:border-primary/30 transition-all cursor-pointer"
-                    >
-                      <div
-                        className="w-20 h-20 rounded-lg bg-cover bg-center shrink-0"
-                        style={{ backgroundImage: `url('${space.image}')` }}
-                      ></div>
-                      <div className="flex flex-col justify-between py-1">
-                        <div>
-                          <h4 className="text-sm font-bold group-hover:text-primary transition-colors">
-                            {space.name}
-                          </h4>
-                          <p className="text-xs text-text-sub-light dark:text-text-sub-dark">
-                            {space.capacity} • Wifi • Projector
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs font-bold">
-                            {formatVND(space.pricePerHour)}
-                          </span>
-                          <span className="text-[10px] text-text-sub-light dark:text-text-sub-dark">
-                            / hour
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            
           </div>
         </div>
       </div>

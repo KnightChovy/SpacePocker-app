@@ -4,20 +4,14 @@ import {
   useNavigate,
   useSearchParams,
 } from 'react-router-dom';
-import {
-  Search,
-  BellRing,
-  Plus,
-  CircleCheckBig,
-  CircleAlert,
-  X,
-} from 'lucide-react';
+import { Search, Plus, CircleCheckBig, CircleAlert, X } from 'lucide-react';
 import AppHeader from '@/components/layouts/AppHeader';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
 import FilterButton from '@/components/features/user/bookings/FilterButton';
 import PaginationButton from '@/components/features/user/bookings/PaginationButton';
 import BookingList from '@/components/features/user/bookings/BookingList';
+import BookingNotificationsBell from '@/components/features/user/dashboard/BookingNotificationsBell';
 import { useGetMyBookingRequests } from '@/hooks/user/booking-requests/use-get-my-booking-requests';
 import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
 import type { BookingUser } from '@/types/user-type';
@@ -233,12 +227,6 @@ const Bookings = () => {
 
   const headerActions = [
     {
-      id: 'notifications',
-      icon: <BellRing />,
-      badge: true,
-      variant: 'ghost' as const,
-    },
-    {
       id: 'new-booking',
       icon: <Plus className="w-5 h-5" />,
       label: 'New Booking',
@@ -257,6 +245,7 @@ const Bookings = () => {
         onMenuClick={() => setSidebarOpen(true)}
         showSearch={false}
         actions={headerActions}
+        rightExtra={<BookingNotificationsBell />}
         profile={{
           name: user?.name || 'User',
           subtitle: user?.role || 'USER',
