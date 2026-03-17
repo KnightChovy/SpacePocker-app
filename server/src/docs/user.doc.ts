@@ -42,6 +42,20 @@
  *           type: string
  *           nullable: true
  *           example: "0901234567"
+ *
+ *     ChangePasswordRequest:
+ *       type: object
+ *       required: [currentPassword, newPassword, confirmNewPassword]
+ *       properties:
+ *         currentPassword:
+ *           type: string
+ *           example: "OldPassword@123"
+ *         newPassword:
+ *           type: string
+ *           example: "NewPassword@123"
+ *         confirmNewPassword:
+ *           type: string
+ *           example: "NewPassword@123"
  */
 
 /**
@@ -207,4 +221,60 @@
  *                           type: integer
  *                         totalPages:
  *                           type: integer
+ */
+
+/**
+ * @openapi
+ * /v1/api/users/change-password:
+ *   patch:
+ *     tags:
+ *       - User
+ *     summary: Change password for current user
+ *     description: Logged-in user changes password using current password.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *       - in: header
+ *         name: authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Access token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ChangePasswordRequest'
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Change password successfully"
+ *                 metadata:
+ *                   type: object
+ *                   properties:
+ *                     userId:
+ *                       type: string
+ *                     changed:
+ *                       type: boolean
+ *                       example: true
+ *       400:
+ *         description: Invalid request (wrong current password, mismatch confirm password)
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
  */
