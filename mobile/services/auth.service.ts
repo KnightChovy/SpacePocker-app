@@ -10,15 +10,15 @@ import {
 
 const authService = {
   login: async (payload: LoginRequest): Promise<LoginResponse> => {
-    const res = await axiosClient.post<LoginResponse>('/login', payload);
+    const res = await axiosClient.post<LoginResponse>('/auth/login', payload);
     return res.data;
   },
   signup: async (payload: SignUpRequest): Promise<SignUpResponse> => {
-    const res = await axiosClient.post<SignUpResponse>('/signup', payload);
+    const res = await axiosClient.post<SignUpResponse>('/auth/signup', payload);
     return res.data;
   },
   logout: async (userId?: string, refreshToken?: string): Promise<void> => {
-    await axiosClient.post('/logout', userId ? { userId } : null, {
+    await axiosClient.post('/auth/logout', userId ? { userId } : null, {
       headers: refreshToken ? { 'x-refresh-token': refreshToken } : undefined,
     });
   },
@@ -26,8 +26,9 @@ const authService = {
   refreshToken: async (
     refreshToken: string
   ): Promise<ApiResponse<AuthTokens>> => {
-    const res =
-      await axiosClient.post<ApiResponse<AuthTokens>>('/refresh-token');
+    const res = await axiosClient.post<ApiResponse<AuthTokens>>(
+      '/auth/refresh-token'
+    );
     return res.data;
   },
 };
