@@ -1,13 +1,14 @@
-import express from 'express';
+import express from "express";
 const router = express.Router();
-import { accessController } from '../../container/access.container';
-import { asyncHandler } from '../../helper/asyncHandler';
+import { accessController } from "../../container/access.container";
+import { asyncHandler } from "../../helper/asyncHandler";
+
+router.post("/auth/signup", asyncHandler(accessController.signUp));
+router.post("/auth/login", asyncHandler(accessController.login));
+router.post("/auth/logout", asyncHandler(accessController.logout));
 router.post(
-  '/refresh-token',
+  "/auth/refresh-token",
   asyncHandler(accessController.handleRefreshToken),
 );
-router.post('/logout', asyncHandler(accessController.logout));
-router.post('/signup', asyncHandler(accessController.signUp));
-router.post('/login', asyncHandler(accessController.login));
 
 export default router;
