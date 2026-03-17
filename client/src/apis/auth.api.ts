@@ -12,7 +12,7 @@ const login = async ({
   email: string;
   password: string;
 }) => {
-  const response = await axiosInstance.post('/login', { email, password });
+  const response = await axiosInstance.post('/auth/login', { email, password });
   return response.data.metadata;
 };
 
@@ -27,7 +27,7 @@ const signup = async ({
   name: string;
   phone?: string;
 }) => {
-  const response = await axiosInstance.post('/signup', {
+  const response = await axiosInstance.post('/auth/signup', {
     email,
     password,
     name,
@@ -37,7 +37,7 @@ const signup = async ({
 };
 
 const logout = async (userId: string) => {
-  const response = await axiosInstance.post('/logout', { userId });
+  const response = await axiosInstance.post('/auth/logout', { userId });
   return response.data.metadata;
 };
 
@@ -50,7 +50,7 @@ const refreshToken = async ({
   userId: string;
   email: string;
 }) => {
-  const response = await axiosInstance.post('/refresh-token', {
+  const response = await axiosInstance.post('/auth/refresh-token', {
     refreshToken,
     userId,
     email,

@@ -1,6 +1,17 @@
-import { useState } from 'react';
-import { useOutletContext, useNavigate } from 'react-router-dom';
-import { Search, BellRing, Plus } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  useOutletContext,
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
+import {
+  Search,
+  BellRing,
+  Plus,
+  CircleCheckBig,
+  CircleAlert,
+  X,
+} from 'lucide-react';
 import AppHeader from '@/components/layouts/AppHeader';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
@@ -50,14 +61,12 @@ const formatDurationLabel = (startIso: string, endIso: string) => {
   return `${hours}h ${minutes}m`;
 };
 
-const mapStatusToUserLabel = (status: BookingRequestStatus, isPaid: boolean) => {
+const mapStatusToUserLabel = (status: BookingRequestStatus) => {
   switch (status) {
     case 'PENDING':
       return 'Pending Approval' as const;
     case 'APPROVED':
-      return isPaid
-        ? ('Confirmed' as const)
-        : ('Awaiting Payment' as const);
+      return 'Awaiting Payment' as const;
     case 'COMPLETED':
       return 'Completed' as const;
     case 'CANCELLED':
@@ -68,23 +77,8 @@ const mapStatusToUserLabel = (status: BookingRequestStatus, isPaid: boolean) => 
   }
 };
 
-const formatPaymentMethodLabel = (method?: string) => {
-  switch (method) {
-    case 'CARD':
-      return 'Card';
-    case 'APPLE_PAY':
-      return 'Apple Pay';
-    case 'GOOGLE_PAY':
-      return 'Google Pay';
-    default:
-      return '—';
-  }
-};
-
 const mapMyBookingRequestToBookingUser = (
   request: MyBookingRequest,
-  paymentMethod: string,
-  isPaid: boolean,
   totalPrice: number
 ): BookingUser => {
   const room = request.room;
@@ -110,13 +104,13 @@ const mapMyBookingRequestToBookingUser = (
     spaceId: room?.roomCode ?? request.roomId,
     spaceName: room?.name ?? '—',
     location,
-    status: mapStatusToUserLabel(request.status, isPaid),
+    status: mapStatusToUserLabel(request.status),
     date: formatDateLabel(startIso),
     startTime: formatTimeLabel(startIso),
     endTime: formatTimeLabel(endIso),
     duration: formatDurationLabel(startIso, endIso),
     price: Number.isFinite(estimatedPrice) ? estimatedPrice : 0,
-    paymentMethod,
+    paymentMethod: '—',
     image: imageUrl,
   };
 };
@@ -126,13 +120,39 @@ const Bookings = () => {
     setSidebarOpen: (open: boolean) => void;
   }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const user = useAuthStore(state => state.user);
   const [activeTab, setActiveTab] = useState<'Active' | 'Cancelled'>('Active');
+  const [dismissedPaymentToken, setDismissedPaymentToken] = useState<
+    string | null
+  >(null);
 
-  const paymentsByBookingRequestId = useBookingDraftStore(
-    state => state.paymentsByBookingRequestId
+  const paymentStatusParam = searchParams.get('paymentStatus');
+  const bookingRequestIdParam =
+    searchParams.get('bookingRequestId') ?? undefined;
+  const paymentToken = `${paymentStatusParam ?? ''}:${bookingRequestIdParam ?? ''}`;
+  const paymentReturn =
+    (paymentStatusParam === 'success' || paymentStatusParam === 'failed') &&
+    dismissedPaymentToken !== paymentToken
+      ? {
+          status: paymentStatusParam,
+          bookingRequestId: bookingRequestIdParam,
+        }
+      : null;
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get('paymentStatus');
+    if (paymentStatus !== 'success' && paymentStatus !== 'failed') return;
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('paymentStatus');
+    nextParams.delete('bookingRequestId');
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const localBookingsById = useBookingDraftStore(
+    state => state.localBookingsById
   );
-  const localBookingsById = useBookingDraftStore(state => state.localBookingsById);
 
   const serviceCategoriesQuery = useGetServiceCategories();
   const servicePriceById = useMemo(() => {
@@ -145,26 +165,26 @@ const Bookings = () => {
     return map;
   }, [serviceCategoriesQuery.data]);
 
-  const readPersistedBookingStorage = ():
-    | {
-        localBookingsById?: Record<
-          string,
-          {
-            amenityIds?: string[];
-            services?: Array<{ serviceId: string; quantity: number }>;
-          }
-        >;
-      }
-    | undefined => {
+  const readPersistedBookingStorage = () => {
     if (typeof window === 'undefined') return undefined;
     try {
       const raw = window.localStorage.getItem('spacepocker-booking-storage');
       if (!raw) return undefined;
-      const parsed = JSON.parse(raw) as any;
-      const state = parsed?.state ?? parsed;
-      return {
-        localBookingsById: state?.localBookingsById,
-      };
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const state = (parsed?.state ?? parsed) as Record<string, unknown>;
+      const localBookingsById = state?.localBookingsById as
+        | Record<
+            string,
+            {
+              amenityIds?: string[];
+              services?: Array<{ serviceId: string; quantity: number }>;
+            }
+          >
+        | undefined;
+      if (localBookingsById) {
+        return { localBookingsById };
+      }
+      return undefined;
     } catch {
       return undefined;
     }
@@ -188,8 +208,6 @@ const Bookings = () => {
   const requestsForTab =
     activeTab === 'Active' ? activeRequests : cancelledRequests;
   const bookingsForTab = requestsForTab.map(req => {
-    const payment = req.id ? paymentsByBookingRequestId[req.id] : undefined;
-
     const start = new Date(req.startTime);
     const end = new Date(req.endTime);
     const hours = Math.max(0, (end.getTime() - start.getTime()) / 3600000);
@@ -210,12 +228,7 @@ const Bookings = () => {
 
     const totalPrice = roomLine + servicesLine;
 
-    return mapMyBookingRequestToBookingUser(
-      req,
-      formatPaymentMethodLabel(payment?.paymentMethod),
-      Boolean(payment),
-      totalPrice
-    );
+    return mapMyBookingRequestToBookingUser(req, totalPrice);
   });
 
   const headerActions = [
@@ -253,6 +266,39 @@ const Bookings = () => {
       />
       <div className="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark p-4 md:p-8 scroll-smooth">
         <div className="max-w-5xl mx-auto flex flex-col gap-8">
+          {paymentReturn ? (
+            <div className="rounded-2xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark p-4 flex items-start gap-3">
+              {paymentReturn.status === 'success' ? (
+                <CircleCheckBig className="h-5 w-5 mt-0.5 text-primary" />
+              ) : (
+                <CircleAlert className="h-5 w-5 mt-0.5 text-text-sub-light dark:text-text-sub-dark" />
+              )}
+              <div className="flex-1">
+                <div className="font-semibold text-text-main-light dark:text-text-main-dark">
+                  {paymentReturn.status === 'success'
+                    ? 'Payment successful'
+                    : 'Payment failed or cancelled'}
+                </div>
+                <div className="text-sm text-text-sub-light dark:text-text-sub-dark">
+                  {paymentReturn.status === 'success'
+                    ? 'Your booking has been confirmed.'
+                    : 'Please try again to complete your payment.'}
+                  {paymentReturn.bookingRequestId
+                    ? ` (Request: ${paymentReturn.bookingRequestId})`
+                    : ''}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDismissedPaymentToken(paymentToken)}
+                className="p-1.5 rounded-lg hover:bg-background-light dark:hover:bg-background-dark transition-colors"
+                aria-label="Dismiss payment status"
+              >
+                <X className="h-4 w-4 text-text-sub-light dark:text-text-sub-dark" />
+              </button>
+            </div>
+          ) : null}
+
           <div className="flex flex-col gap-6">
             <div className="border-b border-border-light dark:border-border-dark">
               <nav className="flex gap-8">

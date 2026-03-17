@@ -20,10 +20,8 @@ import { Button } from '@/components/ui/button';
 import { useCreateFeedback } from '@/hooks/user/feedback/use-create-feedback';
 import { useGetAmenities } from '@/hooks/user/amenities/use-get-amenities';
 import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
-import type {
-  LocalBookingRecord,
-  LocalPaymentMethod,
-} from '@/stores/bookingDraft.store';
+import { bookingPaymentApi } from '@/apis/booking-payment.api';
+import type { LocalBookingRecord } from '@/stores/bookingDraft.store';
 import { useBookingDraftStore } from '@/stores/bookingDraft.store';
 
 type BookingListProps = {
@@ -39,20 +37,12 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
     state => state.localBookingsById
   );
 
-  const paymentsByBookingRequestId = useBookingDraftStore(
-    state => state.paymentsByBookingRequestId
-  );
-  const setBookingPayment = useBookingDraftStore(
-    state => state.setBookingPayment
-  );
-
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetMode, setSheetMode] = useState<'detail' | 'feedback' | 'pay'>(
     'detail'
   );
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-
-  const [paymentMethod, setPaymentMethod] = useState<LocalPaymentMethod>('CARD');
+  const [isPaymentLoading, setIsPaymentLoading] = useState(false);
 
   const selectedRequest = useMemo(() => {
     if (selectedIndex === null) return null;
@@ -63,11 +53,6 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
     if (selectedIndex === null) return null;
     return bookings[selectedIndex] ?? null;
   }, [bookings, selectedIndex]);
-
-  const selectedPaymentRecord = useMemo(() => {
-    if (!selectedRequest?.id) return undefined;
-    return paymentsByBookingRequestId[selectedRequest.id];
-  }, [paymentsByBookingRequestId, selectedRequest?.id]);
 
   const [rating, setRating] = useState<number>(5);
   const [comment, setComment] = useState<string>('');
@@ -97,18 +82,17 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
   }, [serviceCategoriesQuery.data]);
 
   const readPersistedBookingStorage = ():
-    | {
-        localBookingsById?: Record<string, LocalBookingRecord>;
-      }
+    | { localBookingsById?: Record<string, LocalBookingRecord> }
     | undefined => {
     if (typeof window === 'undefined') return undefined;
     try {
       const raw = window.localStorage.getItem('spacepocker-booking-storage');
       if (!raw) return undefined;
-      const parsed = JSON.parse(raw) as any;
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
       const state = parsed?.state ?? parsed;
       return {
-        localBookingsById: state?.localBookingsById,
+        localBookingsById: (state as Record<string, unknown>)
+          ?.localBookingsById as Record<string, LocalBookingRecord> | undefined,
       };
     } catch {
       return undefined;
@@ -166,7 +150,6 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
   const openPay = (idx: number) => {
     setSelectedIndex(idx);
     setSheetMode('pay');
-    setPaymentMethod('CARD');
     setSheetOpen(true);
   };
 
@@ -204,13 +187,24 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
     };
   }, [selectedExtras.services, selectedRequest, serviceById]);
 
-  const handlePay = () => {
+  const handlePay = async () => {
     if (!selectedRequest?.id) return;
-    if (selectedPaymentRecord) return;
+    if (selectedRequest.status !== 'APPROVED') {
+      toast.error('Can only pay for approved bookings');
+      return;
+    }
 
-    setBookingPayment(selectedRequest.id, paymentMethod);
-    toast.success('Payment recorded!');
-    setSheetOpen(false);
+    try {
+      setIsPaymentLoading(true);
+      const paymentUrl = await bookingPaymentApi.getPaymentUrl(
+        selectedRequest.id
+      );
+      window.location.href = paymentUrl;
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast.error('Failed to get payment URL. Please try again.');
+      setIsPaymentLoading(false);
+    }
   };
 
   const handleSubmitFeedback = async () => {
@@ -229,9 +223,12 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
         return next;
       });
       setSheetOpen(false);
-    } catch (error: any) {
-      const message: string | undefined = error?.response?.data?.message;
-      if (message?.toLowerCase().includes('already left feedback')) {
+    } catch (error: unknown) {
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      const message = axiosError?.response?.data?.message as string | undefined;
+      if (message?.toLowerCase?.().includes('already left feedback')) {
         setSubmittedRoomIds(prev => {
           const next = new Set(prev);
           next.add(selectedRequest.roomId);
@@ -261,11 +258,7 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
         const isFeedbackSubmitted =
           !!req?.roomId && submittedRoomIds.has(req.roomId);
 
-        const paymentRecord = req?.id
-          ? paymentsByBookingRequestId[req.id]
-          : undefined;
-        const isPaid = Boolean(paymentRecord);
-        const canPay = req?.status === 'APPROVED' && !isPaid;
+        const canPay = req?.status === 'APPROVED';
 
         return (
           <div
@@ -301,13 +294,11 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
                     ${booking.price.toFixed(2)}
                   </div>
                   <div className="text-xs text-text-sub-light dark:text-text-sub-dark mt-0.5">
-                    {isPaid
-                      ? `Paid via ${booking.paymentMethod}`
+                    {req?.status === 'COMPLETED'
+                      ? 'Paid & Confirmed'
                       : canPay
                         ? 'Payment required'
-                        : booking.paymentMethod !== '—'
-                          ? `Paid via ${booking.paymentMethod}`
-                          : '—'}
+                        : '—'}
                   </div>
                 </div>
               </div>
@@ -619,58 +610,11 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
                       </div>
                     </div>
 
-                    {selectedPaymentRecord ? (
+                    {selectedRequest.status === 'COMPLETED' ? (
                       <div className="px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-700">
-                        This booking is already marked as paid.
+                        This booking has been paid and confirmed.
                       </div>
                     ) : null}
-
-                    <div className="grid grid-cols-1 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod('CARD')}
-                        className={`rounded-xl border px-4 py-3 flex items-center justify-between transition-colors ${
-                          paymentMethod === 'CARD'
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark hover:bg-background-light dark:hover:bg-background-dark'
-                        }`}
-                      >
-                        <span className="font-semibold">Card</span>
-                        {paymentMethod === 'CARD' ? (
-                          <CircleCheckBig className="h-5 w-5 text-primary" />
-                        ) : null}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod('APPLE_PAY')}
-                        className={`rounded-xl border px-4 py-3 flex items-center justify-between transition-colors ${
-                          paymentMethod === 'APPLE_PAY'
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark hover:bg-background-light dark:hover:bg-background-dark'
-                        }`}
-                      >
-                        <span className="font-semibold">Apple Pay</span>
-                        {paymentMethod === 'APPLE_PAY' ? (
-                          <CircleCheckBig className="h-5 w-5 text-primary" />
-                        ) : null}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod('GOOGLE_PAY')}
-                        className={`rounded-xl border px-4 py-3 flex items-center justify-between transition-colors ${
-                          paymentMethod === 'GOOGLE_PAY'
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark hover:bg-background-light dark:hover:bg-background-dark'
-                        }`}
-                      >
-                        <span className="font-semibold">Google Pay</span>
-                        {paymentMethod === 'GOOGLE_PAY' ? (
-                          <CircleCheckBig className="h-5 w-5 text-primary" />
-                        ) : null}
-                      </button>
-                    </div>
 
                     <div className="rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark p-4">
                       <div className="flex items-center justify-between">
@@ -692,11 +636,16 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
 
                     <button
                       type="button"
-                      disabled={Boolean(selectedPaymentRecord)}
+                      disabled={
+                        selectedRequest.status !== 'APPROVED' ||
+                        isPaymentLoading
+                      }
                       onClick={handlePay}
                       className="px-5 py-2.5 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                     >
-                      Pay ${pricing.total.toFixed(2)}
+                      {isPaymentLoading
+                        ? 'Processing...'
+                        : `Pay $${pricing.total.toFixed(2)}`}
                     </button>
                   </div>
                 ) : (
