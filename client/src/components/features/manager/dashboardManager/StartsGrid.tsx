@@ -1,16 +1,23 @@
-import type { StatItem } from '@/types/types';
+import { useMemo } from 'react';
 import {
-  CircleDollarSign,
   CalendarCheck,
-  PieChart,
-  Bell,
-  TrendingUp,
-  TrendingDown,
+  CircleDollarSign,
+  Building2,
+  DoorClosed,
   type LucideIcon,
 } from 'lucide-react';
+import { useGetBuildings } from '@/hooks/manager/buildings/use-get-buildings';
+import { useGetRooms } from '@/hooks/manager/rooms/use-get-rooms';
+import { useGetBookingRequestsForManager } from '@/hooks/manager/booking-requests/use-get-booking-requests';
+import type { BookingRequestForManager } from '@/types/booking-request-api';
+import { formatVND } from '@/lib/utils';
 
 interface StatsGridProps {
-  stats: StatItem[];
+  // Kept for backward compatibility with existing page usage.
+  // The manager dashboard now fetches real data directly in this component.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  stats?: any[];
+  paidRange?: '3m' | '30d' | '7d';
 }
 
 interface IconConfig {
@@ -20,10 +27,37 @@ interface IconConfig {
   borderColor: string;
 }
 
-const StatCard = ({ label, value, trend, subtext, type }: StatItem) => {
+type DashboardStatType = 'paid' | 'buildings' | 'rooms' | 'bookings';
+
+interface DashboardStat {
+  label: string;
+  value: string | number;
+  subtext?: string;
+  type: DashboardStatType;
+  badgeText?: string;
+}
+
+const isActiveBooking = (booking: BookingRequestForManager, now: Date) => {
+  const start = new Date(booking.startTime);
+  const end = new Date(booking.endTime);
+
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
+    return false;
+  }
+
+  return start <= now && now <= end;
+};
+
+const StatCard = ({
+  label,
+  value,
+  subtext,
+  type,
+  badgeText,
+}: DashboardStat) => {
   const getIconConfig = (): IconConfig => {
     switch (type) {
-      case 'revenue':
+      case 'paid':
         return {
           Icon: CircleDollarSign,
           bgColor: 'bg-blue-50',
@@ -37,19 +71,19 @@ const StatCard = ({ label, value, trend, subtext, type }: StatItem) => {
           iconColor: 'text-amber-500',
           borderColor: 'border-amber-100',
         };
-      case 'occupancy':
+      case 'buildings':
         return {
-          Icon: PieChart,
-          bgColor: 'bg-teal-50',
-          iconColor: 'text-teal-500',
-          borderColor: 'border-teal-100',
+          Icon: Building2,
+          bgColor: 'bg-slate-50',
+          iconColor: 'text-slate-600',
+          borderColor: 'border-slate-100',
         };
-      case 'inquiries':
+      case 'rooms':
         return {
-          Icon: Bell,
-          bgColor: 'bg-purple-50',
-          iconColor: 'text-purple-500',
-          borderColor: 'border-purple-100',
+          Icon: DoorClosed,
+          bgColor: 'bg-emerald-50',
+          iconColor: 'text-emerald-600',
+          borderColor: 'border-emerald-100',
         };
     }
   };
@@ -64,25 +98,9 @@ const StatCard = ({ label, value, trend, subtext, type }: StatItem) => {
         >
           <Icon className={`size-5 ${iconColor}`} />
         </div>
-        {trend !== undefined && (
-          <span
-            className={`flex items-center gap-0.5 text-xs font-semibold ${
-              trend > 0
-                ? 'text-emerald-600 bg-emerald-50'
-                : 'text-red-500 bg-red-50'
-            } px-2 py-1 rounded-full`}
-          >
-            {trend > 0 ? (
-              <TrendingUp className="size-3.5" />
-            ) : (
-              <TrendingDown className="size-3.5" />
-            )}
-            {Math.abs(trend)}%
-          </span>
-        )}
-        {type === 'inquiries' && (
+        {badgeText && (
           <span className="text-xs font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">
-            3 New
+            {badgeText}
           </span>
         )}
       </div>
@@ -95,47 +113,123 @@ const StatCard = ({ label, value, trend, subtext, type }: StatItem) => {
       </div>
 
       {subtext && <p className="text-xs text-text-gray mt-1">{subtext}</p>}
-
-      {type === 'revenue' && (
-        <div className="h-10 w-full mt-2">
-          <svg
-            className="w-full h-full overflow-visible"
-            preserveAspectRatio="none"
-            viewBox="0 0 100 40"
-          >
-            <path
-              d="M0,35 Q10,30 20,32 T40,20 T60,25 T80,10 T100,5"
-              fill="none"
-              stroke="#6764f2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-            />
-            <path
-              d="M0,35 Q10,30 20,32 T40,20 T60,25 T80,10 T100,5 V40 H0 Z"
-              fill="rgba(103, 100, 242, 0.1)"
-              stroke="none"
-            />
-          </svg>
-        </div>
-      )}
-
-      {type === 'bookings' && (
-        <div className="w-full bg-gray-100 h-1.5 rounded-full mt-4 overflow-hidden">
-          <div
-            className="bg-amber-500 h-full rounded-full"
-            style={{ width: '65%' }}
-          />
-        </div>
-      )}
     </div>
   );
 };
 
-export const StatsGrid = ({ stats }: StatsGridProps) => {
+const getPaidRangeCutoff = (now: Date, paidRange: '3m' | '30d' | '7d') => {
+  const cutoff = new Date(now);
+  switch (paidRange) {
+    case '7d':
+      cutoff.setDate(cutoff.getDate() - 7);
+      return cutoff;
+    case '30d':
+      cutoff.setDate(cutoff.getDate() - 30);
+      return cutoff;
+    case '3m':
+      cutoff.setMonth(cutoff.getMonth() - 3);
+      return cutoff;
+  }
+  return cutoff;
+};
+
+export const StatsGrid = ({ stats, paidRange = '30d' }: StatsGridProps) => {
+  const buildingsQuery = useGetBuildings({ limit: 1, offset: 0 });
+  // Use a higher limit so we can compute totals that depend on room pricing.
+  // Pagination.total still drives the room count card.
+  const roomsQuery = useGetRooms({ limit: 1000, offset: 0 });
+  const approvedRequestsQuery = useGetBookingRequestsForManager('APPROVED');
+  const completedRequestsQuery = useGetBookingRequestsForManager('COMPLETED');
+
+  const dashboardStats: DashboardStat[] = useMemo(() => {
+    const buildingsTotal = buildingsQuery.data?.pagination.total;
+    const roomsTotal = roomsQuery.data?.pagination.total;
+
+    const approved = approvedRequestsQuery.data ?? [];
+    const completed = completedRequestsQuery.data ?? [];
+
+    const priceByRoomId = new Map<string, number>();
+    for (const room of roomsQuery.data?.rooms ?? []) {
+      priceByRoomId.set(room.id, room.pricePerHour ?? 0);
+    }
+
+    const now = new Date();
+    const activeBookings = approved.filter(b => isActiveBooking(b, now)).length;
+
+    const paidCutoff = getPaidRangeCutoff(now, paidRange);
+
+    const totalPaid = completed.reduce((sum, req) => {
+      const start = new Date(req.startTime);
+      const end = new Date(req.endTime);
+      if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()))
+        return sum;
+
+      if (end < paidCutoff) return sum;
+
+      const hours = Math.max(0, (end.getTime() - start.getTime()) / 3_600_000);
+      const pricePerHour = priceByRoomId.get(req.roomId) ?? 0;
+      return sum + hours * pricePerHour;
+    }, 0);
+
+    const safeBuildingsTotal =
+      typeof buildingsTotal === 'number' ? buildingsTotal : 0;
+    const safeRoomsTotal = typeof roomsTotal === 'number' ? roomsTotal : 0;
+    const computed: DashboardStat[] = [
+      {
+        type: 'paid',
+        label: 'Total Paid',
+        value: formatVND(Math.round(totalPaid)),
+        subtext: 'Successful payments',
+      },
+      {
+        type: 'buildings',
+        label: 'Total Buildings',
+        value: safeBuildingsTotal,
+        subtext: 'Across your portfolio',
+      },
+      {
+        type: 'rooms',
+        label: 'Total Rooms',
+        value: safeRoomsTotal,
+        subtext: 'Rooms under management',
+      },
+      {
+        type: 'bookings',
+        label: 'Active Bookings',
+        value: activeBookings,
+        subtext: 'Currently ongoing',
+      },
+    ];
+
+    // If loading and legacy stats exist, keep UI filled temporarily.
+    if (
+      (buildingsQuery.isLoading || roomsQuery.isLoading) &&
+      Array.isArray(stats) &&
+      stats.length > 0
+    ) {
+      return computed.map((s, idx) => {
+        const legacy = stats[idx];
+        return legacy?.value !== undefined ? { ...s, value: legacy.value } : s;
+      });
+    }
+
+    return computed;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    buildingsQuery.data?.pagination.total,
+    roomsQuery.data?.pagination.total,
+    roomsQuery.data?.rooms,
+    approvedRequestsQuery.data,
+    completedRequestsQuery.data,
+    paidRange,
+    buildingsQuery.isLoading,
+    roomsQuery.isLoading,
+    stats,
+  ]);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      {stats.map((stat, idx) => (
+      {dashboardStats.map((stat, idx) => (
         <StatCard key={idx} {...stat} />
       ))}
     </div>
