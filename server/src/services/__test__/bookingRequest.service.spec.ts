@@ -24,6 +24,9 @@ jest.mock("../../lib/prisma", () => ({
     amenity: {
       findMany: jest.fn(),
     },
+    feedback: {
+      findMany: jest.fn(),
+    },
     bookingRequest: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
@@ -43,6 +46,7 @@ const prismaMock = prisma as unknown as {
   roomServiceCategory: { findMany: jest.Mock };
   service: { findMany: jest.Mock };
   amenity: { findMany: jest.Mock };
+  feedback: { findMany: jest.Mock };
   bookingRequest: {
     findMany: jest.Mock;
     findUnique: jest.Mock;
@@ -146,6 +150,7 @@ describe("BookingRequestService", () => {
     prismaMock.roomServiceCategory.findMany.mockResolvedValue([]);
     prismaMock.service.findMany.mockResolvedValue([]);
     prismaMock.amenity.findMany.mockResolvedValue([]);
+    prismaMock.feedback.findMany.mockResolvedValue([]);
     jest.clearAllMocks();
   });
 
@@ -576,6 +581,80 @@ describe("BookingRequestService", () => {
           status: "APPROVED",
           paymentUrl: expect.any(String),
         }),
+      );
+    });
+  });
+
+  describe("getMyBookingRequests()", () => {
+    it("should return booking requests with hasFeedback flag", async () => {
+      prismaMock.bookingRequest.findMany.mockResolvedValue([
+        {
+          id: "br-1",
+          userId: "u-001",
+          roomId: "r-001",
+          startTime: new Date("2026-04-10T09:00:00.000Z"),
+          endTime: new Date("2026-04-10T11:00:00.000Z"),
+          purpose: "Review meeting",
+          status: "COMPLETED",
+          approvedBy: "m-001",
+          createdAt: new Date("2026-04-01T09:00:00.000Z"),
+          room: {
+            id: "r-001",
+            name: "Meeting Room A",
+            roomCode: "ROOM-A",
+            building: {
+              id: "b-001",
+              buildingName: "A",
+              campus: "HCM",
+            },
+          },
+        },
+        {
+          id: "br-2",
+          userId: "u-001",
+          roomId: "r-002",
+          startTime: new Date("2026-04-12T09:00:00.000Z"),
+          endTime: new Date("2026-04-12T11:00:00.000Z"),
+          purpose: "Client demo",
+          status: "COMPLETED",
+          approvedBy: "m-001",
+          createdAt: new Date("2026-04-02T09:00:00.000Z"),
+          room: {
+            id: "r-002",
+            name: "Meeting Room B",
+            roomCode: "ROOM-B",
+            building: {
+              id: "b-001",
+              buildingName: "A",
+              campus: "HCM",
+            },
+          },
+        },
+      ]);
+      prismaMock.feedback.findMany.mockResolvedValue([{ roomId: "r-001" }]);
+
+      const result = await bookingRequestService.getMyBookingRequests(
+        "u-001",
+        "COMPLETED",
+      );
+
+      expect(prismaMock.feedback.findMany).toHaveBeenCalledWith({
+        where: {
+          userId: "u-001",
+          roomId: {
+            in: ["r-001", "r-002"],
+          },
+        },
+        select: {
+          roomId: true,
+        },
+      });
+
+      expect(result).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: "br-1", hasFeedback: true }),
+          expect.objectContaining({ id: "br-2", hasFeedback: false }),
+        ]),
       );
     });
   });

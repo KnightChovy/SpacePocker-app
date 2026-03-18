@@ -319,7 +319,7 @@ export default class BookingRequestService {
       ...(status && { status }),
     };
 
-    return prisma.bookingRequest.findMany({
+    const bookingRequests = await prisma.bookingRequest.findMany({
       where,
       orderBy: {
         createdAt: "desc",
@@ -332,6 +332,30 @@ export default class BookingRequestService {
         },
       },
     });
+
+    if (bookingRequests.length === 0) {
+      return bookingRequests;
+    }
+
+    const roomIds = Array.from(new Set(bookingRequests.map((item) => item.roomId)));
+    const feedbacks = await prisma.feedback.findMany({
+      where: {
+        userId,
+        roomId: {
+          in: roomIds,
+        },
+      },
+      select: {
+        roomId: true,
+      },
+    });
+
+    const feedbackRoomIds = new Set(feedbacks.map((item) => item.roomId));
+
+    return bookingRequests.map((item) => ({
+      ...item,
+      hasFeedback: feedbackRoomIds.has(item.roomId),
+    }));
   }
 
   async getBookingRequestsForManager(
