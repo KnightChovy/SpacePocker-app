@@ -10,6 +10,7 @@ describe("BookingRequestController", () => {
     getAllBookingRequestsForAdmin: jest.fn(),
     approveBookingRequest: jest.fn(),
     rejectBookingRequest: jest.fn(),
+    cancelMyBookingRequest: jest.fn(),
   };
 
   const controller = new BookingRequestController(bookingRequestServiceMock);
@@ -64,6 +65,27 @@ describe("BookingRequestController", () => {
       "br-2",
       "manager-1",
       "manager@example.com",
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it("should call service cancelMyBookingRequest and return 200", async () => {
+    const req = {
+      params: { id: "br-3" },
+      user: { userId: "user-1" },
+    } as unknown as Request;
+    const res = createMockResponse();
+
+    bookingRequestServiceMock.cancelMyBookingRequest.mockResolvedValue({
+      id: "br-3",
+      status: "CANCELLED",
+    });
+
+    await controller.cancelMyBookingRequest(req, res, jest.fn());
+
+    expect(bookingRequestServiceMock.cancelMyBookingRequest).toHaveBeenCalledWith(
+      "br-3",
+      "user-1",
     );
     expect(res.status).toHaveBeenCalledWith(200);
   });

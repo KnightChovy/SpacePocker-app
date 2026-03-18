@@ -87,7 +87,7 @@
  *       properties:
  *         reason:
  *           type: string
- *           description: Reason from manager for cancelling a paid booking
+ *           description: Reason from manager for cancelling a booking request/booking
  *           example: Projector issue, room cannot be used as planned
  *
  *     RefundCancelResponse:
@@ -102,6 +102,15 @@
  *         metadata:
  *           type: object
  *           properties:
+ *             bookingRequest:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: booking-request-uuid-123
+ *                 status:
+ *                   type: string
+ *                   example: CANCELLED
  *             booking:
  *               $ref: "#/components/schemas/BookingEntity"
  *             refund:
@@ -360,13 +369,13 @@
  * @openapi
  * /v1/api/manager/bookings/{id}/refund-cancel:
  *   patch:
- *     summary: Manager cancels paid booking and sends refund success email
+ *     summary: Manager cancels booking request and related booking, then sends refund email if needed
  *     description: |
- *       For cases where user has already paid but manager needs to cancel due to issue.
+ *       For cases where manager/admin needs to cancel a booking flow by booking request ID.
  *       This API will:
- *       1. Change Booking status from COMPLETED to CANCELLED
- *       2. Update matched BookingRequest status (if found) from COMPLETED to CANCELLED
- *       3. Queue an email to user confirming refund success
+ *       1. Change BookingRequest status to CANCELLED (including COMPLETED requests)
+ *       2. Change matched Booking status to CANCELLED when it exists (including COMPLETED bookings)
+ *       3. Queue refund success email only when the cancelled booking was COMPLETED (paid)
  *     tags: [Booking]
  *     security:
  *       - bearerAuth: []
@@ -386,7 +395,7 @@
  *         required: true
  *         schema:
  *           type: string
- *         description: Booking ID (paid booking)
+ *         description: BookingRequest ID
  *     requestBody:
  *       required: false
  *       content:
@@ -405,13 +414,13 @@
  *       403:
  *         description: Forbidden - Only MANAGER/ADMIN can call this endpoint
  *       404:
- *         description: Booking not found
+ *         description: BookingRequest not found
  *         content:
  *           application/json:
  *             schema:
  *               $ref: "#/components/schemas/BookingErrorResponse"
  *       409:
- *         description: Booking already cancelled or not eligible for refund-cancel
+ *         description: Booking request and booking were already cancelled
  *         content:
  *           application/json:
  *             schema:
