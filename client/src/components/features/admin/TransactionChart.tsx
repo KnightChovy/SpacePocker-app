@@ -10,20 +10,14 @@ import {
 } from 'recharts';
 import { formatVND } from '@/lib/utils';
 
-const data = [
-  { name: 'Jan', value: 3000 },
-  { name: 'Feb', value: 3500 },
-  { name: 'Mar', value: 2800 },
-  { name: 'Apr', value: 4200 },
-  { name: 'May', value: 3800 },
-  { name: 'Jun', value: 5000 },
-  { name: 'Jul', value: 4500 },
-  { name: 'Aug', value: 5800 },
-  { name: 'Sep', value: 5200 },
-  { name: 'Oct', value: 6500 },
-  { name: 'Nov', value: 6000 },
-  { name: 'Dec', value: 7200 },
-];
+interface TransactionChartPoint {
+  name: string;
+  value: number;
+}
+
+interface Props {
+  data: TransactionChartPoint[];
+}
 
 const CustomTooltip = ({
   active,
@@ -43,7 +37,7 @@ const CustomTooltip = ({
   return null;
 };
 
-const TransactionChart: React.FC = () => {
+const TransactionChart: React.FC<Props> = ({ data }) => {
   return (
     <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
