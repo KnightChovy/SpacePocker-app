@@ -4,6 +4,7 @@ import BookingRequestController from "../bookingRequest.controller";
 describe("BookingRequestController", () => {
   const bookingRequestServiceMock: any = {
     createBookingRequest: jest.fn(),
+    createBookingRequestAndPaymentUrlForMobile: jest.fn(),
     getBookingRequestById: jest.fn(),
     getBookingRequestsForManager: jest.fn(),
     getAllBookingRequestsForAdmin: jest.fn(),
@@ -102,5 +103,41 @@ describe("BookingRequestController", () => {
       bookingRequestServiceMock.getAllBookingRequestsForAdmin,
     ).toHaveBeenCalledWith("admin-1");
     expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it("should create mobile booking request and payment url", async () => {
+    const req = {
+      body: {
+        roomId: "room-1",
+        startTime: "2026-04-10T09:00:00.000Z",
+        endTime: "2026-04-10T11:00:00.000Z",
+        locale: "en",
+      },
+      headers: {},
+      socket: { remoteAddress: "127.0.0.1" },
+      user: { userId: "user-1" },
+    } as unknown as Request;
+    const res = createMockResponse();
+
+    bookingRequestServiceMock.createBookingRequestAndPaymentUrlForMobile.mockResolvedValue(
+      {
+        bookingRequestId: "br-1",
+        status: "APPROVED",
+        paymentUrl: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?...",
+      },
+    );
+
+    await controller.createMobileBookingRequestAndPaymentUrl(req, res, jest.fn());
+
+    expect(
+      bookingRequestServiceMock.createBookingRequestAndPaymentUrlForMobile,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user-1",
+        roomId: "room-1",
+        locale: "en",
+      }),
+    );
+    expect(res.status).toHaveBeenCalledWith(201);
   });
 });

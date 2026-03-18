@@ -152,6 +152,37 @@ class BookingRequestController {
     }).send(res);
   };
 
+  createMobileBookingRequestAndPaymentUrl = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    const ipAddr =
+      (req.headers["x-forwarded-for"] as string | undefined)
+        ?.split(",")[0]
+        ?.trim() ||
+      req.socket.remoteAddress ||
+      "127.0.0.1";
+
+    new Created({
+      message: "Create booking request and VNPAY payment URL successfully",
+      metadata:
+        await this.bookingRequestService.createBookingRequestAndPaymentUrlForMobile(
+          {
+            userId: String(req.user?.userId),
+            roomId: String(req.body?.roomId),
+            startTime: String(req.body?.startTime),
+            endTime: String(req.body?.endTime),
+            purpose: req.body?.purpose,
+            amenityIds: req.body?.amenityIds,
+            services: req.body?.services,
+            ipAddr,
+            locale: req.body?.locale === "en" ? "en" : "vn",
+          },
+        ),
+    }).send(res);
+  };
+
   handleVnpayReturn = async (
     req: Request,
     res: Response,
