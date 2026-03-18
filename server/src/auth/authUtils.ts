@@ -14,6 +14,11 @@ const HEADER = {
   REFRESHTOKEN: "x-refresh-token",
 } as const;
 
+const normalizeToken = (token?: string) => {
+  if (!token) return "";
+  return token.startsWith("Bearer ") ? token.slice(7).trim() : token;
+};
+
 export const authentication = asyncHandler(async (req: Request, res, next) => {
   const userId = req.headers[HEADER.CLIENT_ID];
   if (!userId) throw new NotFoundError("User not found");
@@ -24,7 +29,8 @@ export const authentication = asyncHandler(async (req: Request, res, next) => {
   if (!keyStore) {
     throw new NotFoundError("Key store not found");
   }
-  const refreshToken = req.headers[HEADER.REFRESHTOKEN] as string;
+  const rawRefreshToken = req.headers[HEADER.REFRESHTOKEN] as string;
+  const refreshToken = normalizeToken(rawRefreshToken);
   if (refreshToken) {
     try {
       const decodeUser = JWT.verify(
@@ -40,10 +46,11 @@ export const authentication = asyncHandler(async (req: Request, res, next) => {
       req.refreshToken = refreshToken;
       return next();
     } catch (error) {
-      throw error;
+      throw new AuthFailureError("Invalid or expired refresh token");
     }
   }
-  const accessToken = req.headers[HEADER.AUTHORIZATION] as string;
+  const rawAccessToken = req.headers[HEADER.AUTHORIZATION] as string;
+  const accessToken = normalizeToken(rawAccessToken);
   if (!accessToken) {
     throw new BadRequestError("No token provided");
   }
@@ -59,7 +66,7 @@ export const authentication = asyncHandler(async (req: Request, res, next) => {
     req.user = decodeUser;
     return next();
   } catch (error) {
-    throw error;
+    throw new AuthFailureError("Invalid or expired access token");
   }
 });
 

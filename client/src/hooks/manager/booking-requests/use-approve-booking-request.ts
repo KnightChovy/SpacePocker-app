@@ -15,7 +15,7 @@ export const useApproveBookingRequest = () => {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ['booking-requests', 'manager', 'list'],
+        queryKey: ['booking-requests', 'manager'],
       });
     },
   });

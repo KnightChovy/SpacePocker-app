@@ -6,16 +6,18 @@ import type {
 } from '@/types/booking-request-api';
 
 export const useGetBookingRequestsForManager = (
-  status: BookingRequestStatus
+  status?: BookingRequestStatus
 ) => {
   return useQuery({
-    queryKey: ['booking-requests', 'manager', 'list', { status }],
+    queryKey: ['booking-requests', 'manager', 'all'],
     queryFn: async () => {
       const response = await axiosInstance.get<{
         metadata: BookingRequestForManager[];
-      }>('/booking-requests', { params: { status } });
+      }>('/allBookingRequest');
 
-      return response.data.metadata;
+      return response.data.metadata ?? [];
     },
+    select: requests =>
+      status ? requests.filter(request => request.status === status) : requests,
   });
 };

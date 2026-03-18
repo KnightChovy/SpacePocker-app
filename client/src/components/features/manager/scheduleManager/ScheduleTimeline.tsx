@@ -1,9 +1,15 @@
-import { useRef, useEffect, useState, useMemo } from 'react';
-import type { BookingType, ScheduleRoom, ScheduleBooking } from '@/types/types';
-import { Plus, ChevronLeft, ChevronRight, Filter, Users } from 'lucide-react';
-import AddScheduleBookingModal from './AddScheduleBookingModal';
-import { useGetRooms } from '@/hooks/manager/rooms/use-get-rooms';
+import { useEffect, useMemo, useState } from 'react';
 import { useGetBookingRequestsForManager } from '@/hooks/manager/booking-requests/use-get-booking-requests';
+import type { BookingRequestForManager } from '@/types/booking-request-api';
+import type { BookingType, ScheduleBooking, ScheduleRoom } from '@/types/types';
+import AddScheduleBookingModal from './AddScheduleBookingModal';
+
+type ViewMode = 'day' | 'week' | 'month';
+
+interface ScheduleTimelineProps {
+  selectedDate: Date | undefined;
+  onDateChange: (date: Date | undefined) => void;
+}
 
 const TIME_SLOTS = [
   '09:00',
@@ -16,341 +22,428 @@ const TIME_SLOTS = [
   '16:00',
   '17:00',
 ];
+
 const SLOT_WIDTH = 120;
 const START_HOUR = 9;
 const END_HOUR = 17;
-const DISPLAY_TIME_ZONE = 'Asia/Ho_Chi_Minh';
-const TIMELINE_WIDTH = TIME_SLOTS.length * SLOT_WIDTH;
+const DAY_COLUMN_WIDTH = 140;
 
-const getZonedParts = (date: Date, timeZone: string) => {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone,
+interface TimelineBooking extends ScheduleBooking {
+  startDate: Date;
+  endDate: Date;
+}
+
+const toStartOfDay = (date: Date) => {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
+};
+
+const addDays = (date: Date, days: number) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+};
+
+const addMonths = (date: Date, months: number) => {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + months);
+  return next;
+};
+
+const getStartOfWeek = (date: Date) => {
+  const day = date.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  return toStartOfDay(addDays(date, mondayOffset));
+};
+
+const isSameDay = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
+const toTimeLabel = (date: Date) =>
+  date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
     year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
+  });
+
+const toDayKey = (date: Date) =>
+  `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+
+const formatToHourMinute = (date: Date) =>
+  date.toLocaleTimeString('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-  }).formatToParts(date);
+  });
 
-  const lookup = (type: string) => parts.find(p => p.type === type)?.value;
-  const year = lookup('year') ?? '0000';
-  const month = lookup('month') ?? '01';
-  const day = lookup('day') ?? '01';
-  const hour = lookup('hour') ?? '00';
-  const minute = lookup('minute') ?? '00';
-
-  return {
-    dateKey: `${year}-${month}-${day}`,
-    hhmm: `${hour}:${minute}`,
-    hour: Number(hour),
-    minute: Number(minute),
-  };
+const combineDateAndTime = (date: Date, time: string) => {
+  const [hours, minutes] = time.split(':').map(Number);
+  const result = new Date(date);
+  result.setHours(hours, minutes, 0, 0);
+  return result;
 };
 
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(max, Math.max(min, value));
-
-const formatInTimeZone = (
-  date: Date,
-  options: Intl.DateTimeFormatOptions,
-  locale = 'en-GB'
-) =>
-  new Intl.DateTimeFormat(locale, {
-    timeZone: DISPLAY_TIME_ZONE,
-    ...options,
-  }).format(date);
-
-const getDurationLabel = (startIso: string, endIso: string) => {
-  const durationMs = new Date(endIso).getTime() - new Date(startIso).getTime();
-  const totalMinutes = Math.max(0, Math.round(durationMs / 60000));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours && minutes) return `${hours}h ${minutes}m`;
-  if (hours) return `${hours}h`;
-  return `${minutes}m`;
+const mapRequestToBookingType = (
+  status: BookingRequestForManager['status']
+): BookingType => {
+  if (status === 'COMPLETED') {
+    return 'teal';
+  }
+  return 'primary';
 };
 
-interface ScheduleTimelineProps {
-  selectedDate: Date | undefined;
-  onDateChange: (date: Date) => void;
-}
-
-type TimelineBooking = ScheduleBooking & {
-  createdAtLabel: string;
-  durationLabel: string;
-  roomLabel: string;
-  statusLabel: string;
+const getBookingVariantClass = (type: BookingType) => {
+  switch (type) {
+    case 'primary':
+      return 'bg-primary/10 border-primary text-primary';
+    case 'teal':
+      return 'bg-teal-50 border-teal-500 text-teal-700';
+    case 'amber':
+      return 'bg-amber-50 border-amber-500 text-amber-700';
+    case 'maintenance':
+      return 'bg-slate-100 border-slate-400 text-slate-500 striped-bg';
+    default:
+      return 'bg-slate-100 border-slate-400 text-slate-600';
+  }
 };
 
 export default function ScheduleTimeline({
   selectedDate,
   onDateChange,
 }: ScheduleTimelineProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [currentTimeX, setCurrentTimeX] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('day');
+  const [currentTimeX, setCurrentTimeX] = useState<number>(0);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [localBookings, setLocalBookings] = useState<TimelineBooking[]>([]);
 
-  const roomsQuery = useGetRooms();
   const completedQuery = useGetBookingRequestsForManager('COMPLETED');
   const approvedQuery = useGetBookingRequestsForManager('APPROVED');
 
-  const isLoading =
-    roomsQuery.isLoading || completedQuery.isLoading || approvedQuery.isLoading;
+  const requests = useMemo(
+    () => [...(approvedQuery.data ?? []), ...(completedQuery.data ?? [])],
+    [approvedQuery.data, completedQuery.data]
+  );
 
-  const localRooms = useMemo<ScheduleRoom[]>(() => {
-    if (!roomsQuery.data?.rooms) return [];
-    return roomsQuery.data.rooms.map(r => ({
-      id: r.id,
-      name: r.name,
-      capacity: r.capacity || 0,
-      type: r.roomType || 'Standard',
-    }));
-  }, [roomsQuery.data]);
+  const rooms = useMemo<ScheduleRoom[]>(() => {
+    const roomMap = new Map<string, ScheduleRoom>();
 
-  const localBookings = useMemo<TimelineBooking[]>(() => {
-    const completedReqs = completedQuery.data || [];
-    const approvedReqs = approvedQuery.data || [];
-    const unique = new Map<string, (typeof completedReqs)[number]>();
-    [...completedReqs, ...approvedReqs].forEach(req => unique.set(req.id, req));
-    const allRequests = Array.from(unique.values());
+    requests.forEach(request => {
+      if (!request.room?.id) {
+        return;
+      }
 
-    const selectedDateKey = selectedDate
-      ? getZonedParts(selectedDate, DISPLAY_TIME_ZONE).dateKey
-      : null;
-
-    const filteredRequests = allRequests.filter(req => {
-      if (!selectedDateKey) return true;
-      const reqKey = getZonedParts(
-        new Date(req.startTime),
-        DISPLAY_TIME_ZONE
-      ).dateKey;
-      return reqKey === selectedDateKey;
+      if (!roomMap.has(request.room.id)) {
+        roomMap.set(request.room.id, {
+          id: request.room.id,
+          name: request.room.name || request.room.roomCode || 'Unknown room',
+          type: 'Room',
+          capacity: 0,
+        });
+      }
     });
 
-    return filteredRequests
-      .sort(
-        (left, right) =>
-          new Date(left.startTime).getTime() -
-          new Date(right.startTime).getTime()
-      )
-      .map(req => ({
-        id: req.id,
-        roomId: req.roomId,
-        title: req.user?.name || 'User Booking',
-        subtitle: req.purpose || req.room.name,
-        startTime: getZonedParts(new Date(req.startTime), DISPLAY_TIME_ZONE)
-          .hhmm,
-        endTime: getZonedParts(new Date(req.endTime), DISPLAY_TIME_ZONE).hhmm,
-        type: (req.status === 'COMPLETED' ? 'teal' : 'primary') as BookingType,
-        createdAtLabel: formatInTimeZone(new Date(req.createdAt), {
-          day: '2-digit',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        }),
-        durationLabel: getDurationLabel(req.startTime, req.endTime),
-        roomLabel: req.room.roomCode
-          ? `${req.room.name} · ${req.room.roomCode}`
-          : req.room.name,
-        statusLabel: req.status === 'COMPLETED' ? 'Completed' : 'Approved',
-      }));
-  }, [completedQuery.data, approvedQuery.data, selectedDate]);
+    return Array.from(roomMap.values());
+  }, [requests]);
 
-  const getTimePosition = (time: string) => {
-    const [hours, minutes] = time.split(':').map(Number);
-    const totalMinutes = hours * 60 + minutes;
-    const minMinutes = START_HOUR * 60;
-    const maxMinutes = END_HOUR * 60;
-    const clamped = clamp(totalMinutes, minMinutes, maxMinutes);
-    return ((clamped - minMinutes) / 60) * SLOT_WIDTH;
-  };
+  const apiBookings = useMemo<TimelineBooking[]>(() => {
+    return requests.reduce<TimelineBooking[]>((acc, request) => {
+      const startDate = new Date(request.startTime);
+      const endDate = new Date(request.endTime);
 
-  const getTimeWidth = (start: string, end: string) => {
-    return Math.max(0, getTimePosition(end) - getTimePosition(start));
-  };
+      if (
+        !request.roomId ||
+        Number.isNaN(startDate.getTime()) ||
+        Number.isNaN(endDate.getTime())
+      ) {
+        return acc;
+      }
+
+      const title = request.purpose?.trim() || request.user?.name || 'Booking';
+      const subtitle = `${request.room?.name ?? 'Room'} • ${request.user?.name ?? 'User'}`;
+
+      acc.push({
+        id: request.id,
+        roomId: request.roomId,
+        title,
+        subtitle,
+        startTime: formatToHourMinute(startDate),
+        endTime: formatToHourMinute(endDate),
+        type: mapRequestToBookingType(request.status),
+        icon: request.status === 'COMPLETED' ? 'task_alt' : 'event_available',
+        startDate,
+        endDate,
+      });
+
+      return acc;
+    }, []);
+  }, [requests]);
+
+  const bookings = useMemo(
+    () => [...apiBookings, ...localBookings],
+    [apiBookings, localBookings]
+  );
+
+  const currentDate = useMemo(
+    () => toStartOfDay(selectedDate ?? new Date()),
+    [selectedDate]
+  );
+
+  const dayColumns = useMemo(() => {
+    if (viewMode === 'day') {
+      return [currentDate];
+    }
+
+    if (viewMode === 'week') {
+      const weekStart = getStartOfWeek(currentDate);
+      return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+    }
+
+    const monthStart = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      1
+    );
+    const totalDays = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      0
+    ).getDate();
+
+    return Array.from({ length: totalDays }, (_, i) => addDays(monthStart, i));
+  }, [currentDate, viewMode]);
+
+  const timelineWidth =
+    viewMode === 'day'
+      ? TIME_SLOTS.length * SLOT_WIDTH
+      : dayColumns.length * DAY_COLUMN_WIDTH;
+
+  const periodLabel = useMemo(() => {
+    if (viewMode === 'day') {
+      return toTimeLabel(currentDate);
+    }
+
+    if (viewMode === 'week') {
+      const start = dayColumns[0];
+      const end = dayColumns[dayColumns.length - 1];
+      const sameMonth = start.getMonth() === end.getMonth();
+      const left = start.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
+      const right = end.toLocaleDateString('en-US', {
+        month: sameMonth ? undefined : 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+      return `${left} - ${right}`;
+    }
+
+    return currentDate.toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric',
+    });
+  }, [currentDate, dayColumns, viewMode]);
+
+  const periodBookingCount = useMemo(() => {
+    const periodKeys = new Set(dayColumns.map(day => toDayKey(day)));
+    return bookings.filter(booking =>
+      periodKeys.has(toDayKey(toStartOfDay(booking.startDate)))
+    ).length;
+  }, [bookings, dayColumns]);
 
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      const nowParts = getZonedParts(now, DISPLAY_TIME_ZONE);
-      const selectedKey = selectedDate
-        ? getZonedParts(selectedDate, DISPLAY_TIME_ZONE).dateKey
-        : null;
-      const isSameDay = selectedKey ? selectedKey === nowParts.dateKey : true;
-
-      if (!isSameDay) {
-        setCurrentTimeX(null);
-        return;
-      }
-
-      const h = nowParts.hour;
-      const m = nowParts.minute;
+      const h = now.getHours();
+      const m = now.getMinutes();
 
       if (h >= START_HOUR && h < END_HOUR) {
-        setCurrentTimeX(getTimePosition(`${h}:${m}`));
+        const totalMinutes = (h - START_HOUR) * 60 + m;
+        setCurrentTimeX((totalMinutes / 60) * SLOT_WIDTH);
       } else {
-        setCurrentTimeX(null);
+        setCurrentTimeX(2.5 * SLOT_WIDTH);
       }
     };
 
     updateTime();
     const timer = setInterval(updateTime, 60000);
     return () => clearInterval(timer);
-  }, [selectedDate]);
+  }, []);
 
-  const getVariantStyles = (type: BookingType) => {
-    switch (type) {
-      case 'primary':
-        return 'bg-primary/10 border-primary text-primary';
-      case 'teal':
-        return 'bg-teal-50 border-teal-500 text-teal-700';
-      case 'amber':
-        return 'bg-amber-50 border-amber-500 text-amber-700';
-      case 'maintenance':
-        return 'bg-slate-100 border-slate-400 text-slate-500 striped-bg';
-      default:
-        return 'bg-slate-100 border-slate-400 text-slate-600';
+  const goToPrev = () => {
+    if (viewMode === 'day') {
+      onDateChange(addDays(currentDate, -1));
+      return;
     }
-  };
 
-  const formatDate = (date: Date | undefined) => {
-    if (!date) return 'Select Date';
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  const handlePrevDay = () => {
-    if (selectedDate) {
-      const newDate = new Date(selectedDate);
-      newDate.setDate(newDate.getDate() - 1);
-      onDateChange(newDate);
+    if (viewMode === 'week') {
+      onDateChange(addDays(currentDate, -7));
+      return;
     }
+
+    onDateChange(addMonths(currentDate, -1));
   };
 
-  const handleNextDay = () => {
-    if (selectedDate) {
-      const newDate = new Date(selectedDate);
-      newDate.setDate(newDate.getDate() + 1);
-      onDateChange(newDate);
+  const goToNext = () => {
+    if (viewMode === 'day') {
+      onDateChange(addDays(currentDate, 1));
+      return;
     }
+
+    if (viewMode === 'week') {
+      onDateChange(addDays(currentDate, 7));
+      return;
+    }
+
+    onDateChange(addMonths(currentDate, 1));
   };
 
-  const handleToday = () => {
+  const handleGoToToday = () => {
     onDateChange(new Date());
   };
 
-  const bookingCountLabel = `${localBookings.length} booking${localBookings.length === 1 ? '' : 's'}`;
+  const getTimePosition = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const totalMinutes = (hours - START_HOUR) * 60 + minutes;
+    return (totalMinutes / 60) * SLOT_WIDTH;
+  };
+
+  const getTimeWidth = (start: string, end: string) => {
+    return getTimePosition(end) - getTimePosition(start);
+  };
+
+  const shouldShowCurrentTime =
+    viewMode === 'day' && isSameDay(currentDate, toStartOfDay(new Date()));
+
+  const handleAddBooking = (newBooking: Omit<ScheduleBooking, 'id'>) => {
+    const bookingDate = toStartOfDay(selectedDate ?? new Date());
+    const startDate = combineDateAndTime(bookingDate, newBooking.startTime);
+    const endDate = combineDateAndTime(bookingDate, newBooking.endTime);
+
+    setLocalBookings(prev => [
+      ...prev,
+      {
+        ...newBooking,
+        id: `b-${Date.now()}`,
+        startDate,
+        endDate,
+      },
+    ]);
+  };
+
+  const isLoadingBookings = approvedQuery.isLoading || completedQuery.isLoading;
+  const isErrorBookings = approvedQuery.isError || completedQuery.isError;
+
+  const getBookingsForRoomByDay = (roomId: string, day: Date) => {
+    const dayKey = toDayKey(day);
+    return bookings
+      .filter(booking => booking.roomId === roomId)
+      .filter(booking => toDayKey(toStartOfDay(booking.startDate)) === dayKey);
+  };
 
   return (
-    <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-border-light relative overflow-hidden">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b border-border-light gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex bg-background-light p-1 rounded-xl border border-border-light">
-            <button className="px-4 py-1.5 rounded-lg text-sm font-medium bg-white text-slate-900 shadow-sm border border-black/5">
-              Day
-            </button>
-            <button className="px-4 py-1.5 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
-              Week
-            </button>
-            <button className="px-4 py-1.5 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
-              Month
-            </button>
-          </div>
+    <>
+      <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-border-light relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b border-border-light gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex bg-background-light p-1 rounded-xl border border-border-light">
+              {(['day', 'week', 'month'] as const).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    viewMode === mode
+                      ? 'bg-white text-slate-900 shadow-sm border border-black/5'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  {mode[0].toUpperCase() + mode.slice(1)}
+                </button>
+              ))}
+            </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500"
-              onClick={handlePrevDay}
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <span className="text-sm font-bold text-slate-900 min-w-35 text-center">
-              {formatDate(selectedDate)}
-            </span>
-            <button
-              className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500"
-              onClick={handleNextDay}
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-            <button
-              className="text-xs font-semibold text-primary hover:text-primary-dark ml-2"
-              onClick={handleToday}
-            >
-              Today
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 text-[11px]">
-            <span className="rounded-full bg-primary/8 px-3 py-1 font-semibold text-primary border border-primary/10">
-              {bookingCountLabel}
-            </span>
-            <span className="rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-600 border border-slate-200">
-              Timezone GMT+7
-            </span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
-        >
-          <Plus className="h-5 w-5" />
-          <span>New Booking</span>
-        </button>
-      </div>
-
-      <AddScheduleBookingModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        rooms={localRooms}
-        onAdd={() => {
-          // Note: Add Schedule Booking locally (won't persist to the API without mutation hook unfortunately,
-          // but we follow current component structure)
-          // localBookings cannot be pushed, but the user is not asking to fix AddBooking here.
-        }}
-      />
-
-      <div className="flex border-b border-border-light bg-background-light/50">
-        <div className="w-48 xl:w-60 p-3 shrink-0 border-r border-border-light flex items-center gap-2">
-          <Filter className="h-4 w-4 text-slate-400" />
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-            Resources
-          </span>
-        </div>
-        <div className="flex-1 overflow-x-hidden relative">
-          <div
-            className="flex"
-            style={{ width: TIME_SLOTS.length * SLOT_WIDTH }}
-          >
-            {TIME_SLOTS.map(time => (
-              <div
-                key={time}
-                className="py-3 text-center border-r border-border-light text-xs font-medium text-slate-500"
-                style={{ width: SLOT_WIDTH }}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={goToPrev}
+                className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500"
               >
-                {time}
-              </div>
-            ))}
+                <span className="material-symbols-outlined">chevron_left</span>
+              </button>
+              <span className="text-sm font-bold text-slate-900 min-w-32 text-center">
+                {periodLabel}
+              </span>
+              <button
+                onClick={goToNext}
+                className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500"
+              >
+                <span className="material-symbols-outlined">chevron_right</span>
+              </button>
+              <button
+                onClick={handleGoToToday}
+                className="text-xs font-semibold text-primary hover:text-primary-dark ml-2"
+              >
+                Today
+              </button>
+              <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+                {periodBookingCount} bookings
+              </span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+          >
+            <span className="material-symbols-outlined text-[20px]">add</span>
+            <span>New Booking</span>
+          </button>
+        </div>
+
+        <div className="flex border-b border-border-light bg-background-light/50">
+          <div className="w-48 xl:w-60 p-3 shrink-0 border-r border-border-light flex items-center gap-2">
+            <span className="material-symbols-outlined text-slate-400 text-sm">
+              filter_alt
+            </span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+              Resources
+            </span>
+          </div>
+          <div className="flex-1 overflow-x-auto relative no-scrollbar">
+            <div className="flex" style={{ width: timelineWidth }}>
+              {viewMode === 'day'
+                ? TIME_SLOTS.map(time => (
+                    <div
+                      key={time}
+                      className="py-3 text-center border-r border-border-light text-xs font-medium text-slate-500"
+                      style={{ width: SLOT_WIDTH }}
+                    >
+                      {time}
+                    </div>
+                  ))
+                : dayColumns.map(day => (
+                    <div
+                      key={day.toISOString()}
+                      className="py-3 text-center border-r border-border-light text-xs font-medium text-slate-500"
+                      style={{ width: DAY_COLUMN_WIDTH }}
+                    >
+                      {day.toLocaleDateString('en-US', {
+                        weekday: viewMode === 'week' ? 'short' : undefined,
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </div>
+                  ))}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar relative">
-        <div className="flex min-h-full">
-          <div className="w-48 xl:w-60 shrink-0 sticky left-0 z-10 bg-white border-r border-border-light">
-            {isLoading ? (
-              <div className="h-24 p-4 flex items-center justify-center">
-                <span className="text-sm text-slate-500">Loading...</span>
-              </div>
-            ) : (
-              localRooms.map(room => (
+        <div className="flex-1 overflow-y-auto custom-scrollbar relative">
+          <div className="flex min-h-full">
+            <div className="w-48 xl:w-60 shrink-0 sticky left-0 z-10 bg-white border-r border-border-light">
+              {rooms.map(room => (
                 <div
                   key={room.id}
                   className="h-24 p-4 border-b border-border-light flex flex-col justify-center"
@@ -358,119 +451,171 @@ export default function ScheduleTimeline({
                   <span className="text-sm font-semibold text-slate-800">
                     {room.name}
                   </span>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                    <span className="rounded-full bg-slate-100 px-2 py-1 font-medium text-slate-600">
-                      {room.type}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3.5 w-3.5 text-slate-400" />
-                      {room.capacity} seats
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          <div
-            className="flex-1 relative overflow-x-auto no-scrollbar"
-            ref={containerRef}
-          >
-            <div className="h-full relative" style={{ width: TIMELINE_WIDTH }}>
-              <div className="absolute inset-0 flex pointer-events-none">
-                {TIME_SLOTS.map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-full border-r border-border-light/50 border-dashed"
-                    style={{ width: SLOT_WIDTH }}
-                  />
-                ))}
-              </div>
-
-              {!isLoading && localBookings.length === 0 && (
-                <div className="absolute inset-x-6 top-6 z-10 rounded-2xl border border-dashed border-slate-200 bg-white/90 px-4 py-3 text-sm text-slate-500 shadow-sm backdrop-blur-sm">
-                  No bookings for this date. Approved or completed requests will
-                  appear here using local time.
-                </div>
-              )}
-
-              {currentTimeX !== null && (
-                <div
-                  className="absolute top-0 bottom-0 w-px bg-red-500 z-20 pointer-events-none"
-                  style={{ left: currentTimeX }}
-                >
-                  <div className="absolute -top-1.5 -left-1.5 h-3 w-3 bg-red-500 rounded-full" />
-                </div>
-              )}
-
-              {localRooms.map(room => (
-                <div
-                  key={room.id}
-                  className="h-24 border-b border-border-light relative hover:bg-slate-50/50 transition-colors"
-                >
-                  {localBookings
-                    .filter(b => b.roomId === room.id)
-                    .map(booking => {
-                      const bookingWidth = getTimeWidth(
-                        booking.startTime,
-                        booking.endTime
-                      );
-
-                      if (bookingWidth <= 0) {
-                        return null;
-                      }
-                      return (
-                        <div
-                          key={booking.id}
-                          className={`absolute top-1.5 bottom-1.5 rounded-xl border-l-4 px-2.5 py-1.5 cursor-pointer transition-all hover:shadow-md hover:z-30 overflow-hidden group ${getVariantStyles(booking.type)}`}
-                          style={{
-                            left: getTimePosition(booking.startTime),
-                            width: bookingWidth,
-                          }}
-                          title={`${booking.title} • ${booking.roomLabel} • ${booking.startTime}-${booking.endTime} (${booking.durationLabel}) • Created ${booking.createdAtLabel}`}
-                        >
-                          <div className="flex h-full min-w-0 flex-col justify-center gap-0.5">
-                            <div className="flex items-baseline justify-between gap-1 min-w-0">
-                              <p className="text-xs font-bold truncate leading-tight">
-                                {booking.title}
-                              </p>
-                              <span className="shrink-0 rounded-full bg-white/70 border border-current/20 px-1.5 py-0.5 text-[9px] font-semibold leading-none whitespace-nowrap">
-                                {booking.statusLabel}
-                              </span>
-                            </div>
-
-                            <p className="text-[10px] opacity-70 truncate leading-tight">
-                              {booking.roomLabel}
-                            </p>
-
-                            <p className="text-[10px] font-medium opacity-80 truncate leading-tight">
-                              {booking.startTime}–{booking.endTime}
-                              {bookingWidth >= 140 && (
-                                <span> • {booking.durationLabel}</span>
-                              )}
-                              {bookingWidth >= 200 && (
-                                <span className="opacity-60">
-                                  {' '}
-                                  • Created {booking.createdAtLabel}
-                                </span>
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                  <div className="absolute inset-0 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <button className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/20 backdrop-blur-sm">
-                      + Add
-                    </button>
-                  </div>
+                  <span className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                    <span className="material-symbols-outlined text-[10px]">
+                      group
+                    </span>{' '}
+                    {room.type}
+                  </span>
                 </div>
               ))}
+            </div>
+
+            <div className="flex-1 relative overflow-x-auto no-scrollbar">
+              <div className="h-full relative" style={{ width: timelineWidth }}>
+                <div className="absolute inset-0 flex pointer-events-none">
+                  {(viewMode === 'day' ? TIME_SLOTS : dayColumns).map(
+                    (item, i) => (
+                      <div
+                        key={
+                          viewMode === 'day'
+                            ? String(item)
+                            : dayColumns[i].toISOString()
+                        }
+                        className="h-full border-r border-border-light/50 border-dashed"
+                        style={{
+                          width:
+                            viewMode === 'day' ? SLOT_WIDTH : DAY_COLUMN_WIDTH,
+                        }}
+                      />
+                    )
+                  )}
+                </div>
+
+                {shouldShowCurrentTime && (
+                  <div
+                    className="absolute top-0 bottom-0 w-px bg-red-500 z-20 pointer-events-none"
+                    style={{ left: currentTimeX }}
+                  >
+                    <div className="absolute -top-1.5 -left-1.5 h-3 w-3 bg-red-500 rounded-full" />
+                  </div>
+                )}
+
+                {rooms.map(room => (
+                  <div
+                    key={room.id}
+                    className="h-24 border-b border-border-light relative hover:bg-slate-50/50 transition-colors"
+                  >
+                    {viewMode === 'day' &&
+                      getBookingsForRoomByDay(room.id, currentDate).map(
+                        booking => (
+                          <div
+                            key={booking.id}
+                            className={`absolute top-2 bottom-2 border-l-4 rounded-r-md px-3 py-2 cursor-pointer hover:shadow-md transition-shadow flex items-center gap-3 overflow-hidden ${getBookingVariantClass(
+                              booking.type
+                            )}`}
+                            style={{
+                              left: Math.max(
+                                0,
+                                getTimePosition(booking.startTime)
+                              ),
+                              width: Math.max(
+                                12,
+                                getTimeWidth(booking.startTime, booking.endTime)
+                              ),
+                            }}
+                          >
+                            {booking.icon && (
+                              <div
+                                className={`p-1 rounded shrink-0 ${booking.type === 'primary' ? 'bg-primary/20' : 'bg-black/5'}`}
+                              >
+                                <span className="material-symbols-outlined text-sm">
+                                  {booking.icon}
+                                </span>
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold truncate">
+                                {booking.title}
+                              </p>
+                              <p className="text-[10px] opacity-70 truncate">
+                                {room.name} · {booking.startTime}-
+                                {booking.endTime}
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      )}
+
+                    {viewMode !== 'day' && (
+                      <div className="absolute inset-0 flex">
+                        {dayColumns.map(day => {
+                          const dayBookings = getBookingsForRoomByDay(
+                            room.id,
+                            day
+                          ).slice(0, 2);
+
+                          return (
+                            <div
+                              key={`${room.id}-${day.toISOString()}`}
+                              className="h-full border-r border-border-light/40 px-1 py-1.5"
+                              style={{ width: DAY_COLUMN_WIDTH }}
+                            >
+                              <div className="flex flex-col gap-1">
+                                {dayBookings.map(booking => (
+                                  <div
+                                    key={booking.id}
+                                    className={`rounded-md border-l-2 px-2 py-1 text-[10px] leading-tight ${getBookingVariantClass(
+                                      booking.type
+                                    )}`}
+                                  >
+                                    <p className="font-semibold truncate">
+                                      {booking.title}
+                                    </p>
+                                    <p className="opacity-70 truncate">
+                                      {booking.startTime}-{booking.endTime}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    <div className="absolute inset-0 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/20 backdrop-blur-sm"
+                      >
+                        + Add
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {!isLoadingBookings &&
+                  !isErrorBookings &&
+                  rooms.length === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-500">
+                      No approved/completed booking requests to display.
+                    </div>
+                  )}
+
+                {isLoadingBookings && (
+                  <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-500 bg-white/70">
+                    Loading schedule from booking requests...
+                  </div>
+                )}
+
+                {isErrorBookings && (
+                  <div className="absolute inset-0 flex items-center justify-center text-sm text-red-600 bg-white/70">
+                    Failed to load approved/completed booking requests.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <AddScheduleBookingModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        rooms={rooms}
+        onAdd={handleAddBooking}
+      />
+    </>
   );
 }

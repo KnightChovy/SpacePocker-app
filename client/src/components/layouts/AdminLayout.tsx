@@ -66,15 +66,9 @@ export default function AdminLayout() {
       items: [
         {
           id: 'settings',
-          label: 'Settings',
+          label: 'Profile',
           path: '/admin/settings',
           icon: 'settings',
-        },
-        {
-          id: 'security',
-          label: 'Security Logs',
-          path: '/admin/security',
-          icon: 'shield',
         },
       ],
     },
