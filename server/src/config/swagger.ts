@@ -21,7 +21,7 @@ export const swaggerSpec = swaggerJSDoc({
         description: "Booking Request APIs - Manage room booking requests",
       },
       {
-        name: "Booking Request - Payment",
+        name: "Payment",
         description: "Payment processing for booking requests",
       },
       { name: "User", description: "User management APIs" },
@@ -30,7 +30,7 @@ export const swaggerSpec = swaggerJSDoc({
       { name: "Amenity", description: "Amenity management APIs" },
       { name: "Service", description: "Service management APIs" },
       {
-        name: "Service Category",
+        name: "ServiceCategory",
         description: "Service Category management APIs",
       },
       { name: "Booking", description: "Booking APIs" },
