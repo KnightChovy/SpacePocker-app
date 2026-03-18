@@ -66,7 +66,7 @@
  *         RspCode:
  *           type: string
  *           example: "97"
- *           description: "97" = invalid checksum, "24" = user cancel, "99" = unknown error
+ *           description: "Code 97 means invalid checksum, code 24 means user cancel, and code 99 means unknown error"
  *         Message:
  *           type: string
  *           example: "Invalid checksum"
@@ -188,12 +188,12 @@
  *         name: vnp_ResponseCode
  *         schema:
  *           type: string
- *         description: "00" = success
+ *         description: "Code 00 means success"
  *       - in: query
  *         name: vnp_TransactionStatus
  *         schema:
  *           type: string
- *         description: "00" = success
+ *         description: "Code 00 means success"
  *       - in: query
  *         name: vnp_SecureHash
  *         schema:
