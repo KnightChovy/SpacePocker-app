@@ -1,12 +1,18 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Space } from '@/types/types';
 import { Button } from '../ui/button';
 import { formatVND } from '@/lib/utils';
 
 const SpaceCard: React.FC<{ space: Space }> = ({ space }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="card-hover group flex flex-col overflow-hidden bg-white rounded-2xl border border-slate-100">
-      <div className="relative aspect-16/10 w-full overflow-hidden">
+      <div
+        className="relative aspect-16/10 w-full overflow-hidden cursor-pointer"
+        onClick={() => navigate(`/spaces/detail/${space.id}`)}
+      >
         <img
           src={space.imageUrl}
           alt={space.name}
@@ -16,7 +22,10 @@ const SpaceCard: React.FC<{ space: Space }> = ({ space }) => {
 
       <div className="p-5">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-bold text-secondary text-lg truncate pr-4">
+          <h3
+            className="font-bold text-secondary text-lg truncate pr-4 cursor-pointer hover:text-primary transition-colors"
+            onClick={() => navigate(`/spaces/detail/${space.id}`)}
+          >
             {space.name}
           </h3>
           <div className="flex items-center gap-1">
@@ -34,7 +43,10 @@ const SpaceCard: React.FC<{ space: Space }> = ({ space }) => {
             </span>
             <span className="text-xs text-slate-400 font-medium"> / hour</span>
           </div>
-          <Button className="text-xs font-bold text-primary bg-primary/5 px-3 py-1.5 rounded-full hover:bg-primary/10 transition-colors cursor-pointer">
+          <Button
+            className="text-xs font-bold text-primary bg-primary/5 px-3 py-1.5 rounded-full hover:bg-primary/10 transition-colors cursor-pointer"
+            onClick={() => navigate(`/spaces/detail/${space.id}`)}
+          >
             Details
           </Button>
         </div>

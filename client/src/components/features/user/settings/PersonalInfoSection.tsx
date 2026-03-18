@@ -50,9 +50,9 @@ const PersonalInfoSection = ({
               <button className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-lg transition-colors">
                 Change
               </button>
-              <button className="px-3 py-1.5 bg-background-light dark:bg-background-dark text-text-sub-light hover:text-red-500 text-xs font-bold rounded-lg transition-colors border border-transparent hover:border-red-200">
+              {/* <button className="px-3 py-1.5 bg-background-light dark:bg-background-dark text-text-sub-light hover:text-red-500 text-xs font-bold rounded-lg transition-colors border border-transparent hover:border-red-200">
                 Remove
-              </button>
+              </button> */}
             </div>
           </div>
         </div>

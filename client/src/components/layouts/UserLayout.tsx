@@ -60,12 +60,6 @@ const UserLayout: React.FC = () => {
 
   const footerCards = [
     {
-      title: 'Need Help?',
-      description: 'Contact our support team for any booking issues.',
-      buttonText: 'Contact Support',
-      variant: 'help' as const,
-    },
-    {
       renderCustom: () => (
         <button
           onClick={handleLogout}
