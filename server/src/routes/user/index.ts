@@ -6,19 +6,27 @@ import "../../docs/user.doc";
 
 const router = express.Router();
 
-router.use(authentication);
-
 // User can get their own profile
-router.get("/users/profile", asyncHandler(userController.getUserProfile));
-router.patch("/users/profile", asyncHandler(userController.updateUserProfile));
+router.get(
+  "/users/profile",
+  authentication,
+  asyncHandler(userController.getUserProfile),
+);
+router.patch(
+  "/users/profile",
+  authentication,
+  asyncHandler(userController.updateUserProfile),
+);
 router.patch(
   "/users/change-password",
+  authentication,
   asyncHandler(userController.changePassword),
 );
 
 // Admin and Manager can get list of users
 router.get(
   "/users",
+  authentication,
   authorizeRoles("ADMIN", "MANAGER"),
   asyncHandler(userController.getUsers),
 );
