@@ -253,6 +253,54 @@ export default class BookingRequestService {
     };
   }
 
+  async createBookingRequestAndPaymentUrlForMobile(data: {
+    userId: string;
+    roomId: string;
+    startTime: string;
+    endTime: string;
+    purpose?: string;
+    amenityIds?: string[];
+    services?: Array<{ serviceId: string; quantity: number }>;
+    ipAddr: string;
+    locale?: "vn" | "en";
+  }) {
+    const bookingRequest = await this.createBookingRequest({
+      userId: data.userId,
+      roomId: data.roomId,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      purpose: data.purpose,
+      amenityIds: data.amenityIds,
+      services: data.services,
+    });
+
+    const room = await this.roomRepo.findById(data.roomId);
+    if (!room) {
+      throw new NotFoundError("Room with id not found");
+    }
+
+    await prisma.bookingRequest.update({
+      where: { id: bookingRequest.id },
+      data: {
+        status: "APPROVED",
+        approvedBy: room.managerId,
+      },
+    });
+
+    const paymentPayload =
+      await this.createPaymentUrlForApprovedBookingRequest({
+        bookingRequestId: bookingRequest.id,
+        userId: data.userId,
+        ipAddr: data.ipAddr,
+        locale: data.locale,
+      });
+
+    return {
+      ...paymentPayload,
+      status: "APPROVED",
+    };
+  }
+
   async getBookingRequestById(id: string) {
     const bookingRequest = await this.bookingRequestRepo.findById(id);
     if (!bookingRequest) {
@@ -651,8 +699,23 @@ export default class BookingRequestService {
     });
 
     if (existingBooking) {
+      if (bookingRequest.status !== "COMPLETED") {
+        await tx.bookingRequest.update({
+          where: { id: bookingRequest.id },
+          data: { status: "COMPLETED" },
+        });
+      }
+
+      const completedBooking =
+        existingBooking.status === "COMPLETED"
+          ? existingBooking
+          : await tx.booking.update({
+              where: { id: existingBooking.id },
+              data: { status: "COMPLETED" },
+            });
+
       return {
-        booking: existingBooking,
+        booking: completedBooking,
         bookingRequest,
         created: false,
       };
@@ -671,8 +734,13 @@ export default class BookingRequestService {
         startTime: bookingRequest.startTime,
         endTime: bookingRequest.endTime,
         purpose: bookingRequest.purpose,
-        status: "APPROVED",
+        status: "COMPLETED",
       },
+    });
+
+    await tx.bookingRequest.update({
+      where: { id: bookingRequest.id },
+      data: { status: "COMPLETED" },
     });
 
     return {

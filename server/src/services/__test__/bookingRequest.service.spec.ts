@@ -530,6 +530,56 @@ describe("BookingRequestService", () => {
     });
   });
 
+  describe("createBookingRequestAndPaymentUrlForMobile()", () => {
+    it("should auto-approve newly created request and return payment url", async () => {
+      const startTime = futureStartTime.toISOString();
+      const endTime = futureEndTime.toISOString();
+
+      jest
+        .spyOn(bookingRequestService, "createBookingRequest")
+        .mockResolvedValue({ id: "br-mobile-1" } as any);
+      jest
+        .spyOn(bookingRequestService, "createPaymentUrlForApprovedBookingRequest")
+        .mockResolvedValue({
+          paymentUrl: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?...",
+          txnRef: "br_br-mobile-1_1710000000000",
+          amount: 100000,
+          bookingRequestId: "br-mobile-1",
+          roomName: "Meeting Room A",
+        });
+
+      mockRoomRepo.findById.mockResolvedValue(mockRoom);
+      prismaMock.bookingRequest.update.mockResolvedValue({
+        id: "br-mobile-1",
+      });
+
+      const result =
+        await bookingRequestService.createBookingRequestAndPaymentUrlForMobile({
+          userId: "u-001",
+          roomId: "r-001",
+          startTime,
+          endTime,
+          ipAddr: "127.0.0.1",
+          locale: "vn",
+        });
+
+      expect(prismaMock.bookingRequest.update).toHaveBeenCalledWith({
+        where: { id: "br-mobile-1" },
+        data: {
+          status: "APPROVED",
+          approvedBy: "m-001",
+        },
+      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          bookingRequestId: "br-mobile-1",
+          status: "APPROVED",
+          paymentUrl: expect.any(String),
+        }),
+      );
+    });
+  });
+
   describe("getBookingRequestById()", () => {
     it("should return booking request if found", async () => {
       mockBookingRequestRepo.findById.mockResolvedValue(mockBookingRequest);
@@ -551,6 +601,147 @@ describe("BookingRequestService", () => {
       await expect(
         bookingRequestService.getBookingRequestById("non-existent"),
       ).rejects.toThrow("Booking request with id not found");
+    });
+  });
+
+  describe("processVnpayPayment()", () => {
+    it("should set bookingRequest and booking status to COMPLETED when payment succeeds", async () => {
+      mockVnpayService.verifyQuery.mockReturnValue(true);
+      mockVnpayService.extractBookingRequestId.mockReturnValue("br-001");
+
+      const tx = {
+        bookingRequest: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: "br-001",
+            userId: "u-001",
+            roomId: "r-001",
+            startTime: new Date("2026-02-10T09:00:00Z"),
+            endTime: new Date("2026-02-10T11:00:00Z"),
+            purpose: "Team meeting",
+            status: "APPROVED",
+            user: {
+              id: "u-001",
+              name: "Test User",
+              email: "test@example.com",
+            },
+            room: {
+              id: "r-001",
+              name: "Meeting Room A",
+            },
+          }),
+          update: jest.fn().mockResolvedValue({ id: "br-001", status: "COMPLETED" }),
+        },
+        booking: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          create: jest.fn().mockResolvedValue({
+            id: "b-001",
+            status: "COMPLETED",
+            startTime: new Date("2026-02-10T09:00:00Z"),
+            endTime: new Date("2026-02-10T11:00:00Z"),
+          }),
+          update: jest.fn(),
+        },
+      };
+
+      prismaMock.$transaction.mockImplementation(async (callback: any) =>
+        callback(tx),
+      );
+
+      const result = await bookingRequestService.processVnpayPayment({
+        vnp_TxnRef: "txn-ref-1",
+        vnp_ResponseCode: "00",
+        vnp_TransactionStatus: "00",
+        vnp_SecureHash: "valid-hash",
+      });
+
+      expect(tx.booking.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ status: "COMPLETED" }),
+      });
+      expect(tx.bookingRequest.update).toHaveBeenCalledWith({
+        where: { id: "br-001" },
+        data: { status: "COMPLETED" },
+      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          success: true,
+          bookingRequestId: "br-001",
+          bookingId: "b-001",
+          alreadyProcessed: false,
+        }),
+      );
+    });
+
+    it("should complete existing APPROVED booking and bookingRequest on successful reprocessing", async () => {
+      mockVnpayService.verifyQuery.mockReturnValue(true);
+      mockVnpayService.extractBookingRequestId.mockReturnValue("br-001");
+
+      const tx = {
+        bookingRequest: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: "br-001",
+            userId: "u-001",
+            roomId: "r-001",
+            startTime: new Date("2026-02-10T09:00:00Z"),
+            endTime: new Date("2026-02-10T11:00:00Z"),
+            purpose: "Team meeting",
+            status: "APPROVED",
+            user: {
+              id: "u-001",
+              name: "Test User",
+              email: "test@example.com",
+            },
+            room: {
+              id: "r-001",
+              name: "Meeting Room A",
+            },
+          }),
+          update: jest.fn().mockResolvedValue({ id: "br-001", status: "COMPLETED" }),
+        },
+        booking: {
+          findFirst: jest.fn().mockResolvedValue({
+            id: "b-001",
+            status: "APPROVED",
+            startTime: new Date("2026-02-10T09:00:00Z"),
+            endTime: new Date("2026-02-10T11:00:00Z"),
+          }),
+          create: jest.fn(),
+          update: jest.fn().mockResolvedValue({
+            id: "b-001",
+            status: "COMPLETED",
+            startTime: new Date("2026-02-10T09:00:00Z"),
+            endTime: new Date("2026-02-10T11:00:00Z"),
+          }),
+        },
+      };
+
+      prismaMock.$transaction.mockImplementation(async (callback: any) =>
+        callback(tx),
+      );
+
+      const result = await bookingRequestService.processVnpayPayment({
+        vnp_TxnRef: "txn-ref-1",
+        vnp_ResponseCode: "00",
+        vnp_TransactionStatus: "00",
+        vnp_SecureHash: "valid-hash",
+      });
+
+      expect(tx.booking.update).toHaveBeenCalledWith({
+        where: { id: "b-001" },
+        data: { status: "COMPLETED" },
+      });
+      expect(tx.bookingRequest.update).toHaveBeenCalledWith({
+        where: { id: "br-001" },
+        data: { status: "COMPLETED" },
+      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          success: true,
+          bookingRequestId: "br-001",
+          bookingId: "b-001",
+          alreadyProcessed: true,
+        }),
+      );
+      expect(mockMailQueueService.publishBookingConfirmedEmailJob).not.toHaveBeenCalled();
     });
   });
 });

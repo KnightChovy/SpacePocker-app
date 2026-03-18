@@ -11,6 +11,12 @@ router.post(
   asyncHandler(bookingRequestController.createBookingRequest),
 );
 router.post(
+  "/mobile/booking-requests/payment-url",
+  authentication,
+  authorizeRoles("USER"),
+  asyncHandler(bookingRequestController.createMobileBookingRequestAndPaymentUrl),
+);
+router.post(
   "/booking-requests/:id/payment-url",
   authentication,
   authorizeRoles("USER"),
