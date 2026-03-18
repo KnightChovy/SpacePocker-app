@@ -56,11 +56,25 @@ export default class AccessService {
     const match = await bcrypt.compare(password, foundUser.password);
     if (!match) throw new BadRequestError("Password is incorrect");
 
-    const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
-      modulusLength: 2048,
-      publicKeyEncoding: { type: "spki", format: "pem" },
-      privateKeyEncoding: { type: "pkcs8", format: "pem" },
-    });
+    // Check if keys already exist for this user
+    let existingKey = await this.keyRepo.findByUserId(foundUser.id);
+    let publicKey: string;
+    let privateKey: string;
+
+    if (existingKey && existingKey.publicKey && existingKey.privateKey) {
+      // Reuse existing keys
+      publicKey = existingKey.publicKey;
+      privateKey = existingKey.privateKey;
+    } else {
+      // Generate new keys only if they don't exist
+      const keyPair = crypto.generateKeyPairSync("rsa", {
+        modulusLength: 2048,
+        publicKeyEncoding: { type: "spki", format: "pem" },
+        privateKeyEncoding: { type: "pkcs8", format: "pem" },
+      });
+      publicKey = keyPair.publicKey;
+      privateKey = keyPair.privateKey;
+    }
 
     const tokens = await createTokenPair(
       { userId: foundUser.id, email: foundUser.email, role: foundUser.role },

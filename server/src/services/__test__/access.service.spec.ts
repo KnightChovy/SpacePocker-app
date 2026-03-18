@@ -107,6 +107,9 @@ describe("AccessService", () => {
 
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
+      // Mock no existing keys, so new ones will be generated
+      keyRepo.findByUserId.mockResolvedValue(null);
+
       (crypto.generateKeyPairSync as jest.Mock).mockReturnValue({
         publicKey: "PUBLIC_KEY",
         privateKey: "PRIVATE_KEY",
@@ -133,6 +136,57 @@ describe("AccessService", () => {
         "u1",
         "PUBLIC_KEY",
         "PRIVATE_KEY",
+        "REFRESH_TOKEN",
+      );
+    });
+
+    it("should login using existing keys if they exist", async () => {
+      userRepo.findByEmail.mockResolvedValue({
+        id: "u1",
+        email: "a@gmail.com",
+        name: "A",
+        password: "hashed",
+      });
+
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+      // Mock existing keys
+      keyRepo.findByUserId.mockResolvedValue({
+        publicKey: "EXISTING_PUBLIC_KEY",
+        privateKey: "EXISTING_PRIVATE_KEY",
+      });
+
+      (createTokenPair as jest.Mock).mockResolvedValue({
+        accessToken: "ACCESS_TOKEN",
+        refreshToken: "REFRESH_TOKEN",
+      });
+
+      keyTokenService.createKeyToken.mockResolvedValue(true);
+
+      const result = await accessService.login({
+        email: "a@gmail.com",
+        password: "123",
+      });
+
+      expect(result).toEqual({
+        user: { id: "u1", name: "A", email: "a@gmail.com" },
+        tokens: { accessToken: "ACCESS_TOKEN", refreshToken: "REFRESH_TOKEN" },
+      });
+
+      // Verify createTokenPair was called with existing keys, not new ones
+      expect(createTokenPair).toHaveBeenCalledWith(
+        expect.any(Object),
+        "EXISTING_PUBLIC_KEY",
+        "EXISTING_PRIVATE_KEY",
+      );
+
+      // generateKeyPairSync should not be called
+      expect(crypto.generateKeyPairSync).not.toHaveBeenCalled();
+
+      expect(keyTokenService.createKeyToken).toHaveBeenCalledWith(
+        "u1",
+        "EXISTING_PUBLIC_KEY",
+        "EXISTING_PRIVATE_KEY",
         "REFRESH_TOKEN",
       );
     });
