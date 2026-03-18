@@ -167,6 +167,18 @@
  *       properties:
  *         message:
  *           type: string
+ *           example: "Success"
+ *         reason:
+ *           type: string
+ *           example: "Success"
+ *         metadata:
+ *           $ref: "#/components/schemas/BookingRequest"
+
+ *     CreateBookingRequestResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
  *           example: "Booking request created successfully"
  *         reason:
  *           type: string
@@ -225,7 +237,10 @@
  *             bookingRequest:
  *               $ref: "#/components/schemas/BookingRequest"
  *             booking:
- *               $ref: "#/components/schemas/Booking"
+ *               nullable: true
+ *               oneOf:
+ *                 - $ref: "#/components/schemas/Booking"
+ *                 - type: "null"
  *
  *     BookingRequestListResponse:
  *       type: object
@@ -292,7 +307,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: "#/components/schemas/BookingRequestResponse"
+ *               $ref: "#/components/schemas/CreateBookingRequestResponse"
  *       400:
  *         description: Invalid request data or invalid amenities/services selection
  *         content:
@@ -446,7 +461,7 @@
  * @openapi
  * /v1/api/booking-requests/approve/{id}:
  *   patch:
- *     summary: Approve booking request and create booking
+ *     summary: Approve booking request
  *     description: |
  *       Manager approves a pending booking request.
  *
@@ -456,7 +471,8 @@
  *       - Conflict check uses overlap rule:
  *         (startTime < requestedEndTime) AND (endTime > requestedStartTime)
  *       - Earliest pending request has priority for overlapping slot
- *       - On success, creates Booking with status APPROVED
+ *       - On success, booking request is moved to APPROVED
+ *       - Booking is created later after successful VNPAY confirmation
  *     tags: [Booking Request]
  *     security:
  *       - bearerAuth: []
@@ -482,7 +498,7 @@
  *         description: Booking request ID
  *     responses:
  *       200:
- *         description: Booking request approved and booking created
+ *         description: Booking request approved successfully
  *         content:
  *           application/json:
  *             schema:
@@ -589,6 +605,9 @@
  *                 message:
  *                   type: string
  *                   example: "Get my booking requests successfully"
+ *                 reason:
+ *                   type: string
+ *                   example: "Success"
  *                 metadata:
  *                   type: array
  *                   items:
