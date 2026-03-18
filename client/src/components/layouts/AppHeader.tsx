@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { Menu, Search, ChevronDown } from 'lucide-react';
+import { Menu, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -203,9 +203,6 @@ export default function AppHeader({
                 </span>
               )}
             </div>
-            {profile.showDropdown && (
-              <ChevronDown className="hidden lg:block h-4 w-4 text-slate-400 dark:text-text-sub-dark" />
-            )}
           </button>
         )}
       </div>

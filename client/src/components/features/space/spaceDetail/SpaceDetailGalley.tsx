@@ -7,10 +7,11 @@ interface SpaceDetailGalleryProps {
 
 const SpaceDetailGallery: React.FC<SpaceDetailGalleryProps> = ({ images }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const hasMultipleImages = images.length > 1;
 
   if (!images || images.length === 0) {
     return (
-      <div className="w-full aspect-21/9 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center">
+      <div className="mx-auto w-full max-w-5xl aspect-video rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center">
         <div className="text-center text-gray-500">
           <Image className="w-10 h-10 mx-auto mb-2" />
           <p className="text-sm font-medium">No photos available</p>
@@ -21,9 +22,11 @@ const SpaceDetailGallery: React.FC<SpaceDetailGalleryProps> = ({ images }) => {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-100 md:h-137.5 overflow-hidden rounded-2xl relative">
+      <div
+        className={`mx-auto w-full max-w-5xl grid grid-cols-1 ${hasMultipleImages ? 'md:grid-cols-4 gap-4 h-100 md:h-137.5' : 'gap-0 aspect-video'} overflow-hidden rounded-2xl relative`}
+      >
         <div
-          className="md:col-span-2 md:row-span-2 relative group overflow-hidden cursor-pointer"
+          className={`relative group overflow-hidden cursor-pointer ${hasMultipleImages ? 'md:col-span-2 md:row-span-2' : 'w-full h-full'}`}
           onClick={() => setIsModalOpen(true)}
         >
           <div
@@ -33,27 +36,28 @@ const SpaceDetailGallery: React.FC<SpaceDetailGalleryProps> = ({ images }) => {
           <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
         </div>
 
-        {images.slice(1, 5).map((image, idx) => (
-          <div
-            key={idx}
-            className="hidden md:block relative group overflow-hidden cursor-pointer"
-            onClick={() => setIsModalOpen(true)}
-          >
+        {hasMultipleImages &&
+          images.slice(1, 5).map((image, idx) => (
             <div
-              className="w-full h-full bg-center bg-cover transition-transform duration-700 group-hover:scale-105"
-              style={{ backgroundImage: `url(${image})` }}
-            />
-            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
-            {idx === 3 && (
-              <button className="absolute bottom-4 right-4 bg-white/95 backdrop-blur shadow-lg px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-white transition-all transform active:scale-95">
-                <span className="">
-                  <Image />
-                </span>
-                Show all photos
-              </button>
-            )}
-          </div>
-        ))}
+              key={idx}
+              className="hidden md:block relative group overflow-hidden cursor-pointer"
+              onClick={() => setIsModalOpen(true)}
+            >
+              <div
+                className="w-full h-full bg-center bg-cover transition-transform duration-700 group-hover:scale-105"
+                style={{ backgroundImage: `url(${image})` }}
+              />
+              <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
+              {idx === 3 && (
+                <button className="absolute bottom-4 right-4 bg-white/95 backdrop-blur shadow-lg px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-white transition-all transform active:scale-95">
+                  <span className="">
+                    <Image />
+                  </span>
+                  Show all photos
+                </button>
+              )}
+            </div>
+          ))}
       </div>
 
       {isModalOpen && (

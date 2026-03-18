@@ -105,7 +105,7 @@ const Dashboard = () => {
         title="Dashboard"
         hideTitle={false}
         onMenuClick={() => setSidebarOpen(true)}
-        showSearch={true}
+        showSearch={false}
         searchPlaceholder="Search for spaces, bookings..."
         actions={headerActions}
         rightExtra={<BookingNotificationsBell />}
