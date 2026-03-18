@@ -20,7 +20,7 @@ const SystemHealth: React.FC<Props> = ({ logs }) => {
               terminal
             </span>
             <span className="text-[11px] font-mono font-bold text-gray-400 uppercase tracking-widest">
-              System Health
+              System Log
             </span>
           </div>
         </div>

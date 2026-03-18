@@ -10,20 +10,14 @@ import {
 } from 'recharts';
 import { formatVND } from '@/lib/utils';
 
-const data = [
-  { name: 'Jan', value: 3000 },
-  { name: 'Feb', value: 3500 },
-  { name: 'Mar', value: 2800 },
-  { name: 'Apr', value: 4200 },
-  { name: 'May', value: 3800 },
-  { name: 'Jun', value: 5000 },
-  { name: 'Jul', value: 4500 },
-  { name: 'Aug', value: 5800 },
-  { name: 'Sep', value: 5200 },
-  { name: 'Oct', value: 6500 },
-  { name: 'Nov', value: 6000 },
-  { name: 'Dec', value: 7200 },
-];
+interface TransactionChartPoint {
+  name: string;
+  value: number;
+}
+
+interface Props {
+  data: TransactionChartPoint[];
+}
 
 const CustomTooltip = ({
   active,
@@ -43,7 +37,7 @@ const CustomTooltip = ({
   return null;
 };
 
-const TransactionChart: React.FC = () => {
+const TransactionChart: React.FC<Props> = ({ data }) => {
   return (
     <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
@@ -61,10 +55,6 @@ const TransactionChart: React.FC = () => {
             <span className="text-xs font-bold text-indigo-700">
               Current Year
             </span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200">
-            <div className="w-2.5 h-2.5 rounded-full bg-gray-300"></div>
-            <span className="text-xs font-bold text-gray-500">Last Year</span>
           </div>
         </div>
       </div>

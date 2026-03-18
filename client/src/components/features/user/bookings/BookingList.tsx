@@ -28,9 +28,16 @@ import { formatVND } from '@/lib/utils';
 type BookingListProps = {
   bookings: BookingUser[];
   requests: MyBookingRequest[];
+  onCancelRequest?: (requestId: string) => Promise<void> | void;
+  isCancelling?: boolean;
 };
 
-const BookingList = ({ bookings, requests }: BookingListProps) => {
+const BookingList = ({
+  bookings,
+  requests,
+  onCancelRequest,
+  isCancelling = false,
+}: BookingListProps) => {
   const amenitiesQuery = useGetAmenities();
   const serviceCategoriesQuery = useGetServiceCategories();
 
@@ -261,6 +268,11 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
 
         const canPay = req?.status === 'APPROVED';
         const isPaid = req?.status === 'COMPLETED';
+        const canCancelRequest =
+          !!req?.id &&
+          req.status !== 'COMPLETED' &&
+          req.status !== 'CANCELLED' &&
+          req.status !== 'REJECTED';
 
         return (
           <div
@@ -331,6 +343,17 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
                 >
                   Get Detail
                 </button>
+
+                {canCancelRequest ? (
+                  <button
+                    type="button"
+                    onClick={() => onCancelRequest?.(req.id)}
+                    disabled={isCancelling}
+                    className="px-4 py-2 rounded-xl text-sm font-bold border border-red-200 text-red-600 hover:bg-red-50 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {isCancelling ? 'Cancelling...' : 'Cancel Booking'}
+                  </button>
+                ) : null}
 
                 {canPay ? (
                   <button

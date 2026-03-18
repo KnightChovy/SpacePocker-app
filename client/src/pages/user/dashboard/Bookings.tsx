@@ -13,6 +13,7 @@ import PaginationButton from '@/components/features/user/bookings/PaginationButt
 import BookingList from '@/components/features/user/bookings/BookingList';
 import BookingNotificationsBell from '@/components/features/user/dashboard/BookingNotificationsBell';
 import { useGetMyBookingRequests } from '@/hooks/user/booking-requests/use-get-my-booking-requests';
+import { useCancelMyBookingRequest } from '@/hooks/user/booking-requests/use-cancel-my-booking-request';
 import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
 import type { BookingUser } from '@/types/user-type';
 import type {
@@ -74,8 +75,9 @@ const mapStatusToUserLabel = (status: BookingRequestStatus) => {
     case 'COMPLETED':
       return 'Completed' as const;
     case 'CANCELLED':
-    case 'REJECTED':
       return 'Cancelled' as const;
+    case 'REJECTED':
+      return 'Rejected' as const;
     default:
       return 'Pending Approval' as const;
   }
@@ -120,6 +122,7 @@ const mapMyBookingRequestToBookingUser = (
 };
 
 const Bookings = () => {
+  const PAGE_SIZE = 10;
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
@@ -128,6 +131,7 @@ const Bookings = () => {
   const user = useAuthStore(state => state.user);
   const [activeTab, setActiveTab] = useState<'Active' | 'Cancelled'>('Active');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState<DateRangeValue>({
     from: '',
     to: '',
@@ -205,6 +209,7 @@ const Bookings = () => {
     isLoading,
     isError,
   } = useGetMyBookingRequests();
+  const cancelMyBookingRequestMutation = useCancelMyBookingRequest();
 
   const cancelledStatuses: BookingRequestStatus[] = ['CANCELLED', 'REJECTED'];
 
@@ -295,7 +300,31 @@ const Bookings = () => {
     searchQuery,
   ]);
 
-  const bookingsForTab = filteredRequestsForTab.map(req => {
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    activeTab,
+    searchQuery,
+    dateRange.from,
+    dateRange.to,
+    effectiveSelectedBuildingId,
+  ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredRequestsForTab.length / PAGE_SIZE)
+  );
+
+  useEffect(() => {
+    setCurrentPage(prev => Math.min(prev, totalPages));
+  }, [totalPages]);
+
+  const paginatedRequests = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredRequestsForTab.slice(start, start + PAGE_SIZE);
+  }, [currentPage, filteredRequestsForTab]);
+
+  const bookingsForTab = paginatedRequests.map(req => {
     const start = new Date(req.startTime);
     const end = new Date(req.endTime);
     const hours = Math.max(0, (end.getTime() - start.getTime()) / 3600000);
@@ -318,6 +347,16 @@ const Bookings = () => {
 
     return mapMyBookingRequestToBookingUser(req, totalPrice);
   });
+
+  const handleCancelBookingRequest = async (bookingRequestId: string) => {
+    if (!bookingRequestId) return;
+
+    if (!window.confirm('Cancel this booking request?')) {
+      return;
+    }
+
+    await cancelMyBookingRequestMutation.mutateAsync(bookingRequestId);
+  };
 
   const headerActions = [
     {
@@ -526,16 +565,36 @@ const Bookings = () => {
           ) : (
             <BookingList
               bookings={bookingsForTab}
-              requests={filteredRequestsForTab}
+              requests={paginatedRequests}
+              onCancelRequest={handleCancelBookingRequest}
+              isCancelling={cancelMyBookingRequestMutation.isPending}
             />
           )}
 
           <div className="flex items-center justify-center gap-2 py-4">
-            <PaginationButton icon="left" disabled />
-            <PaginationButton label="1" active />
-            <PaginationButton label="2" />
-            <PaginationButton label="3" />
-            <PaginationButton icon="right" />
+            <PaginationButton
+              icon="left"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            />
+            {Array.from({ length: totalPages }, (_, index) => {
+              const page = index + 1;
+              return (
+                <PaginationButton
+                  key={page}
+                  label={String(page)}
+                  active={page === currentPage}
+                  onClick={() => setCurrentPage(page)}
+                />
+              );
+            })}
+            <PaginationButton
+              icon="right"
+              disabled={currentPage === totalPages}
+              onClick={() =>
+                setCurrentPage(prev => Math.min(totalPages, prev + 1))
+              }
+            />
           </div>
         </div>
       </div>

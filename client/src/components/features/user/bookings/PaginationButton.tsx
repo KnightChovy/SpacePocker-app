@@ -6,8 +6,11 @@ const PaginationButton: React.FC<{
   label?: string;
   active?: boolean;
   disabled?: boolean;
-}> = ({ icon, label, active, disabled }) => (
+  onClick?: () => void;
+}> = ({ icon, label, active, disabled, onClick }) => (
   <button
+    type="button"
+    onClick={onClick}
     disabled={disabled}
     className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${
       active

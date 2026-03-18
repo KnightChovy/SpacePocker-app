@@ -168,20 +168,6 @@ const ServicesPage = () => {
     deleteMutation.mutate(service.id);
   };
 
-  const headerActions = [
-    {
-      id: 'add-service',
-      icon: (
-        <span className="material-symbols-outlined text-[20px]">
-          add_circle
-        </span>
-      ),
-      label: 'Add Service',
-      variant: 'primary' as const,
-      onClick: openCreate,
-    },
-  ];
-
   return (
     <>
       <AppHeader
@@ -192,7 +178,6 @@ const ServicesPage = () => {
         searchPlaceholder="Search services..."
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
-        actions={headerActions}
         profile={{
           name: authUser?.name || 'Admin',
           subtitle: authUser?.role || 'ADMIN',
