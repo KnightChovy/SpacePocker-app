@@ -50,7 +50,7 @@ const UserLayout: React.FC = () => {
         },
         {
           id: 'settings',
-          label: 'Settings',
+          label: 'Profile',
           path: '/user/settings',
           icon: <Settings />,
         },

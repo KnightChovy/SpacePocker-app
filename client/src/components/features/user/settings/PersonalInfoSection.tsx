@@ -59,18 +59,18 @@ const PersonalInfoSection = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <InputField
-            label="Full Name"
-            icon="person"
-            value={name}
-            onChange={onNameChange}
-          />
-          <InputField label="Role / Title" icon="work" value={role} disabled />
-          <InputField
             label="Email Address"
             icon="mail"
             value={email}
             type="email"
             disabled
+          />
+            <InputField label="Role / Title" icon="work" value={role} disabled />
+          <InputField
+            label="Full Name"
+            icon="person"
+            value={name}
+            onChange={onNameChange}
           />
           <InputField
             label="Phone Number"
