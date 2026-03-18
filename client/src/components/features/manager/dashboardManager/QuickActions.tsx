@@ -1,4 +1,4 @@
-import { PlusCircle, Wrench, UserPlus, type LucideIcon } from 'lucide-react';
+import { PlusCircle, Wrench, type LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface ActionItemProps {
@@ -34,10 +34,6 @@ export const QuickActions = () => {
     navigate('/manager/schedule');
   };
 
-  const handleAddUser = () => {
-    console.log('Add user clicked - feature coming soon');
-  };
-
   return (
     <div className="p-6 rounded-xl bg-white/60 backdrop-blur-md border border-gray-100 shadow-sm">
       <h3 className="text-lg font-bold text-slate-800 mb-4">Quick Actions</h3>
@@ -55,13 +51,6 @@ export const QuickActions = () => {
           color="text-amber-600"
           bg="bg-amber-100"
           onClick={handleMaintenance}
-        />
-        <ActionItem
-          Icon={UserPlus}
-          label="Add User"
-          color="text-teal-600"
-          bg="bg-teal-100"
-          onClick={handleAddUser}
         />
       </div>
     </div>
