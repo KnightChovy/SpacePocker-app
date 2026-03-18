@@ -505,6 +505,63 @@
           ]
         }
       }
+    },
+    {
+      "name": "7) Manager Refund-Cancel Paid Booking + Queue Refund Mail",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "x-client-id",
+            "value": "{{managerUserId}}"
+          },
+          {
+            "key": "authorization",
+            "value": "{{managerAccessToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"{{refundReason}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/api/manager/bookings/{{bookingId}}/refund-cancel",
+          "host": ["{{baseUrl}}"],
+          "path": [
+            "v1",
+            "api",
+            "manager",
+            "bookings",
+            "{{bookingId}}",
+            "refund-cancel"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.test('refund status is SUCCESS', function () {",
+              "  pm.expect(json.metadata.refund.status).to.eql('SUCCESS');",
+              "});",
+              "pm.test('booking status is CANCELLED', function () {",
+              "  pm.expect(json.metadata.booking.status).to.eql('CANCELLED');",
+              "});"
+            ]
+          }
+        }
+      ]
     }
   ]
 }

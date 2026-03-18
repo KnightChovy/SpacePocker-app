@@ -43,6 +43,21 @@ class BookingController {
       ),
     }).send(res);
   };
+
+  managerCancelPaidBookingAndNotifyRefund = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    new OK({
+      message: "Booking cancelled and refund email queued successfully",
+      metadata: await this.bookingService.managerCancelPaidBookingAndNotifyRefund(
+        String(req.params.id),
+        String(req.user?.userId),
+        typeof req.body?.reason === "string" ? req.body.reason : undefined,
+      ),
+    }).send(res);
+  };
 }
 
 export default BookingController;

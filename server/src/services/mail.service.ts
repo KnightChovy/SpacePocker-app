@@ -9,6 +9,15 @@ type SendBookingConfirmedEmailInput = {
   endTime: Date;
 };
 
+type SendBookingRefundSuccessEmailInput = {
+  to: string;
+  customerName: string;
+  bookingId: string;
+  roomName: string;
+  refundAmount: number;
+  refundReason?: string;
+};
+
 export default class MailService {
   private readonly transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -92,6 +101,39 @@ export default class MailService {
         <p style="font-size: 24px; font-weight: 700; letter-spacing: 4px;"><strong>${input.otp}</strong></p>
         <p>Ma OTP co hieu luc trong <strong>10 phut</strong>.</p>
         <p>Neu ban khong yeu cau, vui long bo qua email nay.</p>
+      `,
+    });
+  }
+
+  async sendBookingRefundSuccessEmail(input: SendBookingRefundSuccessEmailInput) {
+    const amount = `${Math.round(input.refundAmount).toLocaleString("vi-VN")} VND`;
+    const reason = input.refundReason?.trim();
+
+    await this.transporter.sendMail({
+      from: this.getFromAddress(),
+      to: input.to,
+      subject: "Thong bao hoan tien thanh cong - SpacePocker",
+      text: [
+        `Xin chao ${input.customerName},`,
+        "",
+        "Booking cua ban da duoc huy boi quan ly va hoan tien thanh cong.",
+        `Ma booking: ${input.bookingId}`,
+        `Phong: ${input.roomName}`,
+        `So tien da hoan: ${amount}`,
+        ...(reason ? [`Ly do huy: ${reason}`] : []),
+        "",
+        "Neu can ho tro them, vui long lien he SpacePocker.",
+      ].join("\n"),
+      html: `
+        <p>Xin chao <strong>${input.customerName}</strong>,</p>
+        <p>Booking cua ban da duoc huy boi quan ly va <strong>hoan tien thanh cong</strong>.</p>
+        <ul>
+          <li><strong>Ma booking:</strong> ${input.bookingId}</li>
+          <li><strong>Phong:</strong> ${input.roomName}</li>
+          <li><strong>So tien da hoan:</strong> ${amount}</li>
+          ${reason ? `<li><strong>Ly do huy:</strong> ${reason}</li>` : ""}
+        </ul>
+        <p>Neu can ho tro them, vui long lien he SpacePocker.</p>
       `,
     });
   }
