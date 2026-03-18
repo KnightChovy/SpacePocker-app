@@ -6,6 +6,7 @@ import {
   NotFoundError,
 } from "../core/error.response";
 import { prisma } from "../lib/prisma";
+import MailQueueService from "./mailQueue.service";
 
 type UpdateBookingInput = {
   userId?: string;
@@ -17,6 +18,8 @@ type UpdateBookingInput = {
 };
 
 export default class BookingService {
+  constructor(private readonly mailQueueService: MailQueueService) {}
+
   private readonly allowedStatus: BookingStatus[] = [
     "PENDING",
     "APPROVED",
@@ -277,5 +280,91 @@ export default class BookingService {
     });
 
     return { booking: cancelledBooking };
+  }
+
+  async managerCancelPaidBookingAndNotifyRefund(
+    id: string,
+    managerId: string,
+    reason?: string,
+  ) {
+    if (!id || id.trim() === "") {
+      throw new BadRequestError("Booking id is required");
+    }
+
+    if (!managerId || managerId.trim() === "") {
+      throw new BadRequestError("Manager ID is required");
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: {
+        user: true,
+        room: true,
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundError("Booking not found");
+    }
+
+    if (booking.status === "CANCELLED") {
+      throw new ConflictRequestError("Booking was already cancelled");
+    }
+
+    if (booking.status !== "COMPLETED") {
+      throw new ConflictRequestError(
+        "Only paid/completed bookings can be cancelled with refund",
+      );
+    }
+
+    const updatedBooking = await prisma.$transaction(async (tx) => {
+      const cancelledBooking = await tx.booking.update({
+        where: { id: booking.id },
+        data: {
+          status: "CANCELLED",
+        },
+        include: {
+          user: true,
+          room: true,
+        },
+      });
+
+      await tx.bookingRequest.updateMany({
+        where: {
+          userId: booking.userId,
+          roomId: booking.roomId,
+          startTime: booking.startTime,
+          endTime: booking.endTime,
+          status: "COMPLETED",
+        },
+        data: {
+          status: "CANCELLED",
+        },
+      });
+
+      return cancelledBooking;
+    });
+
+    const durationHours =
+      (booking.endTime.getTime() - booking.startTime.getTime()) / (1000 * 60 * 60);
+    const refundAmount = Math.max(0, booking.room.pricePerHour * durationHours);
+
+    await this.mailQueueService.publishBookingRefundSuccessEmailJob({
+      to: booking.user.email,
+      customerName: booking.user.name,
+      bookingId: booking.id,
+      roomName: booking.room.name,
+      refundAmount,
+      refundReason: reason,
+    });
+
+    return {
+      booking: updatedBooking,
+      refund: {
+        amount: refundAmount,
+        reason: reason ?? null,
+        status: "SUCCESS",
+      },
+    };
   }
 }

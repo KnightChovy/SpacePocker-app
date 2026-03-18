@@ -31,4 +31,11 @@ router.patch(
   asyncHandler(bookingController.cancelBooking),
 );
 
+router.patch(
+  "/manager/bookings/:id/refund-cancel",
+  authentication,
+  authorizeRoles("MANAGER", "ADMIN"),
+  asyncHandler(bookingController.managerCancelPaidBookingAndNotifyRefund),
+);
+
 export default router;
