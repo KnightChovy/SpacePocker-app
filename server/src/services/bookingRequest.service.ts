@@ -699,8 +699,23 @@ export default class BookingRequestService {
     });
 
     if (existingBooking) {
+      if (bookingRequest.status !== "COMPLETED") {
+        await tx.bookingRequest.update({
+          where: { id: bookingRequest.id },
+          data: { status: "COMPLETED" },
+        });
+      }
+
+      const completedBooking =
+        existingBooking.status === "COMPLETED"
+          ? existingBooking
+          : await tx.booking.update({
+              where: { id: existingBooking.id },
+              data: { status: "COMPLETED" },
+            });
+
       return {
-        booking: existingBooking,
+        booking: completedBooking,
         bookingRequest,
         created: false,
       };
@@ -719,8 +734,13 @@ export default class BookingRequestService {
         startTime: bookingRequest.startTime,
         endTime: bookingRequest.endTime,
         purpose: bookingRequest.purpose,
-        status: "APPROVED",
+        status: "COMPLETED",
       },
+    });
+
+    await tx.bookingRequest.update({
+      where: { id: bookingRequest.id },
+      data: { status: "COMPLETED" },
     });
 
     return {

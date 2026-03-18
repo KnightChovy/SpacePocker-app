@@ -168,7 +168,8 @@
  *       2. User calls this API to get payment URL
  *       3. User redirects to paymentUrl
  *       4. After payment, VNPAY redirects to `/payment/vnpay-return` and calls `/payment/vnpay-ipn`
- *       5. On success, a Booking is created and a confirmation email is queued (RabbitMQ)
+ *       5. On success, Booking is created (or updated) and both Booking + BookingRequest are set to COMPLETED
+ *       6. Confirmation email is queued via RabbitMQ
  *
  *       **Validation:**
  *       - Booking request must exist and belong to the authenticated user
@@ -318,7 +319,7 @@
  *
  *       **Internal flow:**
  *       - Verify vnp_SecureHash (HMAC SHA512)
- *       - If success: create Booking, publish mail job to RabbitMQ
+ *       - If success: complete BookingRequest and Booking, then publish mail job to RabbitMQ
  *       - Mail worker consumes queue and sends confirmation email
  *     tags: [Payment]
  *     security: []
