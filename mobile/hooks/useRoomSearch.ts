@@ -19,7 +19,6 @@ export function useRoomSearch() {
   const [hasSearched, setHasSearched] = useState(false);
 
   const debouncedSearch = useDebounce(searchInput, 500);
-  const isFirstRender = useRef(true);
   const filtersRef = useRef(filters);
   filtersRef.current = filters;
 
@@ -46,11 +45,20 @@ export function useRoomSearch() {
     }
   }, []);
 
+  // Initial fetch on mount
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
+    fetchRooms(filtersRef.current);
+  }, [fetchRooms]);
+
+  // Re-fetch when debounced search text changes (skip the very first '' → '' no-op)
+  const prevDebouncedSearch = useRef<string | null>(null);
+  useEffect(() => {
+    if (prevDebouncedSearch.current === null) {
+      prevDebouncedSearch.current = debouncedSearch;
       return;
     }
+    if (prevDebouncedSearch.current === debouncedSearch) return;
+    prevDebouncedSearch.current = debouncedSearch;
     const next = { ...filtersRef.current, search: debouncedSearch };
     setFilters(next);
     fetchRooms(next);
