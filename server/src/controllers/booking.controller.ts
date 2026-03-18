@@ -49,12 +49,18 @@ class BookingController {
     res: Response,
     next: NextFunction,
   ) => {
+    const bookingRequestId = String(req.params.id);
+    const managerId = String(req.user?.userId);
+    const role = String(req.user?.role);
+    const reason = typeof req.body?.reason === "string" ? req.body.reason : undefined;
+        
     new OK({
       message: "Booking cancelled and refund email queued successfully",
       metadata: await this.bookingService.managerCancelPaidBookingAndNotifyRefund(
-        String(req.params.id),
-        String(req.user?.userId),
-        typeof req.body?.reason === "string" ? req.body.reason : undefined,
+        bookingRequestId,
+        managerId,
+        role,
+        reason,
       ),
     }).send(res);
   };
