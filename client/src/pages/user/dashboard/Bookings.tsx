@@ -13,6 +13,7 @@ import PaginationButton from '@/components/features/user/bookings/PaginationButt
 import BookingList from '@/components/features/user/bookings/BookingList';
 import BookingNotificationsBell from '@/components/features/user/dashboard/BookingNotificationsBell';
 import { useGetMyBookingRequests } from '@/hooks/user/booking-requests/use-get-my-booking-requests';
+import { useCancelMyBookingRequest } from '@/hooks/user/booking-requests/use-cancel-my-booking-request';
 import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
 import type { BookingUser } from '@/types/user-type';
 import type {
@@ -74,8 +75,9 @@ const mapStatusToUserLabel = (status: BookingRequestStatus) => {
     case 'COMPLETED':
       return 'Completed' as const;
     case 'CANCELLED':
-    case 'REJECTED':
       return 'Cancelled' as const;
+    case 'REJECTED':
+      return 'Rejected' as const;
     default:
       return 'Pending Approval' as const;
   }
@@ -207,6 +209,7 @@ const Bookings = () => {
     isLoading,
     isError,
   } = useGetMyBookingRequests();
+  const cancelMyBookingRequestMutation = useCancelMyBookingRequest();
 
   const cancelledStatuses: BookingRequestStatus[] = ['CANCELLED', 'REJECTED'];
 
@@ -344,6 +347,16 @@ const Bookings = () => {
 
     return mapMyBookingRequestToBookingUser(req, totalPrice);
   });
+
+  const handleCancelBookingRequest = async (bookingRequestId: string) => {
+    if (!bookingRequestId) return;
+
+    if (!window.confirm('Cancel this booking request?')) {
+      return;
+    }
+
+    await cancelMyBookingRequestMutation.mutateAsync(bookingRequestId);
+  };
 
   const headerActions = [
     {
@@ -553,6 +566,8 @@ const Bookings = () => {
             <BookingList
               bookings={bookingsForTab}
               requests={paginatedRequests}
+              onCancelRequest={handleCancelBookingRequest}
+              isCancelling={cancelMyBookingRequestMutation.isPending}
             />
           )}
 
