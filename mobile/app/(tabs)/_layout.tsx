@@ -85,9 +85,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="booking"
+        name="mybooking"
         options={{
-          title: 'Booking',
+          title: 'My Booking',
           tabBarIcon: ({ color, size, focused }) => (
             <TabIcon
               icon={CalendarCheck}

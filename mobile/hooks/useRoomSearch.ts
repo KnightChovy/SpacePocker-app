@@ -45,12 +45,10 @@ export function useRoomSearch() {
     }
   }, []);
 
-  // Initial fetch on mount
   useEffect(() => {
     fetchRooms(filtersRef.current);
   }, [fetchRooms]);
 
-  // Re-fetch when debounced search text changes (skip the very first '' → '' no-op)
   const prevDebouncedSearch = useRef<string | null>(null);
   useEffect(() => {
     if (prevDebouncedSearch.current === null) {
