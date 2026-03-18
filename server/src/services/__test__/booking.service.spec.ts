@@ -4,6 +4,7 @@ import {
   ForbiddenError,
   NotFoundError,
 } from "../../core/error.response";
+import MailQueueService from "../mailQueue.service";
 
 jest.mock("../../lib/prisma", () => ({
   prisma: {
@@ -39,9 +40,14 @@ const prismaMock = prisma as unknown as {
 
 describe("BookingService", () => {
   let bookingService: BookingService;
+  let mailQueueServiceMock: jest.Mocked<MailQueueService>;
 
   beforeEach(() => {
-    bookingService = new BookingService();
+    mailQueueServiceMock = {
+      publishBookingConfirmedEmailJob: jest.fn(),
+      publishBookingRefundSuccessEmailJob: jest.fn(),
+    } as unknown as jest.Mocked<MailQueueService>;
+    bookingService = new BookingService(mailQueueServiceMock);
     jest.clearAllMocks();
 
     prismaMock.user.findUnique.mockResolvedValue({ id: "user-1" });
