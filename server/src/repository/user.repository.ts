@@ -45,7 +45,10 @@ export class UserRepository implements IUserRepository {
     });
   }
 
-  updateProfile(id: string, data: { name?: string; phoneNumber?: string | null }) {
+  updateProfile(
+    id: string,
+    data: { name?: string; phoneNumber?: string | null },
+  ) {
     return prisma.user.update({
       where: { id },
       data: {

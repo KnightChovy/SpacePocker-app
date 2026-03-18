@@ -530,6 +530,56 @@ describe("BookingRequestService", () => {
     });
   });
 
+  describe("createBookingRequestAndPaymentUrlForMobile()", () => {
+    it("should auto-approve newly created request and return payment url", async () => {
+      const startTime = futureStartTime.toISOString();
+      const endTime = futureEndTime.toISOString();
+
+      jest
+        .spyOn(bookingRequestService, "createBookingRequest")
+        .mockResolvedValue({ id: "br-mobile-1" } as any);
+      jest
+        .spyOn(bookingRequestService, "createPaymentUrlForApprovedBookingRequest")
+        .mockResolvedValue({
+          paymentUrl: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?...",
+          txnRef: "br_br-mobile-1_1710000000000",
+          amount: 100000,
+          bookingRequestId: "br-mobile-1",
+          roomName: "Meeting Room A",
+        });
+
+      mockRoomRepo.findById.mockResolvedValue(mockRoom);
+      prismaMock.bookingRequest.update.mockResolvedValue({
+        id: "br-mobile-1",
+      });
+
+      const result =
+        await bookingRequestService.createBookingRequestAndPaymentUrlForMobile({
+          userId: "u-001",
+          roomId: "r-001",
+          startTime,
+          endTime,
+          ipAddr: "127.0.0.1",
+          locale: "vn",
+        });
+
+      expect(prismaMock.bookingRequest.update).toHaveBeenCalledWith({
+        where: { id: "br-mobile-1" },
+        data: {
+          status: "APPROVED",
+          approvedBy: "m-001",
+        },
+      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          bookingRequestId: "br-mobile-1",
+          status: "APPROVED",
+          paymentUrl: expect.any(String),
+        }),
+      );
+    });
+  });
+
   describe("getBookingRequestById()", () => {
     it("should return booking request if found", async () => {
       mockBookingRequestRepo.findById.mockResolvedValue(mockBookingRequest);
