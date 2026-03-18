@@ -1,86 +1,107 @@
-import { MapPin, Star } from 'lucide-react-native';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import roomService from '@/services/room.service';
+import { Room, RoomStatus } from '@/types/room.type';
+import { router } from 'expo-router';
+import { MapPin } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-type Space = {
-  id: string;
-  name: string;
-  location: string;
-  price: number;
-  rating: number;
-  image: string;
-  tags: string[];
-};
+function RoomCard({ room }: { room: Room }) {
+  const isAvailable = room.status === RoomStatus.AVAILABLE;
 
-const SPACES: Space[] = [
-  {
-    id: '1',
-    name: 'The Skyline Loft',
-    location: 'Downtown Brooklyn, NY',
-    price: 85,
-    rating: 4.9,
-    image:
-      'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80',
-    tags: ['FAST WIFI', 'PARKING', 'PROJECTOR'],
-  },
-  {
-    id: '2',
-    name: 'Neon Canvas Studio',
-    location: 'Arts District, LA',
-    price: 60,
-    rating: 4.8,
-    image:
-      'https://images.unsplash.com/photo-1525130413817-d45c1d127c42?w=600&q=80',
-    tags: ['NATURAL LIGHT', 'SPEAKERS'],
-  },
-];
+  const handlePress = () => {
+    router.push({
+      pathname: '/(modals)/room-detail' as any,
+      params: { id: room.id },
+    });
+  };
 
-function SpaceCard({ space }: { space: Space }) {
   return (
     <TouchableOpacity
-      className="bg-white rounded-2xl overflow-hidden mb-4 shadow-sm shadow-black/5 border border-gray-100"
+      onPress={handlePress}
       activeOpacity={0.92}
+      className="bg-white rounded-2xl overflow-hidden mb-4 border border-gray-100"
+      style={{
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        elevation: 3,
+      }}
     >
-      {/* Image */}
-      <View className="relative">
+      {room.images?.[0] ? (
         <Image
-          source={{ uri: space.image }}
-          className="w-full h-48"
+          source={{ uri: room.images[0] }}
+          className="w-full h-44"
           resizeMode="cover"
         />
-        {/* Rating badge */}
-        <View className="absolute top-3 right-3 bg-white/95 rounded-xl px-2.5 py-1.5 flex-row items-center gap-1">
-          <Star size={12} color="#F59E0B" fill="#F59E0B" />
-          <Text className="text-xs font-bold text-gray-800">
-            {space.rating}
-          </Text>
+      ) : (
+        <View className="w-full h-44 bg-gray-100 items-center justify-center">
+          <Text className="text-gray-300 text-xs">No image</Text>
         </View>
+      )}
+
+      {/* Status badge */}
+      <View
+        className="absolute top-3 left-3 px-2.5 py-1 rounded-xl"
+        style={{ backgroundColor: isAvailable ? '#D1FAE5' : '#FEE2E2' }}
+      >
+        <Text
+          className="text-xs font-semibold"
+          style={{ color: isAvailable ? '#059669' : '#DC2626' }}
+        >
+          {isAvailable ? 'Available' : 'Occupied'}
+        </Text>
       </View>
 
-      {/* Info */}
       <View className="p-4">
         <View className="flex-row items-start justify-between mb-1">
-          <Text className="text-gray-900 font-bold text-base flex-1">
-            {space.name}
+          <Text
+            className="text-gray-900 font-bold text-base flex-1 mr-2"
+            numberOfLines={1}
+          >
+            {room.name}
           </Text>
-          <View className="flex-row items-baseline gap-0.5 ml-2">
+          <View className="flex-row items-baseline gap-0.5">
             <Text className="text-[#5B4FE9] font-extrabold text-lg">
-              ${space.price}
+              ${room.pricePerHour}
             </Text>
             <Text className="text-gray-400 text-xs">/hr</Text>
           </View>
         </View>
 
-        <View className="flex-row items-center gap-1 mb-3">
-          <MapPin size={12} color="#9CA3AF" strokeWidth={1.8} />
-          <Text className="text-gray-400 text-xs">{space.location}</Text>
-        </View>
+        {room.building?.address ? (
+          <View className="flex-row items-center gap-1 mb-3">
+            <MapPin size={12} color="#9CA3AF" strokeWidth={1.8} />
+            <Text className="text-gray-400 text-xs" numberOfLines={1}>
+              {room.building.address}
+            </Text>
+          </View>
+        ) : null}
 
-        {/* Tags */}
         <View className="flex-row flex-wrap gap-2">
-          {space.tags.map(tag => (
-            <View key={tag} className="bg-gray-100 rounded-lg px-2.5 py-1">
+          <View className="bg-gray-100 rounded-lg px-2.5 py-1">
+            <Text className="text-gray-500 text-[10px] font-semibold tracking-wider">
+              {room.roomType}
+            </Text>
+          </View>
+          <View className="bg-gray-100 rounded-lg px-2.5 py-1">
+            <Text className="text-gray-500 text-[10px] font-semibold tracking-wider">
+              {room.capacity} pax
+            </Text>
+          </View>
+          {room.amenities?.slice(0, 2).map(ra => (
+            <View
+              key={ra.amenityId}
+              className="bg-gray-100 rounded-lg px-2.5 py-1"
+            >
               <Text className="text-gray-500 text-[10px] font-semibold tracking-wider">
-                {tag}
+                {ra.amenity.name}
               </Text>
             </View>
           ))}
@@ -91,18 +112,42 @@ function SpaceCard({ space }: { space: Space }) {
 }
 
 export default function CuratedSpaces() {
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    roomService
+      .getAllRooms({ limit: 3, offset: 0 })
+      .then(res => setRooms(res.metadata.rooms))
+      .catch(() => setRooms([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <View className="px-5 py-4">
       <View className="flex-row items-center justify-between mb-4">
-        <Text className="text-xl font-bold text-gray-900">Curated Spaces</Text>
-        <TouchableOpacity>
-          <Text className="text-[#5B4FE9] text-sm font-medium">View All</Text>
+        <Text className="text-xl font-bold text-gray-900">
+          Available Spaces
+        </Text>
+        <TouchableOpacity
+          onPress={() => router.push('/(tabs)/search')}
+          activeOpacity={0.7}
+        >
+          <Text className="text-[#5B4FE9] text-sm font-semibold">View All</Text>
         </TouchableOpacity>
       </View>
 
-      {SPACES.map(space => (
-        <SpaceCard key={space.id} space={space} />
-      ))}
+      {loading ? (
+        <View className="py-10 items-center">
+          <ActivityIndicator color="#5B4FE9" />
+        </View>
+      ) : rooms.length === 0 ? (
+        <View className="py-10 items-center">
+          <Text className="text-gray-400 text-sm">No spaces available.</Text>
+        </View>
+      ) : (
+        rooms.map(room => <RoomCard key={room.id} room={room} />)
+      )}
     </View>
   );
 }

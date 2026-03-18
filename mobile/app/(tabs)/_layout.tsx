@@ -1,7 +1,8 @@
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { Tabs } from 'expo-router';
+import { useAuthStore } from '@/store/authStore';
+import { Tabs, useRouter } from 'expo-router';
 import { CalendarCheck, Home, Search, User } from 'lucide-react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View } from 'react-native';
 type TabIconProps = {
   icon: React.ElementType;
@@ -25,6 +26,15 @@ function TabIcon({ icon: Icon, color, size, focused }: TabIconProps) {
 export default function TabLayout() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const isLoggedIn = useAuthStore(s => s.isLoggedIn);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      router.replace('/(auth)/login');
+    }
+  }, [isLoggedIn]);
+
   return (
     <Tabs
       screenOptions={{

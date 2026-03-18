@@ -1,10 +1,16 @@
+import { Building } from './building.type';
+
 export enum RoomType {
   MEETING = 'MEETING',
-  CONFERENCE = 'CONFERENCE',
-  STUDIO = 'STUDIO',
-  OFFICE = 'OFFICE',
-  COWORKING = 'COWORKING',
+  CLASSROOM = 'CLASSROOM',
   EVENT = 'EVENT',
+  OTHER = 'OTHER',
+}
+
+export enum RoomStatus {
+  AVAILABLE = 'AVAILABLE',
+  UNAVAILABLE = 'UNAVAILABLE',
+  MAINTENANCE = 'MAINTENANCE',
 }
 export enum SortBy {
   NAME = 'name',
@@ -22,40 +28,71 @@ export type Amenity = {
   createdAt: string;
   updatedAt: string;
 };
-export type Room = {
+
+export type RoomAmenity = {
+  roomId: string;
+  amenityId: string;
+  createdAt: string;
+  amenity: Amenity;
+};
+
+export type ServiceCategory = {
+  id: string;
+  managerId: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type RoomServiceCategory = {
+  roomId: string;
+  categoryId: string;
+  createdAt: string;
+  category: ServiceCategory;
+};
+
+export type Manager = {
   id: string;
   name: string;
-  code: string;
-  roomType: RoomType;
+  email: string;
+  phoneNumber: string | null;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Room = {
+  id: string;
   buildingId: string;
-  buildingName?: string;
+  managerId: string;
+  name: string;
+  roomCode: string;
+  roomType: RoomType;
   description?: string;
   capacity: number;
   pricePerHour: number;
-  isAvailable: boolean;
-  amenities?: Amenity[];
-  images?: string[];
-  address?: string;
-  rating?: number;
-  reviewCount?: number;
+  securityDeposit: number;
+  area: number | null;
+  status: RoomStatus;
+  images: string[];
+  building: Building;
+  manager: Manager;
+  amenities: RoomAmenity[];
+  serviceCategories: RoomServiceCategory[];
   createdAt: string;
   updatedAt: string;
 };
 export type GetAllRoomsParams = {
   search?: string;
-
   buildingId?: string;
   roomType?: RoomType;
-  isAvailable?: boolean;
-
+  status?: RoomStatus;
   minPrice?: number;
   maxPrice?: number;
-
   minCapacity?: number;
-
   sortBy?: SortBy;
   sortOrder?: SortOrder;
-
   limit?: number;
   offset?: number;
 };
@@ -92,7 +129,7 @@ export type GetAllRoomsResponse = {
 export type RoomFilterState = {
   search: string;
   roomType: RoomType | null;
-  isAvailable: boolean | null;
+  status: RoomStatus | null;
   priceRange: [number, number];
   minCapacity: number | null;
   sortBy: SortBy;
@@ -102,7 +139,7 @@ export type RoomFilterState = {
 export const DEFAULT_FILTER_STATE: RoomFilterState = {
   search: '',
   roomType: null,
-  isAvailable: null,
+  status: null,
   priceRange: [0, 500],
   minCapacity: null,
   sortBy: SortBy.NAME,
@@ -112,8 +149,39 @@ export const DEFAULT_FILTER_STATE: RoomFilterState = {
 export function countActiveFilters(filters: RoomFilterState): number {
   let count = 0;
   if (filters.roomType) count++;
-  if (filters.isAvailable !== null) count++;
+  if (filters.status !== null) count++;
   if (filters.priceRange[0] > 0 || filters.priceRange[1] < 500) count++;
   if (filters.minCapacity) count++;
   return count;
 }
+
+// ─── Room Detail ──────────────────────────────────────────────────────────────
+
+export type RoomDetail = {
+  id: string;
+  buildingId: string;
+  managerId: string;
+  name: string;
+  description?: string;
+  pricePerHour: number;
+  securityDeposit: number;
+  capacity: number;
+  roomType: RoomType;
+  area: number | null;
+  status: RoomStatus;
+  roomCode: string;
+  images: string[];
+  createdAt: string;
+  updatedAt: string;
+  building: Building;
+  manager: Manager;
+  amenities: RoomAmenity[];
+  serviceCategories: RoomServiceCategory[];
+};
+
+export type GetRoomByIdResponse = {
+  message: string;
+  metadata: {
+    room: RoomDetail;
+  };
+};
