@@ -283,87 +283,141 @@ export default class BookingService {
   }
 
   async managerCancelPaidBookingAndNotifyRefund(
-    id: string,
-    managerId: string,
+    bookingRequestId: string,
+    requestedByUserId: string,
+    requestedByRole: string,
     reason?: string,
   ) {
-    if (!id || id.trim() === "") {
-      throw new BadRequestError("Booking id is required");
+    if (!bookingRequestId || bookingRequestId.trim() === "") {
+      throw new BadRequestError("Booking request id is required");
     }
 
-    if (!managerId || managerId.trim() === "") {
+    if (!requestedByUserId || requestedByUserId.trim() === "") {
       throw new BadRequestError("Manager ID is required");
     }
 
-    const booking = await prisma.booking.findUnique({
-      where: { id },
+    const bookingRequest = await prisma.bookingRequest.findUnique({
+      where: { id: bookingRequestId },
+      include: {
+        user: true,
+        room: {
+          select: {
+            id: true,
+            name: true,
+            managerId: true,
+            pricePerHour: true,
+          },
+        },
+      },
+    });
+
+    if (!bookingRequest) {
+      throw new NotFoundError("Booking request not found");
+    }
+
+    const isManagerOrAdmin =
+      requestedByRole === "ADMIN" || requestedByRole === "MANAGER";
+    if (!isManagerOrAdmin) {
+      throw new ForbiddenError(
+        "Only MANAGER or ADMIN can cancel this booking request",
+      );
+    }
+
+    const matchedBooking = await prisma.booking.findFirst({
+      where: {
+        userId: bookingRequest.userId,
+        roomId: bookingRequest.roomId,
+        startTime: bookingRequest.startTime,
+        endTime: bookingRequest.endTime,
+      },
       include: {
         user: true,
         room: true,
       },
     });
 
-    if (!booking) {
-      throw new NotFoundError("Booking not found");
+    if (
+      bookingRequest.status === "CANCELLED" &&
+      (!matchedBooking || matchedBooking.status === "CANCELLED")
+    ) {
+      throw new ConflictRequestError("Booking request was already cancelled");
     }
 
-    if (booking.status === "CANCELLED") {
-      throw new ConflictRequestError("Booking was already cancelled");
-    }
+    const previousBookingStatus = matchedBooking?.status;
 
-    if (booking.status !== "COMPLETED") {
-      throw new ConflictRequestError(
-        "Only paid/completed bookings can be cancelled with refund",
-      );
-    }
+    const { cancelledBookingRequest, cancelledBooking } =
+      await prisma.$transaction(async (tx) => {
+        const requestAfterCancel =
+          bookingRequest.status === "CANCELLED"
+            ? bookingRequest
+            : await tx.bookingRequest.update({
+                where: { id: bookingRequest.id },
+                data: {
+                  status: "CANCELLED",
+                },
+                include: {
+                  user: true,
+                  room: {
+                    select: {
+                      id: true,
+                      name: true,
+                      managerId: true,
+                      pricePerHour: true,
+                    },
+                  },
+                },
+              });
 
-    const updatedBooking = await prisma.$transaction(async (tx) => {
-      const cancelledBooking = await tx.booking.update({
-        where: { id: booking.id },
-        data: {
-          status: "CANCELLED",
-        },
-        include: {
-          user: true,
-          room: true,
-        },
+        let bookingAfterCancel = matchedBooking;
+
+        if (matchedBooking && matchedBooking.status !== "CANCELLED") {
+          bookingAfterCancel = await tx.booking.update({
+            where: { id: matchedBooking.id },
+            data: {
+              status: "CANCELLED",
+            },
+            include: {
+              user: true,
+              room: true,
+            },
+          });
+        }
+
+        return {
+          cancelledBookingRequest: requestAfterCancel,
+          cancelledBooking: bookingAfterCancel,
+        };
       });
 
-      await tx.bookingRequest.updateMany({
-        where: {
-          userId: booking.userId,
-          roomId: booking.roomId,
-          startTime: booking.startTime,
-          endTime: booking.endTime,
-          status: "COMPLETED",
-        },
-        data: {
-          status: "CANCELLED",
-        },
+    const isCompletedCancellation = previousBookingStatus === "COMPLETED";
+    const refundAmount = isCompletedCancellation && cancelledBooking
+      ? Math.max(
+          0,
+          cancelledBooking.room.pricePerHour *
+            ((cancelledBooking.endTime.getTime() -
+              cancelledBooking.startTime.getTime()) /
+              (1000 * 60 * 60)),
+        )
+      : 0;
+
+    if (isCompletedCancellation && cancelledBooking) {
+      await this.mailQueueService.publishBookingRefundSuccessEmailJob({
+        to: cancelledBooking.user.email,
+        customerName: cancelledBooking.user.name,
+        bookingId: cancelledBooking.id,
+        roomName: cancelledBooking.room.name,
+        refundAmount,
+        refundReason: reason,
       });
-
-      return cancelledBooking;
-    });
-
-    const durationHours =
-      (booking.endTime.getTime() - booking.startTime.getTime()) / (1000 * 60 * 60);
-    const refundAmount = Math.max(0, booking.room.pricePerHour * durationHours);
-
-    await this.mailQueueService.publishBookingRefundSuccessEmailJob({
-      to: booking.user.email,
-      customerName: booking.user.name,
-      bookingId: booking.id,
-      roomName: booking.room.name,
-      refundAmount,
-      refundReason: reason,
-    });
+    }
 
     return {
-      booking: updatedBooking,
+      bookingRequest: cancelledBookingRequest,
+      booking: cancelledBooking,
       refund: {
         amount: refundAmount,
         reason: reason ?? null,
-        status: "SUCCESS",
+        status: isCompletedCancellation ? "SUCCESS" : "NOT_APPLICABLE",
       },
     };
   }

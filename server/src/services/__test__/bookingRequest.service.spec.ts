@@ -31,6 +31,7 @@ jest.mock("../../lib/prisma", () => ({
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
     manager: {
       findFirst: jest.fn(),
@@ -51,6 +52,7 @@ const prismaMock = prisma as unknown as {
     findMany: jest.Mock;
     findUnique: jest.Mock;
     update: jest.Mock;
+    updateMany: jest.Mock;
   };
   manager: { findFirst: jest.Mock };
   $transaction: jest.Mock;
@@ -680,6 +682,71 @@ describe("BookingRequestService", () => {
       await expect(
         bookingRequestService.getBookingRequestById("non-existent"),
       ).rejects.toThrow("Booking request with id not found");
+    });
+  });
+
+  describe("cancelMyBookingRequest()", () => {
+    it("should cancel own booking request when not completed", async () => {
+      prismaMock.bookingRequest.findUnique
+        .mockResolvedValueOnce({
+          id: "br-1",
+          userId: "u-001",
+          status: "APPROVED",
+        })
+        .mockResolvedValueOnce({
+          id: "br-1",
+          userId: "u-001",
+          status: "CANCELLED",
+        });
+      prismaMock.bookingRequest.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await bookingRequestService.cancelMyBookingRequest(
+        "br-1",
+        "u-001",
+      );
+
+      expect(prismaMock.bookingRequest.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: "br-1",
+          userId: "u-001",
+          status: {
+            notIn: ["COMPLETED", "CANCELLED"],
+          },
+        },
+        data: {
+          status: "CANCELLED",
+        },
+      });
+      expect(result).toEqual(
+        expect.objectContaining({ id: "br-1", status: "CANCELLED" }),
+      );
+    });
+
+    it("should throw conflict when booking request is completed", async () => {
+      prismaMock.bookingRequest.findUnique.mockResolvedValue({
+        id: "br-1",
+        userId: "u-001",
+        status: "COMPLETED",
+      });
+
+      await expect(
+        bookingRequestService.cancelMyBookingRequest("br-1", "u-001"),
+      ).rejects.toThrow(ConflictRequestError);
+      await expect(
+        bookingRequestService.cancelMyBookingRequest("br-1", "u-001"),
+      ).rejects.toThrow("Cannot cancel a completed booking request");
+    });
+
+    it("should throw forbidden when cancelling another user's request", async () => {
+      prismaMock.bookingRequest.findUnique.mockResolvedValue({
+        id: "br-1",
+        userId: "u-999",
+        status: "PENDING",
+      });
+
+      await expect(
+        bookingRequestService.cancelMyBookingRequest("br-1", "u-001"),
+      ).rejects.toThrow("You are not allowed to cancel this booking request");
     });
   });
 

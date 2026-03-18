@@ -126,6 +126,20 @@ class BookingRequestController {
     }).send(res);
   };
 
+  cancelMyBookingRequest = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    new OK({
+      message: "Booking request cancelled successfully",
+      metadata: await this.bookingRequestService.cancelMyBookingRequest(
+        String(req.params.id),
+        String(req.user?.userId),
+      ),
+    }).send(res);
+  };
+
   createBookingRequestPaymentUrl = async (
     req: Request,
     res: Response,

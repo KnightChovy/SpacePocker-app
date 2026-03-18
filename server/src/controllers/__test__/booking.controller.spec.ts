@@ -7,6 +7,7 @@ describe("BookingController", () => {
     getMyBookings: jest.fn(),
     updateBooking: jest.fn(),
     cancelBooking: jest.fn(),
+    managerCancelPaidBookingAndNotifyRefund: jest.fn(),
   };
 
   const controller = new BookingController(bookingServiceMock);
@@ -95,6 +96,40 @@ describe("BookingController", () => {
       "booking-1",
       "user-1",
       "USER",
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it("should call service managerCancelPaidBookingAndNotifyRefund and return 200", async () => {
+    const req = {
+      params: { id: "booking-request-1" },
+      body: { reason: "Room maintenance" },
+      user: {
+        userId: "manager-1",
+        role: "MANAGER",
+      },
+    } as unknown as Request;
+    const res = createMockResponse();
+
+    bookingServiceMock.managerCancelPaidBookingAndNotifyRefund.mockResolvedValue({
+      bookingRequest: { id: "booking-request-1", status: "CANCELLED" },
+      booking: { id: "booking-1", status: "CANCELLED" },
+      refund: { amount: 100000, reason: "Room maintenance", status: "SUCCESS" },
+    });
+
+    await controller.managerCancelPaidBookingAndNotifyRefund(
+      req,
+      res,
+      jest.fn(),
+    );
+
+    expect(
+      bookingServiceMock.managerCancelPaidBookingAndNotifyRefund,
+    ).toHaveBeenCalledWith(
+      "booking-request-1",
+      "manager-1",
+      "MANAGER",
+      "Room maintenance",
     );
     expect(res.status).toHaveBeenCalledWith(200);
   });
