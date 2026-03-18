@@ -7,8 +7,6 @@ import {
   Users,
   BarChart3,
   Building2,
-  HelpCircle,
-  Zap,
   UserCircle,
   Tags,
   LogOut,
@@ -83,19 +81,6 @@ export default function ManagerLayout() {
   };
 
   const footerCards = [
-    {
-      title: 'Quick Optimization',
-      description: 'Optimize space usage with one click.',
-      buttonText: 'Run Analysis',
-      icon: <Zap className="h-5 w-5 text-yellow-300" />,
-      variant: 'action' as const,
-    },
-    {
-      title: 'Need Help?',
-      description: 'Contact support for booking issues.',
-      icon: <HelpCircle className="h-5 w-5" />,
-      variant: 'help' as const,
-    },
     {
       renderCustom: () => (
         <button

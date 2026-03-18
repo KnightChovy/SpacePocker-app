@@ -43,7 +43,7 @@ export default function AdminLayout() {
         },
         {
           id: 'spaces',
-          label: 'Spaces',
+          label: 'Booking requests',
           path: '/admin/spaces',
           icon: 'apartment',
         },

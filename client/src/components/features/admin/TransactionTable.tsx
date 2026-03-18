@@ -11,9 +11,7 @@ const TransactionTable: React.FC<Props> = ({ transactions }) => {
     <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="p-8 flex items-center justify-between border-b border-gray-50">
         <h3 className="text-lg font-bold text-gray-900">Recent Transactions</h3>
-        <button className="text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
-          View All
-        </button>
+   
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left">

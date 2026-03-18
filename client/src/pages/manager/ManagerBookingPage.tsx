@@ -8,6 +8,7 @@ import { getAvatarUrl } from '@/lib/utils';
 import { useGetBookingRequestsForManager } from '@/hooks/manager/booking-requests/use-get-booking-requests';
 import { useApproveBookingRequest } from '@/hooks/manager/booking-requests/use-approve-booking-request';
 import { useRejectBookingRequest } from '@/hooks/manager/booking-requests/use-reject-booking-request';
+import { useCancelBookingRequest } from '@/hooks/manager/booking-requests/use-cancel-booking-request';
 import type {
   BookingRequestForManager,
   BookingRequestStatus,
@@ -38,6 +39,7 @@ const ManagerBookingPage: React.FC = () => {
   const bookingRequestsQuery = useGetBookingRequestsForManager(selectedStatus);
   const approveMutation = useApproveBookingRequest();
   const rejectMutation = useRejectBookingRequest();
+  const cancelMutation = useCancelBookingRequest();
 
   const bookingRequests = useMemo(() => {
     const items = bookingRequestsQuery.data ?? [];
@@ -68,6 +70,12 @@ const ManagerBookingPage: React.FC = () => {
   const handleReject = async (request: BookingRequestForManager) => {
     if (window.confirm('Reject this booking request?')) {
       await rejectMutation.mutateAsync(request.id);
+    }
+  };
+
+  const handleCancel = async (request: BookingRequestForManager) => {
+    if (window.confirm('Cancel this completed booking?')) {
+      await cancelMutation.mutateAsync(request.id);
     }
   };
 
@@ -131,8 +139,10 @@ const ManagerBookingPage: React.FC = () => {
                 requests={bookingRequests}
                 onApprove={handleApprove}
                 onReject={handleReject}
+                onCancel={handleCancel}
                 isApproving={approveMutation.isPending}
                 isRejecting={rejectMutation.isPending}
+                isCancelling={cancelMutation.isPending}
               />
             )}
           </div>

@@ -120,6 +120,7 @@ const mapMyBookingRequestToBookingUser = (
 };
 
 const Bookings = () => {
+  const PAGE_SIZE = 10;
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
@@ -128,6 +129,7 @@ const Bookings = () => {
   const user = useAuthStore(state => state.user);
   const [activeTab, setActiveTab] = useState<'Active' | 'Cancelled'>('Active');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState<DateRangeValue>({
     from: '',
     to: '',
@@ -295,7 +297,31 @@ const Bookings = () => {
     searchQuery,
   ]);
 
-  const bookingsForTab = filteredRequestsForTab.map(req => {
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    activeTab,
+    searchQuery,
+    dateRange.from,
+    dateRange.to,
+    effectiveSelectedBuildingId,
+  ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredRequestsForTab.length / PAGE_SIZE)
+  );
+
+  useEffect(() => {
+    setCurrentPage(prev => Math.min(prev, totalPages));
+  }, [totalPages]);
+
+  const paginatedRequests = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredRequestsForTab.slice(start, start + PAGE_SIZE);
+  }, [currentPage, filteredRequestsForTab]);
+
+  const bookingsForTab = paginatedRequests.map(req => {
     const start = new Date(req.startTime);
     const end = new Date(req.endTime);
     const hours = Math.max(0, (end.getTime() - start.getTime()) / 3600000);
@@ -526,16 +552,34 @@ const Bookings = () => {
           ) : (
             <BookingList
               bookings={bookingsForTab}
-              requests={filteredRequestsForTab}
+              requests={paginatedRequests}
             />
           )}
 
           <div className="flex items-center justify-center gap-2 py-4">
-            <PaginationButton icon="left" disabled />
-            <PaginationButton label="1" active />
-            <PaginationButton label="2" />
-            <PaginationButton label="3" />
-            <PaginationButton icon="right" />
+            <PaginationButton
+              icon="left"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            />
+            {Array.from({ length: totalPages }, (_, index) => {
+              const page = index + 1;
+              return (
+                <PaginationButton
+                  key={page}
+                  label={String(page)}
+                  active={page === currentPage}
+                  onClick={() => setCurrentPage(page)}
+                />
+              );
+            })}
+            <PaginationButton
+              icon="right"
+              disabled={currentPage === totalPages}
+              onClick={() =>
+                setCurrentPage(prev => Math.min(totalPages, prev + 1))
+              }
+            />
           </div>
         </div>
       </div>

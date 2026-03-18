@@ -56,10 +56,6 @@ const TransactionChart: React.FC<Props> = ({ data }) => {
               Current Year
             </span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200">
-            <div className="w-2.5 h-2.5 rounded-full bg-gray-300"></div>
-            <span className="text-xs font-bold text-gray-500">Last Year</span>
-          </div>
         </div>
       </div>
 

@@ -25,28 +25,7 @@ const DashboardPage: React.FC = () => {
   const user = useAuthStore(state => state.user);
   const { data, isLoading, isError } = useAdminDashboard();
   console.log(data);
-  const headerActions = [
-    {
-      id: 'date-range',
-      icon: (
-        <span className="material-symbols-outlined text-[20px]">
-          calendar_today
-        </span>
-      ),
-      label: 'Last 30 Days',
-      variant: 'ghost' as const,
-    },
-    {
-      id: 'export',
-      icon: (
-        <span className="material-symbols-outlined text-[20px]">
-          file_download
-        </span>
-      ),
-      label: 'Export',
-      variant: 'primary' as const,
-    },
-  ];
+
 
   const stats = useMemo<Stat[]>(() => {
     return (
@@ -71,9 +50,8 @@ const DashboardPage: React.FC = () => {
         title="Analytics Overview"
         subtitle="Real-time insights for SPACEPOCKER performance."
         onMenuClick={() => setSidebarOpen(true)}
-        showSearch={true}
+        showSearch={false}
         searchPlaceholder="Search analytics..."
-        actions={headerActions}
         profile={{
           name: user?.name || 'Admin',
           subtitle: user?.role || 'ADMIN',

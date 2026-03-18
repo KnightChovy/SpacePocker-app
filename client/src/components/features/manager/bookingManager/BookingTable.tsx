@@ -8,8 +8,10 @@ interface BookingTableProps {
   requests: BookingRequestForManager[];
   onApprove?: (request: BookingRequestForManager) => void | Promise<void>;
   onReject?: (request: BookingRequestForManager) => void | Promise<void>;
+  onCancel?: (request: BookingRequestForManager) => void | Promise<void>;
   isApproving?: boolean;
   isRejecting?: boolean;
+  isCancelling?: boolean;
 }
 
 const StatusBadge = ({ status }: { status: BookingRequestStatus }) => {
@@ -36,8 +38,10 @@ const BookingTable = ({
   requests,
   onApprove,
   onReject,
+  onCancel,
   isApproving,
   isRejecting,
+  isCancelling,
 }: BookingTableProps) => {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -148,6 +152,17 @@ const BookingTable = ({
                           <X className="size-4" />
                         </button>
                       </>
+                    )}
+
+                    {request.status === 'COMPLETED' && (
+                      <button
+                        onClick={() => onCancel?.(request)}
+                        className="px-2.5 py-1 text-xs font-medium text-red-500 border border-red-200 rounded hover:bg-red-50 transition-colors disabled:opacity-50"
+                        title="Cancel"
+                        disabled={isApproving || isRejecting || isCancelling}
+                      >
+                        Cancel
+                      </button>
                     )}
                   </div>
                 </td>

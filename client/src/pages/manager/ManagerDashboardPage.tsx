@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Calendar, ChevronDown, Bell, MessageSquare } from 'lucide-react';
+import { Calendar, ChevronDown } from 'lucide-react';
 import type {
   StatItem,
   ChartDataItem,
@@ -36,18 +36,6 @@ const ManagerDashboardPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [paidRange, setPaidRange] = useState<PaidRange>('30d');
 
-  const headerActions = [
-    {
-      id: 'notifications',
-      icon: <Bell className="h-5 w-5" />,
-      badge: true,
-    },
-    {
-      id: 'messages',
-      icon: <MessageSquare className="h-5 w-5" />,
-    },
-  ];
-
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -79,7 +67,6 @@ const ManagerDashboardPage = () => {
           onMenuClick={() => setSidebarOpen(true)}
           showSearch={true}
           searchPlaceholder="Search bookings..."
-          actions={headerActions}
           profile={{
             name: 'Alex Morgan',
             subtitle: 'Manager',
@@ -99,9 +86,8 @@ const ManagerDashboardPage = () => {
       <AppHeader
         title="Dashboard"
         onMenuClick={() => setSidebarOpen(true)}
-        showSearch={true}
+        showSearch={false}
         searchPlaceholder="Search bookings..."
-        actions={headerActions}
         profile={{
           name: user?.name || 'Manager',
           subtitle: user?.role || 'MANAGER',

@@ -1,25 +1,14 @@
 import { Calendar } from '@/components/ui/calendar';
-import type { Building } from '@/types/types';
 import { Zap } from 'lucide-react';
 
 interface FilterPanelProps {
   selectedDate: Date | undefined;
   onDateChange: (date: Date | undefined) => void;
-  buildings: Building[];
-  onBuildingChange: (buildingId: string, checked: boolean) => void;
-  selectedAmenities: string[];
-  onAmenityChange: (amenity: string) => void;
 }
-
-const AMENITIES = ['Projector', 'Whiteboard', 'Video Conf', 'Sound System'];
 
 export default function ScheduleFilterPanel({
   selectedDate,
   onDateChange,
-  buildings,
-  onBuildingChange,
-  selectedAmenities,
-  onAmenityChange,
 }: FilterPanelProps) {
   return (
     <div className="hidden xl:flex w-72 flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-10 shrink-0">
@@ -30,61 +19,6 @@ export default function ScheduleFilterPanel({
           onSelect={onDateChange}
           className="rounded-lg"
         />
-      </div>
-
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Buildings
-          </h3>
-          <button className="text-xs text-primary font-medium hover:underline">
-            Select All
-          </button>
-        </div>
-        <div className="space-y-1">
-          {buildings.map(building => (
-            <label
-              key={building.id}
-              className="group flex items-center gap-3 p-2 rounded-lg hover:bg-white cursor-pointer transition-colors"
-            >
-              <input
-                type="checkbox"
-                checked={building.checked}
-                onChange={e => onBuildingChange(building.id, e.target.checked)}
-                className="rounded border-slate-300 text-primary focus:ring-0 h-4 w-4 cursor-pointer"
-              />
-              <span className="text-sm text-slate-700 group-hover:text-primary transition-colors">
-                {building.name}
-              </span>
-              <span className="ml-auto text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
-                {building.count}
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="h-px bg-border-light w-full" />
-
-      <div className="flex flex-col gap-3">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-          Room Amenities
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {AMENITIES.map(amenity => (
-            <button
-              key={amenity}
-              onClick={() => onAmenityChange(amenity)}
-              className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
-                selectedAmenities.includes(amenity)
-                  ? 'border-primary bg-primary/5 text-primary'
-                  : 'border-border-light bg-white text-slate-600 hover:border-primary hover:text-primary'
-              }`}
-            >
-              {amenity}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="mt-auto bg-linear-to-br from-[#0e0d1b] to-[#1c1e31] rounded-2xl p-5 text-white shadow-lg relative overflow-hidden group cursor-pointer">
