@@ -633,6 +633,10 @@
  *                       status:
  *                         type: string
  *                         enum: [PENDING, APPROVED, REJECTED, CANCELLED, COMPLETED]
+ *                       hasFeedback:
+ *                         type: boolean
+ *                         description: True when the current user already left feedback for this room
+ *                         example: true
  *                       createdAt:
  *                         type: string
  *                         format: date-time
