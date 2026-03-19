@@ -319,7 +319,7 @@ export default class BookingRequestService {
       ...(status && { status }),
     };
 
-    return prisma.bookingRequest.findMany({
+    const bookingRequests = await prisma.bookingRequest.findMany({
       where,
       orderBy: {
         createdAt: "desc",
@@ -332,6 +332,30 @@ export default class BookingRequestService {
         },
       },
     });
+
+    if (bookingRequests.length === 0) {
+      return bookingRequests;
+    }
+
+    const roomIds = Array.from(new Set(bookingRequests.map((item) => item.roomId)));
+    const feedbacks = await prisma.feedback.findMany({
+      where: {
+        userId,
+        roomId: {
+          in: roomIds,
+        },
+      },
+      select: {
+        roomId: true,
+      },
+    });
+
+    const feedbackRoomIds = new Set(feedbacks.map((item) => item.roomId));
+
+    return bookingRequests.map((item) => ({
+      ...item,
+      hasFeedback: feedbackRoomIds.has(item.roomId),
+    }));
   }
 
   async getBookingRequestsForManager(
@@ -573,6 +597,81 @@ export default class BookingRequestService {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       },
     );
+  }
+
+  async cancelMyBookingRequest(id: string, userId: string) {
+    if (!userId) {
+      throw new BadRequestError("User ID is required");
+    }
+
+    const bookingRequest = await prisma.bookingRequest.findUnique({
+      where: { id },
+    });
+
+    if (!bookingRequest) {
+      throw new NotFoundError("Booking request with id not found");
+    }
+
+    if (bookingRequest.userId !== userId) {
+      throw new ForbiddenError(
+        "You are not allowed to cancel this booking request",
+      );
+    }
+
+    if (bookingRequest.status === "COMPLETED") {
+      throw new ConflictRequestError(
+        "Cannot cancel a completed booking request",
+      );
+    }
+
+    if (bookingRequest.status === "CANCELLED") {
+      return bookingRequest;
+    }
+
+    const updated = await prisma.bookingRequest.updateMany({
+      where: {
+        id,
+        userId,
+        status: {
+          notIn: ["COMPLETED", "CANCELLED"],
+        },
+      },
+      data: {
+        status: "CANCELLED",
+      },
+    });
+
+    if (updated.count === 0) {
+      const latest = await prisma.bookingRequest.findUnique({
+        where: { id },
+      });
+
+      if (!latest) {
+        throw new NotFoundError("Booking request with id not found");
+      }
+
+      if (latest.status === "COMPLETED") {
+        throw new ConflictRequestError(
+          "Cannot cancel a completed booking request",
+        );
+      }
+
+      if (latest.status === "CANCELLED") {
+        return latest;
+      }
+
+      throw new ConflictRequestError("Booking request has already been processed");
+    }
+
+    const cancelled = await prisma.bookingRequest.findUnique({
+      where: { id },
+    });
+
+    if (!cancelled) {
+      throw new NotFoundError("Booking request with id not found");
+    }
+
+    return cancelled;
   }
 
   private calculateRoomAmount(

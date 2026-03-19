@@ -82,6 +82,51 @@
  *             booking:
  *               $ref: "#/components/schemas/BookingEntity"
  *
+ *     RefundCancelRequest:
+ *       type: object
+ *       properties:
+ *         reason:
+ *           type: string
+ *           description: Reason from manager for cancelling a booking request/booking
+ *           example: Projector issue, room cannot be used as planned
+ *
+ *     RefundCancelResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: Booking cancelled and refund email queued successfully
+ *         reason:
+ *           type: string
+ *           example: Success
+ *         metadata:
+ *           type: object
+ *           properties:
+ *             bookingRequest:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: booking-request-uuid-123
+ *                 status:
+ *                   type: string
+ *                   example: CANCELLED
+ *             booking:
+ *               $ref: "#/components/schemas/BookingEntity"
+ *             refund:
+ *               type: object
+ *               properties:
+ *                 amount:
+ *                   type: number
+ *                   example: 30000
+ *                 reason:
+ *                   type: string
+ *                   nullable: true
+ *                   example: Room issue
+ *                 status:
+ *                   type: string
+ *                   example: SUCCESS
+ *
  *     BookingListResponse:
  *       type: object
  *       properties:
@@ -314,6 +359,68 @@
  *               $ref: "#/components/schemas/BookingMutationResponse"
  *       404:
  *         description: Booking not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/BookingErrorResponse"
+ */
+
+/**
+ * @openapi
+ * /v1/api/manager/bookings/{id}/refund-cancel:
+ *   patch:
+ *     summary: Manager cancels booking request and related booking, then sends refund email if needed
+ *     description: |
+ *       For cases where manager/admin needs to cancel a booking flow by booking request ID.
+ *       This API will:
+ *       1. Change BookingRequest status to CANCELLED (including COMPLETED requests)
+ *       2. Change matched Booking status to CANCELLED when it exists (including COMPLETED bookings)
+ *       3. Queue refund success email only when the cancelled booking was COMPLETED (paid)
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: header
+ *         name: authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: BookingRequest ID
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: "#/components/schemas/RefundCancelRequest"
+ *     responses:
+ *       200:
+ *         description: Booking cancelled and refund mail queued
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/RefundCancelResponse"
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Only MANAGER/ADMIN can call this endpoint
+ *       404:
+ *         description: BookingRequest not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/BookingErrorResponse"
+ *       409:
+ *         description: Booking request and booking were already cancelled
  *         content:
  *           application/json:
  *             schema:

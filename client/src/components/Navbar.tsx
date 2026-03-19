@@ -13,6 +13,7 @@ import {
 import { User, LogOut, LayoutDashboard, Bell } from 'lucide-react';
 import { useLogout } from '@/hooks/auth/use-logout';
 import { getAvatarUrl } from '@/lib/utils';
+import BookingNotificationsBell from '@/components/features/user/dashboard/BookingNotificationsBell';
 
 const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -134,11 +135,15 @@ const Navbar: React.FC = () => {
           </div>
         ) : (
           <div className="flex items-center gap-6">
-            <Bell
-              className={`h-5 w-5 transition-colors cursor-pointer ${
-                scrolled ? 'text-slate-600' : 'text-white/90'
-              }`}
-            />
+            {user.role === 'USER' ? (
+              <BookingNotificationsBell />
+            ) : (
+              <Bell
+                className={`h-5 w-5 transition-colors cursor-pointer ${
+                  scrolled ? 'text-slate-600' : 'text-white/90'
+                }`}
+              />
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button

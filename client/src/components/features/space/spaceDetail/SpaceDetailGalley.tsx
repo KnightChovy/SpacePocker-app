@@ -7,10 +7,26 @@ interface SpaceDetailGalleryProps {
 
 const SpaceDetailGallery: React.FC<SpaceDetailGalleryProps> = ({ images }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const imageCount = images.length;
+
+  const renderTile = (image: string, idx: number, className = '') => (
+    <div
+      key={`${image}-${idx}`}
+      className={`relative group overflow-hidden cursor-pointer ${className}`}
+      onClick={() => setIsModalOpen(true)}
+    >
+      <img
+        src={image}
+        alt={`Photo ${idx + 1}`}
+        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+      />
+      <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
+    </div>
+  );
 
   if (!images || images.length === 0) {
     return (
-      <div className="w-full aspect-21/9 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center">
+      <div className="mx-auto w-full max-w-5xl aspect-video rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center">
         <div className="text-center text-gray-500">
           <Image className="w-10 h-10 mx-auto mb-2" />
           <p className="text-sm font-medium">No photos available</p>
@@ -21,40 +37,45 @@ const SpaceDetailGallery: React.FC<SpaceDetailGalleryProps> = ({ images }) => {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-100 md:h-137.5 overflow-hidden rounded-2xl relative">
-        <div
-          className="md:col-span-2 md:row-span-2 relative group overflow-hidden cursor-pointer"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <div
-            className="w-full h-full bg-center bg-cover transition-transform duration-700 group-hover:scale-105"
-            style={{ backgroundImage: `url(${images[0]})` }}
-          />
-          <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
+      {imageCount === 1 ? (
+        <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-2xl aspect-video">
+          {renderTile(images[0], 0, 'w-full h-full')}
         </div>
+      ) : null}
 
-        {images.slice(1, 5).map((image, idx) => (
-          <div
-            key={idx}
-            className="hidden md:block relative group overflow-hidden cursor-pointer"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <div
-              className="w-full h-full bg-center bg-cover transition-transform duration-700 group-hover:scale-105"
-              style={{ backgroundImage: `url(${image})` }}
-            />
-            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
-            {idx === 3 && (
-              <button className="absolute bottom-4 right-4 bg-white/95 backdrop-blur shadow-lg px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-white transition-all transform active:scale-95">
-                <span className="">
-                  <Image />
-                </span>
-                Show all photos
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
+      {imageCount === 2 ? (
+        <div className="mx-auto w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4 h-104 md:h-136 overflow-hidden rounded-2xl">
+          {images.slice(0, 2).map((image, idx) => renderTile(image, idx))}
+        </div>
+      ) : null}
+
+      {imageCount === 3 ? (
+        <div className="mx-auto w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 gap-4 h-120 md:h-152 overflow-hidden rounded-2xl">
+          {renderTile(images[0], 0, 'md:col-span-2')}
+          {renderTile(images[1], 1)}
+          {renderTile(images[2], 2)}
+        </div>
+      ) : null}
+
+      {imageCount >= 4 ? (
+        <div className="mx-auto w-full max-w-5xl grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 h-120 md:h-152 overflow-hidden rounded-2xl relative">
+          {renderTile(images[0], 0, 'md:col-span-2 md:row-span-2')}
+          {images.slice(1, 5).map((image, idx) => (
+            <div key={`${image}-${idx + 1}`} className="hidden md:block h-full">
+              {renderTile(image, idx + 1, 'h-full')}
+              {idx === 3 ? (
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="absolute bottom-4 right-4 bg-white/95 backdrop-blur shadow-lg px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-white transition-all transform active:scale-95"
+                >
+                  <Image className="w-4 h-4" />
+                  Show all photos
+                </button>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4">

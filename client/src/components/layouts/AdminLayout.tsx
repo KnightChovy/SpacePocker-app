@@ -43,7 +43,7 @@ export default function AdminLayout() {
         },
         {
           id: 'spaces',
-          label: 'Spaces',
+          label: 'Booking requests',
           path: '/admin/spaces',
           icon: 'apartment',
         },
@@ -66,15 +66,9 @@ export default function AdminLayout() {
       items: [
         {
           id: 'settings',
-          label: 'Settings',
+          label: 'Profile',
           path: '/admin/settings',
           icon: 'settings',
-        },
-        {
-          id: 'security',
-          label: 'Security Logs',
-          path: '/admin/security',
-          icon: 'shield',
         },
       ],
     },

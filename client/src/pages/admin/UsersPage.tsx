@@ -9,6 +9,7 @@ import { usePromoteUserToManager } from '@/hooks/admin/users/use-promote-user-to
 import type { ApiUser, ApiUserRole } from '@/types/users-api';
 
 type UiStatus = 'Active' | 'Idle' | 'Offline' | 'Suspended';
+type UserSortOption = 'newest' | 'oldest' | 'lastActive';
 
 const toHandle = (email: string) => {
   const atIndex = email.indexOf('@');
@@ -34,6 +35,7 @@ const UsersPage: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState<ApiUserRole | undefined>(
     undefined
   );
+  const [sortBy, setSortBy] = useState<UserSortOption>('newest');
 
   const { data, isLoading, isError } = useGetUsers({
     search: searchQuery || undefined,
@@ -45,23 +47,36 @@ const UsersPage: React.FC = () => {
   const promoteMutation = usePromoteUserToManager();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
   }, [searchQuery, roleFilter]);
 
-  const headerActions = [
-    {
-      id: 'add-user',
-      icon: (
-        <span className="material-symbols-outlined text-[20px]">
-          person_add
-        </span>
-      ),
-      label: 'Add User',
-      variant: 'primary' as const,
-    },
-  ];
+  const users: ApiUser[] = useMemo(() => {
+    const rawUsers = data?.users ?? [];
+    const sortedUsers = [...rawUsers];
 
-  const users: ApiUser[] = useMemo(() => data?.users ?? [], [data?.users]);
+    if (sortBy === 'oldest') {
+      sortedUsers.sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      return sortedUsers;
+    }
+
+    if (sortBy === 'lastActive') {
+      sortedUsers.sort(
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+      return sortedUsers;
+    }
+
+    sortedUsers.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    return sortedUsers;
+  }, [data?.users, sortBy]);
   const pagination = data?.pagination;
   const totalUsers = pagination?.total;
   const totalPages = pagination?.totalPages ?? 1;
@@ -82,7 +97,6 @@ const UsersPage: React.FC = () => {
         searchPlaceholder="Search users..."
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
-        actions={headerActions}
         profile={{
           name: user?.name || 'Admin',
           subtitle: user?.role || 'ADMIN',
@@ -94,12 +108,6 @@ const UsersPage: React.FC = () => {
       <main className="flex-1 overflow-y-auto p-6 lg:p-10">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex items-center justify-between gap-3">
-            <button className="flex items-center gap-2 h-10 px-4 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
-              <span className="material-symbols-outlined text-[18px] text-gray-500">
-                filter_list
-              </span>
-              <span className="hidden lg:inline">Filters</span>
-            </button>
             <select
               className="form-select bg-transparent text-sm border-gray-200 rounded-lg text-gray-600 focus:ring-0 focus:border-primary h-10 py-1 pl-3 pr-8 cursor-pointer"
               value={roleFilter ?? ''}
@@ -115,12 +123,6 @@ const UsersPage: React.FC = () => {
                 </option>
               ))}
             </select>
-            <button className="flex items-center justify-center shrink-0 h-10 w-10 sm:w-auto sm:px-4 bg-primary text-white rounded-lg shadow-lg shadow-primary/30 hover:bg-indigo-600 transition-all">
-              <span className="material-symbols-outlined text-[20px]">add</span>
-              <span className="hidden sm:inline ml-2 text-sm font-semibold">
-                Add User
-              </span>
-            </button>
           </div>
 
           <div className="bg-surface-light rounded-2xl shadow-float border border-gray-100 flex flex-col overflow-hidden">
@@ -138,10 +140,14 @@ const UsersPage: React.FC = () => {
                 </span>
               </div>
               <div className="flex gap-2">
-                <select className="form-select bg-transparent text-sm border-gray-200 rounded-lg text-gray-600 focus:ring-0 focus:border-primary py-1 pl-2 pr-8 cursor-pointer">
-                  <option>Sort by: Newest</option>
-                  <option>Sort by: Oldest</option>
-                  <option>Sort by: Last Active</option>
+                <select
+                  className="form-select bg-transparent text-sm border-gray-200 rounded-lg text-gray-600 focus:ring-0 focus:border-primary py-1 pl-2 pr-8 cursor-pointer"
+                  value={sortBy}
+                  onChange={e => setSortBy(e.target.value as UserSortOption)}
+                >
+                  <option value="newest">Sort by: Newest</option>
+                  <option value="oldest">Sort by: Oldest</option>
+                  <option value="lastActive">Sort by: Last Active</option>
                 </select>
               </div>
             </div>

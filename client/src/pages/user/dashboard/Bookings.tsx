@@ -13,6 +13,7 @@ import PaginationButton from '@/components/features/user/bookings/PaginationButt
 import BookingList from '@/components/features/user/bookings/BookingList';
 import BookingNotificationsBell from '@/components/features/user/dashboard/BookingNotificationsBell';
 import { useGetMyBookingRequests } from '@/hooks/user/booking-requests/use-get-my-booking-requests';
+import { useCancelMyBookingRequest } from '@/hooks/user/booking-requests/use-cancel-my-booking-request';
 import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
 import type { BookingUser } from '@/types/user-type';
 import type {
@@ -20,6 +21,16 @@ import type {
   MyBookingRequest,
 } from '@/types/booking-request-api';
 import { useBookingDraftStore } from '@/stores/bookingDraft.store';
+
+type DateRangeValue = {
+  from: string;
+  to: string;
+};
+
+type BuildingFilterOption = {
+  id: string;
+  label: string;
+};
 
 const formatDateLabel = (iso: string) => {
   const date = new Date(iso);
@@ -64,8 +75,9 @@ const mapStatusToUserLabel = (status: BookingRequestStatus) => {
     case 'COMPLETED':
       return 'Completed' as const;
     case 'CANCELLED':
-    case 'REJECTED':
       return 'Cancelled' as const;
+    case 'REJECTED':
+      return 'Rejected' as const;
     default:
       return 'Pending Approval' as const;
   }
@@ -110,6 +122,7 @@ const mapMyBookingRequestToBookingUser = (
 };
 
 const Bookings = () => {
+  const PAGE_SIZE = 10;
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
@@ -117,6 +130,13 @@ const Bookings = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const user = useAuthStore(state => state.user);
   const [activeTab, setActiveTab] = useState<'Active' | 'Cancelled'>('Active');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [dateRange, setDateRange] = useState<DateRangeValue>({
+    from: '',
+    to: '',
+  });
+  const [selectedBuildingId, setSelectedBuildingId] = useState('ALL');
   const [dismissedPaymentToken, setDismissedPaymentToken] = useState<
     string | null
   >(null);
@@ -189,6 +209,7 @@ const Bookings = () => {
     isLoading,
     isError,
   } = useGetMyBookingRequests();
+  const cancelMyBookingRequestMutation = useCancelMyBookingRequest();
 
   const cancelledStatuses: BookingRequestStatus[] = ['CANCELLED', 'REJECTED'];
 
@@ -201,7 +222,109 @@ const Bookings = () => {
 
   const requestsForTab =
     activeTab === 'Active' ? activeRequests : cancelledRequests;
-  const bookingsForTab = requestsForTab.map(req => {
+
+  const buildingOptions = useMemo<BuildingFilterOption[]>(() => {
+    const optionsById = new Map<string, BuildingFilterOption>();
+
+    for (const req of requestsForTab) {
+      const building = req.room?.building;
+      if (!building?.id) continue;
+
+      const label =
+        building.buildingName ||
+        building.campus ||
+        building.address ||
+        `Building ${building.id.slice(0, 6)}`;
+
+      optionsById.set(building.id, {
+        id: building.id,
+        label,
+      });
+    }
+
+    return Array.from(optionsById.values()).sort((a, b) =>
+      a.label.localeCompare(b.label)
+    );
+  }, [requestsForTab]);
+
+  const effectiveSelectedBuildingId =
+    selectedBuildingId === 'ALL' ||
+    buildingOptions.some(option => option.id === selectedBuildingId)
+      ? selectedBuildingId
+      : 'ALL';
+
+  const filteredRequestsForTab = useMemo(() => {
+    const keyword = searchQuery.trim().toLowerCase();
+
+    const fromTs = dateRange.from
+      ? new Date(`${dateRange.from}T00:00:00`).getTime()
+      : null;
+    const toTs = dateRange.to
+      ? new Date(`${dateRange.to}T23:59:59.999`).getTime()
+      : null;
+
+    return requestsForTab.filter(req => {
+      if (
+        effectiveSelectedBuildingId !== 'ALL' &&
+        req.room?.building?.id !== effectiveSelectedBuildingId
+      ) {
+        return false;
+      }
+
+      const startTs = new Date(req.startTime).getTime();
+      if (!Number.isNaN(startTs)) {
+        if (fromTs !== null && startTs < fromTs) return false;
+        if (toTs !== null && startTs > toTs) return false;
+      }
+
+      if (!keyword) return true;
+
+      const searchFields = [
+        req.id,
+        req.room?.name,
+        req.room?.roomCode,
+        req.room?.building?.buildingName,
+        req.room?.building?.campus,
+        req.room?.building?.address,
+      ]
+        .filter(Boolean)
+        .map(field => String(field).toLowerCase());
+
+      return searchFields.some(field => field.includes(keyword));
+    });
+  }, [
+    dateRange.from,
+    dateRange.to,
+    effectiveSelectedBuildingId,
+    requestsForTab,
+    searchQuery,
+  ]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    activeTab,
+    searchQuery,
+    dateRange.from,
+    dateRange.to,
+    effectiveSelectedBuildingId,
+  ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredRequestsForTab.length / PAGE_SIZE)
+  );
+
+  useEffect(() => {
+    setCurrentPage(prev => Math.min(prev, totalPages));
+  }, [totalPages]);
+
+  const paginatedRequests = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredRequestsForTab.slice(start, start + PAGE_SIZE);
+  }, [currentPage, filteredRequestsForTab]);
+
+  const bookingsForTab = paginatedRequests.map(req => {
     const start = new Date(req.startTime);
     const end = new Date(req.endTime);
     const hours = Math.max(0, (end.getTime() - start.getTime()) / 3600000);
@@ -224,6 +347,16 @@ const Bookings = () => {
 
     return mapMyBookingRequestToBookingUser(req, totalPrice);
   });
+
+  const handleCancelBookingRequest = async (bookingRequestId: string) => {
+    if (!bookingRequestId) return;
+
+    if (!window.confirm('Cancel this booking request?')) {
+      return;
+    }
+
+    await cancelMyBookingRequestMutation.mutateAsync(bookingRequestId);
+  };
 
   const headerActions = [
     {
@@ -321,11 +454,102 @@ const Bookings = () => {
                   className="pl-10 pr-4 py-2.5 w-full rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark focus:ring-2 focus:ring-primary/50 focus:border-transparent text-sm transition-all shadow-sm placeholder:text-text-sub-light/60"
                   placeholder="Search by building, ID or name..."
                   type="text"
+                  value={searchQuery}
+                  onChange={event => setSearchQuery(event.target.value)}
                 />
               </div>
               <div className="flex gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-                <FilterButton icon="calendar" label="Date Range" />
-                <FilterButton icon="domain" label="All Buildings" />
+                <FilterButton
+                  icon="calendar"
+                  label="Date Range"
+                  isActive={Boolean(dateRange.from || dateRange.to)}
+                >
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-medium text-text-sub-light dark:text-text-sub-dark">
+                        From
+                      </label>
+                      <input
+                        type="date"
+                        value={dateRange.from}
+                        onChange={event =>
+                          setDateRange(prev => ({
+                            ...prev,
+                            from: event.target.value,
+                          }))
+                        }
+                        className="mt-1 w-full rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/30"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-medium text-text-sub-light dark:text-text-sub-dark">
+                        To
+                      </label>
+                      <input
+                        type="date"
+                        value={dateRange.to}
+                        min={dateRange.from || undefined}
+                        onChange={event =>
+                          setDateRange(prev => ({
+                            ...prev,
+                            to: event.target.value,
+                          }))
+                        }
+                        className="mt-1 w-full rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/30"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setDateRange({ from: '', to: '' })}
+                      className="w-full rounded-lg border border-border-light dark:border-border-dark px-3 py-2 text-sm font-medium text-text-sub-light dark:text-text-sub-dark hover:border-primary/40 hover:text-primary transition-colors"
+                    >
+                      Clear date filter
+                    </button>
+                  </div>
+                </FilterButton>
+
+                <FilterButton
+                  icon="domain"
+                  label={
+                    effectiveSelectedBuildingId === 'ALL'
+                      ? 'All Buildings'
+                      : (buildingOptions.find(
+                          option => option.id === effectiveSelectedBuildingId
+                        )?.label ?? 'All Buildings')
+                  }
+                  isActive={effectiveSelectedBuildingId !== 'ALL'}
+                >
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBuildingId('ALL')}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                        effectiveSelectedBuildingId === 'ALL'
+                          ? 'bg-primary/10 text-primary font-semibold'
+                          : 'hover:bg-background-light dark:hover:bg-background-dark text-text-main-light dark:text-text-main-dark'
+                      }`}
+                    >
+                      All Buildings
+                    </button>
+
+                    {buildingOptions.map(option => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => setSelectedBuildingId(option.id)}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                          effectiveSelectedBuildingId === option.id
+                            ? 'bg-primary/10 text-primary font-semibold'
+                            : 'hover:bg-background-light dark:hover:bg-background-dark text-text-main-light dark:text-text-main-dark'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </FilterButton>
               </div>
             </div>
           </div>
@@ -339,15 +563,38 @@ const Bookings = () => {
               Failed to load bookings.
             </div>
           ) : (
-            <BookingList bookings={bookingsForTab} requests={requestsForTab} />
+            <BookingList
+              bookings={bookingsForTab}
+              requests={paginatedRequests}
+              onCancelRequest={handleCancelBookingRequest}
+              isCancelling={cancelMyBookingRequestMutation.isPending}
+            />
           )}
 
           <div className="flex items-center justify-center gap-2 py-4">
-            <PaginationButton icon="left" disabled />
-            <PaginationButton label="1" active />
-            <PaginationButton label="2" />
-            <PaginationButton label="3" />
-            <PaginationButton icon="right" />
+            <PaginationButton
+              icon="left"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            />
+            {Array.from({ length: totalPages }, (_, index) => {
+              const page = index + 1;
+              return (
+                <PaginationButton
+                  key={page}
+                  label={String(page)}
+                  active={page === currentPage}
+                  onClick={() => setCurrentPage(page)}
+                />
+              );
+            })}
+            <PaginationButton
+              icon="right"
+              disabled={currentPage === totalPages}
+              onClick={() =>
+                setCurrentPage(prev => Math.min(totalPages, prev + 1))
+              }
+            />
           </div>
         </div>
       </div>

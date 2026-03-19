@@ -2,14 +2,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/lib/axios';
 import type { BookingRequestForManager } from '@/types/booking-request-api';
 
-export const useRejectBookingRequest = () => {
+export const useCancelBookingRequest = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (bookingRequestId: string) => {
       const response = await axiosInstance.patch<{
         metadata: BookingRequestForManager;
-      }>(`/booking-requests/reject/${bookingRequestId}`);
+      }>(`/manager/bookings/${bookingRequestId}/refund-cancel`);
 
       return response.data.metadata;
     },

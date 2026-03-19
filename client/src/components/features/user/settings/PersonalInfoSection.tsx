@@ -50,27 +50,27 @@ const PersonalInfoSection = ({
               <button className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-lg transition-colors">
                 Change
               </button>
-              <button className="px-3 py-1.5 bg-background-light dark:bg-background-dark text-text-sub-light hover:text-red-500 text-xs font-bold rounded-lg transition-colors border border-transparent hover:border-red-200">
+              {/* <button className="px-3 py-1.5 bg-background-light dark:bg-background-dark text-text-sub-light hover:text-red-500 text-xs font-bold rounded-lg transition-colors border border-transparent hover:border-red-200">
                 Remove
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <InputField
-            label="Full Name"
-            icon="person"
-            value={name}
-            onChange={onNameChange}
-          />
-          <InputField label="Role / Title" icon="work" value={role} disabled />
-          <InputField
             label="Email Address"
             icon="mail"
             value={email}
             type="email"
             disabled
+          />
+            <InputField label="Role / Title" icon="work" value={role} disabled />
+          <InputField
+            label="Full Name"
+            icon="person"
+            value={name}
+            onChange={onNameChange}
           />
           <InputField
             label="Phone Number"

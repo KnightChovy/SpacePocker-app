@@ -28,6 +28,12 @@ router.get(
   authorizeRoles("USER"),
   asyncHandler(bookingRequestController.getMyBookingRequests),
 );
+router.patch(
+  "/my-booking-requests/:id/cancel",
+  authentication,
+  authorizeRoles("USER"),
+  asyncHandler(bookingRequestController.cancelMyBookingRequest),
+);
 router.get(
   "/booking-requests",
   authentication,

@@ -1,9 +1,11 @@
 import BookingService from "../booking.service";
 import {
   BadRequestError,
+  ConflictRequestError,
   ForbiddenError,
   NotFoundError,
 } from "../../core/error.response";
+import MailQueueService from "../mailQueue.service";
 
 jest.mock("../../lib/prisma", () => ({
   prisma: {
@@ -20,6 +22,11 @@ jest.mock("../../lib/prisma", () => ({
       findUnique: jest.fn(),
       update: jest.fn(),
     },
+    bookingRequest: {
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
+    $transaction: jest.fn(),
   },
 }));
 
@@ -35,13 +42,23 @@ const prismaMock = prisma as unknown as {
     findUnique: jest.Mock;
     update: jest.Mock;
   };
+  bookingRequest: {
+    findUnique: jest.Mock;
+    update: jest.Mock;
+  };
+  $transaction: jest.Mock;
 };
 
 describe("BookingService", () => {
   let bookingService: BookingService;
+  let mailQueueServiceMock: jest.Mocked<MailQueueService>;
 
   beforeEach(() => {
-    bookingService = new BookingService();
+    mailQueueServiceMock = {
+      publishBookingConfirmedEmailJob: jest.fn(),
+      publishBookingRefundSuccessEmailJob: jest.fn(),
+    } as unknown as jest.Mocked<MailQueueService>;
+    bookingService = new BookingService(mailQueueServiceMock);
     jest.clearAllMocks();
 
     prismaMock.user.findUnique.mockResolvedValue({ id: "user-1" });
@@ -224,6 +241,263 @@ describe("BookingService", () => {
       await expect(
         bookingService.cancelBooking("booking-1", "user-1", "USER"),
       ).rejects.toThrow(BadRequestError);
+    });
+  });
+
+  describe("managerCancelPaidBookingAndNotifyRefund()", () => {
+    it("should cancel completed booking by bookingRequestId and queue refund email", async () => {
+      const startTime = new Date("2026-05-01T08:00:00.000Z");
+      const endTime = new Date("2026-05-01T10:00:00.000Z");
+
+      prismaMock.bookingRequest.findUnique.mockResolvedValue({
+        id: "br-1",
+        userId: "user-1",
+        roomId: "room-1",
+        startTime,
+        endTime,
+        status: "COMPLETED",
+        user: {
+          id: "user-1",
+          name: "User One",
+          email: "user1@example.com",
+        },
+        room: {
+          id: "room-1",
+          name: "Room A",
+          managerId: "manager-1",
+          pricePerHour: 50000,
+        },
+      });
+
+      prismaMock.booking.findFirst.mockResolvedValue({
+        id: "booking-1",
+        userId: "user-1",
+        roomId: "room-1",
+        startTime,
+        endTime,
+        status: "COMPLETED",
+        user: {
+          id: "user-1",
+          name: "User One",
+          email: "user1@example.com",
+        },
+        room: {
+          id: "room-1",
+          name: "Room A",
+          pricePerHour: 50000,
+        },
+      });
+
+      prismaMock.$transaction.mockImplementation(async (callback: any) =>
+        callback({
+          bookingRequest: {
+            update: jest.fn().mockResolvedValue({
+              id: "br-1",
+              status: "CANCELLED",
+            }),
+          },
+          booking: {
+            update: jest.fn().mockResolvedValue({
+              id: "booking-1",
+              userId: "user-1",
+              roomId: "room-1",
+              startTime,
+              endTime,
+              status: "CANCELLED",
+              user: {
+                id: "user-1",
+                name: "User One",
+                email: "user1@example.com",
+              },
+              room: {
+                id: "room-1",
+                name: "Room A",
+                pricePerHour: 50000,
+              },
+            }),
+          },
+        }),
+      );
+
+      const result = await bookingService.managerCancelPaidBookingAndNotifyRefund(
+        "br-1",
+        "manager-1",
+        "MANAGER",
+        "Room issue",
+      );
+
+      expect(result.bookingRequest.status).toBe("CANCELLED");
+      expect(result.booking).not.toBeNull();
+      expect(result.booking?.status).toBe("CANCELLED");
+      expect(result.refund).toEqual({
+        amount: 100000,
+        reason: "Room issue",
+        status: "SUCCESS",
+      });
+      expect(
+        mailQueueServiceMock.publishBookingRefundSuccessEmailJob,
+      ).toHaveBeenCalledWith({
+        to: "user1@example.com",
+        customerName: "User One",
+        bookingId: "booking-1",
+        roomName: "Room A",
+        refundAmount: 100000,
+        refundReason: "Room issue",
+      });
+    });
+
+    it("should throw ForbiddenError when role is not MANAGER or ADMIN", async () => {
+      prismaMock.bookingRequest.findUnique.mockResolvedValue({
+        id: "br-1",
+        userId: "user-1",
+        roomId: "room-1",
+        startTime: new Date("2026-05-01T08:00:00.000Z"),
+        endTime: new Date("2026-05-01T10:00:00.000Z"),
+        status: "COMPLETED",
+        user: {
+          id: "user-1",
+          name: "User One",
+          email: "user1@example.com",
+        },
+        room: {
+          id: "room-1",
+          name: "Room A",
+          managerId: "manager-2",
+          pricePerHour: 50000,
+        },
+      });
+
+      await expect(
+        bookingService.managerCancelPaidBookingAndNotifyRefund(
+          "br-1",
+          "user-1",
+          "USER",
+        ),
+      ).rejects.toThrow(ForbiddenError);
+    });
+
+    it("should return NOT_APPLICABLE refund status when cancelled booking was not completed", async () => {
+      const startTime = new Date("2026-05-01T08:00:00.000Z");
+      const endTime = new Date("2026-05-01T10:00:00.000Z");
+
+      prismaMock.bookingRequest.findUnique.mockResolvedValue({
+        id: "br-1",
+        userId: "user-1",
+        roomId: "room-1",
+        startTime,
+        endTime,
+        status: "APPROVED",
+        user: {
+          id: "user-1",
+          name: "User One",
+          email: "user1@example.com",
+        },
+        room: {
+          id: "room-1",
+          name: "Room A",
+          managerId: "manager-1",
+          pricePerHour: 50000,
+        },
+      });
+
+      prismaMock.booking.findFirst.mockResolvedValue({
+        id: "booking-1",
+        userId: "user-1",
+        roomId: "room-1",
+        startTime,
+        endTime,
+        status: "APPROVED",
+        user: {
+          id: "user-1",
+          name: "User One",
+          email: "user1@example.com",
+        },
+        room: {
+          id: "room-1",
+          name: "Room A",
+          pricePerHour: 50000,
+        },
+      });
+
+      prismaMock.$transaction.mockImplementation(async (callback: any) =>
+        callback({
+          bookingRequest: {
+            update: jest.fn().mockResolvedValue({
+              id: "br-1",
+              status: "CANCELLED",
+            }),
+          },
+          booking: {
+            update: jest.fn().mockResolvedValue({
+              id: "booking-1",
+              userId: "user-1",
+              roomId: "room-1",
+              startTime,
+              endTime,
+              status: "CANCELLED",
+              user: {
+                id: "user-1",
+                name: "User One",
+                email: "user1@example.com",
+              },
+              room: {
+                id: "room-1",
+                name: "Room A",
+                pricePerHour: 50000,
+              },
+            }),
+          },
+        }),
+      );
+
+      const result = await bookingService.managerCancelPaidBookingAndNotifyRefund(
+        "br-1",
+        "manager-1",
+        "MANAGER",
+      );
+
+      expect(result.refund).toEqual({
+        amount: 0,
+        reason: null,
+        status: "NOT_APPLICABLE",
+      });
+      expect(
+        mailQueueServiceMock.publishBookingRefundSuccessEmailJob,
+      ).not.toHaveBeenCalled();
+    });
+
+    it("should throw ConflictRequestError when both booking and booking request are already cancelled", async () => {
+      prismaMock.bookingRequest.findUnique.mockResolvedValue({
+        id: "br-1",
+        userId: "user-1",
+        roomId: "room-1",
+        startTime: new Date("2026-05-01T08:00:00.000Z"),
+        endTime: new Date("2026-05-01T10:00:00.000Z"),
+        status: "CANCELLED",
+        user: {
+          id: "user-1",
+          name: "User One",
+          email: "user1@example.com",
+        },
+        room: {
+          id: "room-1",
+          name: "Room A",
+          managerId: "manager-1",
+          pricePerHour: 50000,
+        },
+      });
+      prismaMock.booking.findFirst.mockResolvedValue({
+        id: "booking-1",
+        status: "CANCELLED",
+      });
+
+      await expect(
+        bookingService.managerCancelPaidBookingAndNotifyRefund(
+          "br-1",
+          "manager-1",
+          "MANAGER",
+        ),
+      ).rejects.toThrow(ConflictRequestError);
     });
   });
 });

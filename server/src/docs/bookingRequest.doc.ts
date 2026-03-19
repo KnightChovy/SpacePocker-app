@@ -633,6 +633,10 @@
  *                       status:
  *                         type: string
  *                         enum: [PENDING, APPROVED, REJECTED, CANCELLED, COMPLETED]
+ *                       hasFeedback:
+ *                         type: boolean
+ *                         description: True when the current user already left feedback for this room
+ *                         example: true
  *                       createdAt:
  *                         type: string
  *                         format: date-time
@@ -656,4 +660,52 @@
  *                                 type: string
  *       401:
  *         description: Unauthorized
+ */
+
+/**
+ * @openapi
+ * /v1/api/my-booking-requests/{id}/cancel:
+ *   patch:
+ *     summary: Cancel my booking request
+ *     description: |
+ *       Allows a user to cancel their own booking request when it is not completed.
+ *       Completed booking requests cannot be cancelled.
+ *     tags: [Booking Request]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID (UUID)
+ *       - in: header
+ *         name: authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Access token
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Booking request ID
+ *     responses:
+ *       200:
+ *         description: Booking request cancelled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/BookingRequestResponse"
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Booking request not found
+ *       409:
+ *         description: Cannot cancel completed booking request
  */

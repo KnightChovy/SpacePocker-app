@@ -1,21 +1,21 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/lib/axios';
-import type { BookingRequestForManager } from '@/types/booking-request-api';
+import type { MyBookingRequest } from '@/types/booking-request-api';
 
-export const useRejectBookingRequest = () => {
+export const useCancelMyBookingRequest = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (bookingRequestId: string) => {
       const response = await axiosInstance.patch<{
-        metadata: BookingRequestForManager;
-      }>(`/booking-requests/reject/${bookingRequestId}`);
+        metadata: MyBookingRequest;
+      }>(`/my-booking-requests/${bookingRequestId}/cancel`);
 
       return response.data.metadata;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ['booking-requests'],
+        queryKey: ['booking-requests', 'user', 'my'],
       });
     },
   });

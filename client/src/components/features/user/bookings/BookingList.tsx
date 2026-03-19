@@ -28,9 +28,16 @@ import { formatVND } from '@/lib/utils';
 type BookingListProps = {
   bookings: BookingUser[];
   requests: MyBookingRequest[];
+  onCancelRequest?: (requestId: string) => Promise<void> | void;
+  isCancelling?: boolean;
 };
 
-const BookingList = ({ bookings, requests }: BookingListProps) => {
+const BookingList = ({
+  bookings,
+  requests,
+  onCancelRequest,
+  isCancelling = false,
+}: BookingListProps) => {
   const amenitiesQuery = useGetAmenities();
   const serviceCategoriesQuery = useGetServiceCategories();
 
@@ -260,6 +267,12 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
           !!req?.roomId && submittedRoomIds.has(req.roomId);
 
         const canPay = req?.status === 'APPROVED';
+        const isPaid = req?.status === 'COMPLETED';
+        const canCancelRequest =
+          !!req?.id &&
+          req.status !== 'COMPLETED' &&
+          req.status !== 'CANCELLED' &&
+          req.status !== 'REJECTED';
 
         return (
           <div
@@ -331,12 +344,30 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
                   Get Detail
                 </button>
 
+                {canCancelRequest ? (
+                  <button
+                    type="button"
+                    onClick={() => onCancelRequest?.(req.id)}
+                    disabled={isCancelling}
+                    className="px-4 py-2 rounded-xl text-sm font-bold border border-red-200 text-red-600 hover:bg-red-50 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {isCancelling ? 'Cancelling...' : 'Cancel Booking'}
+                  </button>
+                ) : null}
+
                 {canPay ? (
                   <button
                     onClick={() => openPay(idx)}
                     className="px-5 py-2 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/90 transition-all flex items-center gap-2 ml-auto"
                   >
                     <CreditCard className="h-5 w-5" /> Pay
+                  </button>
+                ) : isPaid ? (
+                  <button
+                    className="px-5 py-2 rounded-xl text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default flex items-center gap-2 ml-auto"
+                    disabled
+                  >
+                    <CircleCheckBig className="h-5 w-5" /> Paid
                   </button>
                 ) : null}
 
@@ -635,19 +666,29 @@ const BookingList = ({ bookings, requests }: BookingListProps) => {
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      disabled={
-                        selectedRequest.status !== 'APPROVED' ||
-                        isPaymentLoading
-                      }
-                      onClick={handlePay}
-                      className="px-5 py-2.5 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-                    >
-                      {isPaymentLoading
-                        ? 'Processing...'
-                        : `Pay ${formatVND(pricing.total)}`}
-                    </button>
+                    {selectedRequest.status === 'COMPLETED' ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="px-5 py-2.5 rounded-xl text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default flex items-center justify-center gap-2"
+                      >
+                        <CircleCheckBig className="h-5 w-5" /> Paid
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={
+                          selectedRequest.status !== 'APPROVED' ||
+                          isPaymentLoading
+                        }
+                        onClick={handlePay}
+                        className="px-5 py-2.5 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                      >
+                        {isPaymentLoading
+                          ? 'Processing...'
+                          : `Pay ${formatVND(pricing.total)}`}
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="text-sm text-text-sub-light dark:text-text-sub-dark">

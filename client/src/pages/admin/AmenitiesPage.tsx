@@ -58,6 +58,7 @@ const AmenitiesPage: React.FC = () => {
 
   useEffect(() => {
     if (!isModalOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNameInput('');
       setEditingAmenity(null);
       setModalMode('create');
@@ -99,20 +100,6 @@ const AmenitiesPage: React.FC = () => {
     deleteMutation.mutate(amenity.id);
   };
 
-  const headerActions = [
-    {
-      id: 'add-amenity',
-      icon: (
-        <span className="material-symbols-outlined text-[20px]">
-          add_circle
-        </span>
-      ),
-      label: 'Add Amenity',
-      variant: 'primary' as const,
-      onClick: openCreate,
-    },
-  ];
-
   return (
     <>
       <AppHeader
@@ -123,7 +110,6 @@ const AmenitiesPage: React.FC = () => {
         searchPlaceholder="Search amenities..."
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
-        actions={headerActions}
         profile={{
           name: authUser?.name || 'Admin',
           subtitle: authUser?.role || 'ADMIN',
