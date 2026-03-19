@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Host } from '@/types/types';
+import type { Host } from '@/types/user/types';
 
 interface SpaceDetailInfoProps {
   description: string;

@@ -13,7 +13,7 @@ import {
   Bell,
   MessageSquare,
 } from 'lucide-react';
-import type { ApiRoom, ApiRoomStatus } from '@/types/room-api';
+import type { ApiRoom, ApiRoomStatus } from '@/types/user/room-api';
 import { useGetRooms } from '@/hooks/manager/rooms/use-get-rooms';
 import { useCreateRoom } from '@/hooks/manager/rooms/use-create-room';
 import { useDeleteRoom } from '@/hooks/manager/rooms/use-delete-room';

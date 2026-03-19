@@ -1,4 +1,4 @@
-import type { Space } from '@/types/types';
+import type { Space } from '@/types/user/types';
 import React from 'react';
 
 interface SpaceDetailHeaderProps {

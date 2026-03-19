@@ -1,6 +1,6 @@
 import React from 'react';
 import { TrendingUp } from 'lucide-react';
-import type { Stat } from '@/types/admin-types';
+import type { Stat } from '@/types/admin/admin-types';
 
 const StatCard: React.FC<Stat> = ({ label, value, trend, icon: Icon }) => {
   return (

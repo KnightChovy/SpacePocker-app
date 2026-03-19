@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
 import { useGetUsers } from '@/hooks/admin/users/use-get-users';
 import { usePromoteUserToManager } from '@/hooks/admin/users/use-promote-user-to-manager';
-import type { ApiUser, ApiUserRole } from '@/types/users-api';
+import type { ApiUser, ApiUserRole } from '@/types/admin/users-api';
 
 type UiStatus = 'Active' | 'Idle' | 'Offline' | 'Suspended';
 type UserSortOption = 'newest' | 'oldest' | 'lastActive';

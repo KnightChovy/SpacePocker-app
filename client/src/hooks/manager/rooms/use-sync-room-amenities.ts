@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
+import { managerRoomsApi } from '@/apis/manager/rooms.api';
 import { toast } from 'react-toastify';
 
 export type SyncRoomAmenitiesInput = {
@@ -17,20 +17,11 @@ export const useSyncRoomAmenities = () => {
       currentAmenityIds,
       nextAmenityIds,
     }: SyncRoomAmenitiesInput) => {
-      const current = new Set(currentAmenityIds ?? []);
-      const next = new Set(nextAmenityIds ?? []);
-
-      const toAttach = [...next].filter(id => !current.has(id));
-      const toDetach = [...current].filter(id => !next.has(id));
-
-      await Promise.all([
-        ...toAttach.map(amenityId =>
-          axiosInstance.post('/room-amenities', { roomId, amenityId })
-        ),
-        ...toDetach.map(amenityId =>
-          axiosInstance.delete(`/room-amenities/${roomId}/${amenityId}`)
-        ),
-      ]);
+      await managerRoomsApi.syncAmenities({
+        roomId,
+        currentAmenityIds,
+        nextAmenityIds,
+      });
     },
     onSuccess: async (_data, variables) => {
       await Promise.all([

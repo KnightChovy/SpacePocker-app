@@ -9,7 +9,7 @@ import {
 import { useGetBuildings } from '@/hooks/manager/buildings/use-get-buildings';
 import { useGetRooms } from '@/hooks/manager/rooms/use-get-rooms';
 import { useGetBookingRequestsForManager } from '@/hooks/manager/booking-requests/use-get-booking-requests';
-import type { BookingRequestForManager } from '@/types/booking-request-api';
+import type { BookingRequestForManager } from '@/types/user/booking-request-api';
 import { formatVND } from '@/lib/utils';
 
 interface StatsGridProps {

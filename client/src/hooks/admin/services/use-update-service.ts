@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
-import type { ApiService } from '@/types/booking-request-api';
+import { adminServicesApi } from '@/apis/admin/services.api';
 import { toast } from 'react-toastify';
 
 export interface UpdateServicePayload {
@@ -16,16 +15,7 @@ export const useUpdateService = () => {
 
   return useMutation({
     mutationFn: async (payload: UpdateServicePayload) => {
-      const response = await axiosInstance.put<{ metadata: ApiService }>(
-        `/services/${payload.id}`,
-        {
-          name: payload.name,
-          description: payload.description,
-          price: payload.price,
-          categoryId: payload.categoryId,
-        }
-      );
-      return response.data.metadata;
+      return adminServicesApi.update(payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services', 'list'] });

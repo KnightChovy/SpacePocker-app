@@ -5,7 +5,7 @@ import type {
   StatItem,
   ChartDataItem,
   BookingDistribution,
-} from '@/types/types';
+} from '@/types/user/types';
 import { dashboardService } from '@/services/dashboardService';
 import AppHeader from '@/components/layouts/AppHeader';
 import { StatsGrid } from '@/components/features/manager/dashboardManager/StartsGrid';

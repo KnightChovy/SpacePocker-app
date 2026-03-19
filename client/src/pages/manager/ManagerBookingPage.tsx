@@ -12,7 +12,7 @@ import { useCancelBookingRequest } from '@/hooks/manager/booking-requests/use-ca
 import type {
   BookingRequestForManager,
   BookingRequestStatus,
-} from '@/types/booking-request-api';
+} from '@/types/user/booking-request-api';
 
 const ManagerBookingPage: React.FC = () => {
   const { setSidebarOpen } = useOutletContext<{

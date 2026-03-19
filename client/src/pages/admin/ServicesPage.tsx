@@ -8,7 +8,7 @@ import { useCreateService } from '@/hooks/admin/services/use-create-service';
 import { useGetServices } from '@/hooks/admin/services/use-get-services';
 import { useUpdateService } from '@/hooks/admin/services/use-update-service';
 import { useDeleteService } from '@/hooks/admin/services/use-delete-service';
-import type { ApiService } from '@/types/booking-request-api';
+import type { ApiService } from '@/types/user/booking-request-api';
 
 type ServiceModalMode = 'create' | 'edit';
 

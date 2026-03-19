@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, ChevronDown, Calendar, Clock } from 'lucide-react';
-import type { Booking, BookingStatus } from '@/types/types';
+import type { Booking, BookingStatus } from '@/types/user/types';
 import { bookingService } from '@/services/bookingService';
 
 interface EditBookingModalProps {

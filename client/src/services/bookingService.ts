@@ -1,4 +1,4 @@
-import type { BookingStatus } from '@/types/types';
+import type { BookingStatus } from '@/types/user/types';
 
 export type UpdateBookingPayload = {
   id: string;

@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
+import { managerServiceCategoriesApi } from '@/apis/manager/service-categories.api';
 import { toast } from 'react-toastify';
-import type { ApiServiceCategory } from '@/types/booking-request-api';
 
 export interface UpdateServiceCategoryPayload {
   id: string;
@@ -14,13 +13,7 @@ export const useUpdateServiceCategory = () => {
 
   return useMutation({
     mutationFn: async (payload: UpdateServiceCategoryPayload) => {
-      const response = await axiosInstance.put<{
-        metadata: ApiServiceCategory;
-      }>(`/service-categories/${payload.id}`, {
-        name: payload.name,
-        description: payload.description,
-      });
-      return response.data.metadata;
+      return managerServiceCategoriesApi.update(payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({

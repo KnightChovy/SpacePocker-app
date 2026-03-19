@@ -1,4 +1,4 @@
-import type { Building, ScheduleBooking } from '@/types/types';
+import type { Building, ScheduleBooking } from '@/types/user/types';
 
 export const BUILDINGS: Building[] = [
   { id: 'b1', name: 'Main Building', count: 12, checked: true },

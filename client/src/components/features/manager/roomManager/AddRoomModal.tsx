@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import { useGetAmenities } from '@/hooks/admin/amenities/use-get-amenities';
 import { useGetServiceCategoriesManager } from '@/hooks/manager/service-categories/use-get-service-categories';
-import type { ApiRoomStatus } from '@/types/room-api';
+import type { ApiRoomStatus } from '@/types/user/room-api';
 
 interface RoomFormData {
   name: string;

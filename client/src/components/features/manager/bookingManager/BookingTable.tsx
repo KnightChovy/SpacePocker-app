@@ -2,7 +2,7 @@ import { Calendar, Clock, Check, X } from 'lucide-react';
 import type {
   BookingRequestForManager,
   BookingRequestStatus,
-} from '@/types/booking-request-api';
+} from '@/types/user/booking-request-api';
 
 interface BookingTableProps {
   requests: BookingRequestForManager[];

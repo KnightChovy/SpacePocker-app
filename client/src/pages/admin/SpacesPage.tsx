@@ -7,7 +7,7 @@ import { useGetBookingRequestsForManager } from '@/hooks/manager/booking-request
 import type {
   BookingRequestForManager,
   BookingRequestStatus,
-} from '@/types/booking-request-api';
+} from '@/types/user/booking-request-api';
 
 const StatusBadge = ({ status }: { status: BookingRequestStatus }) => {
   const config: Record<BookingRequestStatus, { bg: string; text: string }> = {

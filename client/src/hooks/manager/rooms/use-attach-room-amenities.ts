@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
+import { managerRoomsApi } from '@/apis/manager/rooms.api';
 import { toast } from 'react-toastify';
 
 type AttachRoomAmenitiesInput = {
@@ -12,14 +12,7 @@ export const useAttachRoomAmenities = () => {
 
   return useMutation({
     mutationFn: async ({ roomId, amenityIds }: AttachRoomAmenitiesInput) => {
-      const ids = amenityIds ?? [];
-      if (ids.length === 0) return;
-
-      await Promise.all(
-        ids.map(amenityId =>
-          axiosInstance.post('/room-amenities', { roomId, amenityId })
-        )
-      );
+      await managerRoomsApi.attachAmenities(roomId, amenityIds);
     },
     onSuccess: async (_data, variables) => {
       await Promise.all([

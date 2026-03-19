@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
+import { managerRoomsApi } from '@/apis/manager/rooms.api';
 import { toast } from 'react-toastify';
 import { useAuthStore } from '@/stores/auth.store';
-import type { ApiRoom, CreateRoomPayload } from '@/types/room-api';
+import type { CreateRoomPayload } from '@/types/user/room-api';
 
 export const useCreateRoom = () => {
   const queryClient = useQueryClient();
@@ -15,10 +15,7 @@ export const useCreateRoom = () => {
         managerId: body.managerId || currentUser?.id,
       };
 
-      const response = await axiosInstance.post<{
-        metadata: { room: ApiRoom };
-      }>('/rooms', payload);
-      return response.data.metadata.room;
+      return managerRoomsApi.create(payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rooms', 'list'] });

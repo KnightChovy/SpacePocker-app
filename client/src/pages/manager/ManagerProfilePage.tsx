@@ -6,7 +6,7 @@ import { getAvatarUrl } from '@/lib/utils';
 import { Save, Pencil, Mail, Phone, Shield } from 'lucide-react';
 import { useGetUserProfile } from '@/hooks/user/profile/use-get-user-profile';
 import { useUpdateUserProfile } from '@/hooks/user/profile/use-update-user-profile';
-import type { UserRole } from '@/types/auth-type';
+import type { UserRole } from '@/types/auth/auth-type';
 
 const ManagerProfilePage: React.FC = () => {
   const { setSidebarOpen } = useOutletContext<{

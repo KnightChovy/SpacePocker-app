@@ -9,7 +9,7 @@ import {
   GraduationCap,
   CalendarDays,
 } from 'lucide-react';
-import type { BuildingDetail } from '@/types/types';
+import type { BuildingDetail } from '@/types/user/types';
 
 const formatDate = (iso?: string) => {
   if (!iso) return '—';

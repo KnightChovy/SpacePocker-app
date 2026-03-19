@@ -1,5 +1,5 @@
 import { Plus, Search, ChevronDown, GraduationCap } from 'lucide-react';
-import type { BuildingQueryParams } from '@/types/types';
+import type { BuildingQueryParams } from '@/types/user/types';
 
 const CAMPUS_OPTIONS = [
   'Main Campus',

@@ -8,9 +8,9 @@ import {
 } from 'recharts';
 import { useMemo } from 'react';
 import { Card } from '@/components/common/Card';
-import type { BookingDistribution } from '@/types/types';
+import type { BookingDistribution } from '@/types/user/types';
 import { useGetRooms } from '@/hooks/manager/rooms/use-get-rooms';
-import type { ApiRoomType } from '@/types/room-api';
+import type { ApiRoomType } from '@/types/user/room-api';
 
 interface RoomTypeDistributionProps {
   // Kept for backward compatibility with existing page usage.

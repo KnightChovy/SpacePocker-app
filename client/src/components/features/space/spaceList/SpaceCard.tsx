@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import type { Space } from '@/types/types';
+import type { Space } from '@/types/user/types';
 import { Button } from '@/components/ui/button';
 import { formatVND } from '@/lib/utils';
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Space } from '@/types/admin-types';
+import type { Space } from '@/types/admin/admin-types';
 import { formatVND } from '@/lib/utils';
 
 interface InventoryTableProps {

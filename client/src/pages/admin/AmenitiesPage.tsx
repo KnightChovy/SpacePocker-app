@@ -3,7 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import AppHeader from '@/components/layouts/AppHeader';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
-import type { ApiAmenity } from '@/types/room-api';
+import type { ApiAmenity } from '@/types/user/room-api';
 import { useGetAmenities } from '@/hooks/admin/amenities/use-get-amenities';
 import { useCreateAmenity } from '@/hooks/admin/amenities/use-create-amenity';
 import { useUpdateAmenity } from '@/hooks/admin/amenities/use-update-amenity';

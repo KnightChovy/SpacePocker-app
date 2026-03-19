@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, ChevronDown, Clock } from 'lucide-react';
-import type { ScheduleRoom, BookingType } from '@/types/types';
+import type { ScheduleRoom, BookingType } from '@/types/user/types';
 
 interface AddScheduleBookingModalProps {
   isOpen: boolean;

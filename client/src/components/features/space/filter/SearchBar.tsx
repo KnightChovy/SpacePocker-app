@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MapPin, Map } from 'lucide-react';
-import type { Space } from '@/types/types';
+import type { Space } from '@/types/user/types';
 
 interface SearchBarProps {
   searchQuery: string;

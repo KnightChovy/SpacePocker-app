@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Amenity } from '@/types/types';
+import type { Amenity } from '@/types/user/types';
 
 interface AmenitiesFilterProps {
   selectedAmenities: Amenity[];

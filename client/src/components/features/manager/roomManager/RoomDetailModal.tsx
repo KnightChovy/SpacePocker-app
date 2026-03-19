@@ -10,7 +10,7 @@ import {
   Image,
 } from 'lucide-react';
 import { useGetRoomById } from '@/hooks/manager/rooms/use-get-room-by-id';
-import type { ApiRoomStatus } from '@/types/room-api';
+import type { ApiRoomStatus } from '@/types/user/room-api';
 import { formatVND } from '@/lib/utils';
 
 interface RoomDetailModalProps {

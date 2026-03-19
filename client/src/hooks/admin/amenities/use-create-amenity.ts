@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
-import type { ApiAmenity } from '@/types/room-api';
+import { adminAmenitiesApi } from '@/apis/admin/amenities.api';
 import { toast } from 'react-toastify';
 
 export const useCreateAmenity = () => {
@@ -8,11 +7,7 @@ export const useCreateAmenity = () => {
 
   return useMutation({
     mutationFn: async (payload: { name: string }) => {
-      const response = await axiosInstance.post<{ metadata: ApiAmenity }>(
-        '/amenities',
-        payload
-      );
-      return response.data.metadata;
+      return adminAmenitiesApi.create(payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['amenities', 'list'] });

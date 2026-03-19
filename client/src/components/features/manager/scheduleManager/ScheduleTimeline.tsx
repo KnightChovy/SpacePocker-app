@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useGetBookingRequestsForManager } from '@/hooks/manager/booking-requests/use-get-booking-requests';
-import type { BookingRequestForManager } from '@/types/booking-request-api';
-import type { BookingType, ScheduleBooking, ScheduleRoom } from '@/types/types';
+import type { BookingRequestForManager } from '@/types/user/booking-request-api';
+import type { BookingType, ScheduleBooking, ScheduleRoom } from '@/types/user/types';
 import AddScheduleBookingModal from './AddScheduleBookingModal';
 
 type ViewMode = 'day' | 'week' | 'month';

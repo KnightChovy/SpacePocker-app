@@ -1,5 +1,5 @@
 import React from 'react';
-import type { SpaceType } from '@/types/types';
+import type { SpaceType } from '@/types/user/types';
 
 interface SpaceTypeOption {
   label: SpaceType;

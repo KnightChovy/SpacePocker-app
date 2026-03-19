@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
+import { adminUsersApi } from '@/apis/admin/users.api';
 import { toast } from 'react-toastify';
 
 export const usePromoteUserToManager = () => {
@@ -7,8 +7,7 @@ export const usePromoteUserToManager = () => {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      await axiosInstance.patch(`/admin/users/promote-manager/${userId}`);
-      return userId;
+      return adminUsersApi.promoteToManager(userId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users', 'list'] });

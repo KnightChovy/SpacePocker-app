@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import LeftSide from '@/components/auth/LeftSide';
 import { useLogin } from '@/hooks/auth/use-login';
-import type { USER_DATA } from '@/types/auth-type';
+import type { USER_DATA } from '@/types/auth/auth-type';
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email format'),

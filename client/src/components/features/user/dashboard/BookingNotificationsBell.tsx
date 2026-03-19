@@ -7,7 +7,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { useGetMyBookingRequests } from '@/hooks/user/booking-requests/use-get-my-booking-requests';
-import type { BookingRequestStatus } from '@/types/booking-request-api';
+import type { BookingRequestStatus } from '@/types/user/booking-request-api';
 
 const STATUS_LABEL: Record<BookingRequestStatus, string> = {
   PENDING: 'Waiting for approval',

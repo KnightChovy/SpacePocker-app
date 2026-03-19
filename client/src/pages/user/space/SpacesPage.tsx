@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import type { Amenity, FilterState, Space, SpaceType } from '@/types/types';
+import type { Amenity, FilterState, Space, SpaceType } from '@/types/user/types';
 
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/features/space/filter/Sidebar';
@@ -7,7 +7,7 @@ import SpaceList from '@/components/features/space/spaceList/SpaceList';
 import SearchBar from '@/components/features/space/filter/SearchBar';
 
 import { useGetRooms } from '@/hooks/user/rooms/use-get-rooms';
-import type { ApiRoom } from '@/types/room-api';
+import type { ApiRoom } from '@/types/user/room-api';
 
 const SpacesPage = () => {
   const SPACE_TYPES: Array<{ label: SpaceType }> = [

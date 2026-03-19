@@ -2,21 +2,15 @@ import { useMutation } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { toast } from 'react-toastify';
 
-import axiosInstance from '@/lib/axios';
+import { userFeedbackApi } from '@/apis/user/feedback.api';
 import type {
   CreateFeedbackPayload,
-  FeedbackResponse,
-} from '@/types/feedback-api';
+} from '@/types/user/feedback-api';
 
 export const useCreateFeedback = () => {
   return useMutation({
     mutationFn: async (payload: CreateFeedbackPayload) => {
-      const response = await axiosInstance.post<{ metadata: FeedbackResponse }>(
-        '/feedback',
-        payload
-      );
-
-      return response.data.metadata;
+      return userFeedbackApi.create(payload);
     },
     onSuccess: () => {
       toast.success('Feedback submitted!');
