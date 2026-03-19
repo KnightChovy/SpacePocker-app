@@ -1,14 +1,13 @@
 {
   "defaultSettings": {
-    "siteName": "SPACEPOCKER",
+    "siteName": "SpacePocker",
     "siteEmail": "admin@spacepocker.com",
     "currency": "VND",
-    "timezone": "UTC-5",
-    "maintenanceMode": false,
+    "timezone": "UTC+7",
     "allowNewRegistrations": true,
-    "requireEmailVerification": true,
+    "requireEmailVerification": false,
     "enableNotifications": true,
-    "commissionRate": 10,
-    "autoApproveSpaces": false
+    "autoApproveSpaces": false,
+    "commissionRate": 10
   }
 }

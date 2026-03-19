@@ -1,82 +1,32 @@
-import type {
-  StatItem,
-  Activity,
-  ChartDataItem,
-  BookingDistribution,
-  User,
-} from '@/types/types';
-import {
-  stats,
-  revenueData,
-  roomTypeDistribution,
-  activities,
-  currentUser,
-} from '@/data/constantManager';
-
-export interface DashboardStatsResponse {
-  data: StatItem[];
-}
-
-export interface RevenueDataResponse {
-  data: ChartDataItem[];
-}
-
-export interface RoomDistributionResponse {
-  data: BookingDistribution[];
-}
-
-export interface ActivitiesResponse {
-  data: Activity[];
-}
-
-export interface CurrentUserResponse {
-  data: User;
-}
-
-export interface DashboardFilterParams {
-  dateRange?: {
-    from: Date;
-    to: Date;
-  };
-  building?: string;
-}
+import type { BookingDistribution, ChartDataItem, StatItem } from '@/types/types';
 
 export const dashboardService = {
-  getStats: async (
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _params?: DashboardFilterParams
-  ): Promise<StatItem[]> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    return stats;
+  getStats: async (): Promise<StatItem[]> => {
+    return [
+      { label: 'Total Bookings', value: 0, type: 'bookings' },
+      { label: 'Revenue', value: 0, type: 'revenue' },
+      { label: 'Occupancy', value: '0%', type: 'occupancy' },
+      { label: 'Inquiries', value: 0, type: 'inquiries' },
+    ];
   },
 
-  getRevenueData: async (
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _params?: DashboardFilterParams
-  ): Promise<ChartDataItem[]> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    return revenueData;
+  getRevenueData: async (): Promise<ChartDataItem[]> => {
+    return [
+      { name: 'Mon', value: 0 },
+      { name: 'Tue', value: 0 },
+      { name: 'Wed', value: 0 },
+      { name: 'Thu', value: 0 },
+      { name: 'Fri', value: 0 },
+      { name: 'Sat', value: 0 },
+      { name: 'Sun', value: 0 },
+    ];
   },
 
   getRoomTypeDistribution: async (): Promise<BookingDistribution[]> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    return roomTypeDistribution;
-  },
-
-  getActivities: async (limit?: number): Promise<Activity[]> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    return limit ? activities.slice(0, limit) : activities;
-  },
-
-  getCurrentUser: async (): Promise<User> => {
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    return currentUser;
+    return [
+      { roomType: 'MEETING', booked: 0, available: 0 },
+      { roomType: 'CLASSROOM', booked: 0, available: 0 },
+      { roomType: 'EVENT', booked: 0, available: 0 },
+    ];
   },
 };
-
-export default dashboardService;

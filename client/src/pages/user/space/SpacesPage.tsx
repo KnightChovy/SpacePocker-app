@@ -1,16 +1,34 @@
 import { useState, useMemo, useEffect } from 'react';
-import type { FilterState, Space } from '@/types/types';
+import type { Amenity, FilterState, Space, SpaceType } from '@/types/types';
 
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/features/space/filter/Sidebar';
 import SpaceList from '@/components/features/space/spaceList/SpaceList';
 import SearchBar from '@/components/features/space/filter/SearchBar';
 
-import { SPACE_TYPES, AMENITIES } from '@/data/constant';
 import { useGetRooms } from '@/hooks/user/rooms/use-get-rooms';
 import type { ApiRoom } from '@/types/room-api';
 
 const SpacesPage = () => {
+  const SPACE_TYPES: Array<{ label: SpaceType }> = [
+    { label: 'Meeting Room' },
+    { label: 'Co-working Space' },
+    { label: 'Event Space' },
+    { label: 'Conference Hall' },
+    { label: 'Private Office' },
+  ];
+
+  const AMENITIES: Amenity[] = [
+    'WiFi',
+    'Projector',
+    'Whiteboard',
+    'Air Conditioning',
+    'Coffee Machine',
+    'Parking',
+    'Kitchen Access',
+    'Reception Service',
+  ];
+
   const [filters, setFilters] = useState<FilterState>({
     priceRange: [0, 0],
     spaceTypes: [],
@@ -25,7 +43,7 @@ const SpacesPage = () => {
 
   const roomsQuery = useGetRooms({
     status: 'AVAILABLE',
-    limit: 200,
+    limit: 100,
     offset: 0,
   });
 
@@ -57,6 +75,10 @@ const SpacesPage = () => {
         imageUrl: room.images?.[0] ?? '',
         images: room.images ?? [],
         type,
+        amenities: (room.amenities ?? []).map(a => ({
+          icon: '',
+          label: a.amenity.name,
+        })),
         location: room.building?.address ?? room.building?.campus,
       } satisfies Space;
     });
