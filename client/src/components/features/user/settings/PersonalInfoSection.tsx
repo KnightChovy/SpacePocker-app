@@ -65,7 +65,7 @@ const PersonalInfoSection = ({
             type="email"
             disabled
           />
-            <InputField label="Role / Title" icon="work" value={role} disabled />
+          <InputField label="Role / Title" icon="work" value={role} disabled />
           <InputField
             label="Full Name"
             icon="person"

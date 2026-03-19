@@ -69,19 +69,17 @@ const refreshToken = async (
 };
 
 const getProfile = async (): Promise<GetProfileResponse> => {
-  const response = await axiosInstance.get<ApiResponse<GetProfileResponse>>(
-    '/users/profile'
-  );
+  const response =
+    await axiosInstance.get<ApiResponse<GetProfileResponse>>('/users/profile');
   return response.data.metadata;
 };
 
 const updateProfile = async (
   payload: UpdateProfileRequest
 ): Promise<UpdateProfileResponse> => {
-  const response = await axiosInstance.patch<ApiResponse<UpdateProfileResponse>>(
-    '/users/profile',
-    payload
-  );
+  const response = await axiosInstance.patch<
+    ApiResponse<UpdateProfileResponse>
+  >('/users/profile', payload);
   return response.data.metadata;
 };
 

@@ -1,4 +1,10 @@
-import type { ApiRoom, CreateRoomPayload, GetAllRoomsResponse, RoomQueryParams, UpdateRoomPayload } from '@/types/user/room-api';
+import type {
+  ApiRoom,
+  CreateRoomPayload,
+  GetAllRoomsResponse,
+  RoomQueryParams,
+  UpdateRoomPayload,
+} from '@/types/user/room-api';
 
 export type ListRoomsRequest = { params?: RoomQueryParams };
 export type ListRoomsResponse = GetAllRoomsResponse;
@@ -15,7 +21,10 @@ export type UpdateRoomResponse = { room: ApiRoom };
 export type DeleteRoomRequest = { roomId: string };
 export type DeleteRoomResponse = void;
 
-export type AttachRoomAmenitiesRequest = { roomId: string; amenityIds: string[] };
+export type AttachRoomAmenitiesRequest = {
+  roomId: string;
+  amenityIds: string[];
+};
 export type AttachRoomAmenitiesResponse = void;
 
 export type SyncRoomAmenitiesRequest = {

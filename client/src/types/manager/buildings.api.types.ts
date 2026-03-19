@@ -15,7 +15,10 @@ export type GetBuildingByIdResponse = { building: BuildingDetail };
 export type CreateBuildingRequest = CreateBuildingPayload;
 export type CreateBuildingResponse = { createBuilding: BuildingDetail };
 
-export type UpdateBuildingRequest = { id: string; payload: UpdateBuildingPayload };
+export type UpdateBuildingRequest = {
+  id: string;
+  payload: UpdateBuildingPayload;
+};
 export type UpdateBuildingResponse = { updateBuilding: BuildingDetail };
 
 export type DeleteBuildingRequest = { id: string };

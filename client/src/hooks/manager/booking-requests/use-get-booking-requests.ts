@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { managerBookingRequestsApi } from '@/apis/manager/booking-requests.api';
 import { useAuthStore } from '@/stores/auth.store';
-import type {
-  BookingRequestStatus,
-} from '@/types/user/booking-request-api';
+import type { BookingRequestStatus } from '@/types/user/booking-request-api';
 
 export const useGetBookingRequestsForManager = (
   status?: BookingRequestStatus

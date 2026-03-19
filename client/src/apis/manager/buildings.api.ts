@@ -28,7 +28,9 @@ export type {
   UpdateBuildingResponse,
 } from '@/types/manager/buildings.api.types';
 
-const list = async (params?: BuildingQueryParams): Promise<ListBuildingsResponse> => {
+const list = async (
+  params?: BuildingQueryParams
+): Promise<ListBuildingsResponse> => {
   const response = await axiosInstance.get<ApiResponse<ListBuildingsResponse>>(
     '/buildings',
     { params }
@@ -37,32 +39,35 @@ const list = async (params?: BuildingQueryParams): Promise<ListBuildingsResponse
 };
 
 const getById = async (id: string): Promise<BuildingDetail> => {
-  const response = await axiosInstance.get<ApiResponse<GetBuildingByIdResponse>>(
-    `/buildings/${id}`
-  );
+  const response = await axiosInstance.get<
+    ApiResponse<GetBuildingByIdResponse>
+  >(`/buildings/${id}`);
   return response.data.metadata.building;
 };
 
-const create = async (payload: CreateBuildingRequest): Promise<BuildingDetail> => {
-  const response = await axiosInstance.post<ApiResponse<CreateBuildingResponse>>(
-    '/buildings',
-    payload
-  );
+const create = async (
+  payload: CreateBuildingRequest
+): Promise<BuildingDetail> => {
+  const response = await axiosInstance.post<
+    ApiResponse<CreateBuildingResponse>
+  >('/buildings', payload);
   return response.data.metadata.createBuilding;
 };
 
-const update = async (id: string, payload: UpdateBuildingPayload): Promise<BuildingDetail> => {
-  const response = await axiosInstance.patch<ApiResponse<UpdateBuildingResponse>>(
-    `/buildings/${id}`,
-    payload
-  );
+const update = async (
+  id: string,
+  payload: UpdateBuildingPayload
+): Promise<BuildingDetail> => {
+  const response = await axiosInstance.patch<
+    ApiResponse<UpdateBuildingResponse>
+  >(`/buildings/${id}`, payload);
   return response.data.metadata.updateBuilding;
 };
 
 const remove = async (id: string): Promise<DeleteBuildingResponse> => {
-  const response = await axiosInstance.delete<ApiResponse<DeleteBuildingResponse>>(
-    `/buildings/${id}`
-  );
+  const response = await axiosInstance.delete<
+    ApiResponse<DeleteBuildingResponse>
+  >(`/buildings/${id}`);
   return response.data.metadata;
 };
 

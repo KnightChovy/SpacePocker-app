@@ -1,8 +1,6 @@
 import axiosInstance from '@/lib/axios';
 import type { ApiResponse } from '@/apis/api.types';
-import type {
-  BookingRequestForManager,
-} from '@/types/user/booking-request-api';
+import type { BookingRequestForManager } from '@/types/user/booking-request-api';
 
 import type {
   ApproveBookingRequestResponse,
@@ -28,7 +26,9 @@ const listForRole = async (
 ): Promise<ListBookingRequestsForRoleResponse> => {
   const isAdmin = params.role === 'ADMIN';
 
-  const response = await axiosInstance.get<ApiResponse<BookingRequestForManager[]>>(
+  const response = await axiosInstance.get<
+    ApiResponse<BookingRequestForManager[]>
+  >(
     isAdmin ? '/allBookingRequest' : '/booking-requests',
     isAdmin
       ? undefined

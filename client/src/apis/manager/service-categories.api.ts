@@ -44,12 +44,10 @@ const update = async (
 ): Promise<UpdateServiceCategoryResponse> => {
   const response = await axiosInstance.put<
     ApiResponse<UpdateServiceCategoryResponse>
-  >(`/service-categories/${payload.id}`,
-    {
-      name: payload.name,
-      description: payload.description,
-    }
-  );
+  >(`/service-categories/${payload.id}`, {
+    name: payload.name,
+    description: payload.description,
+  });
   return response.data.metadata;
 };
 

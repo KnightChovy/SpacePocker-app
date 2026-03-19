@@ -14,10 +14,9 @@ export type {
 const create = async (
   payload: CreateFeedbackRequest
 ): Promise<CreateFeedbackResponse> => {
-  const response = await axiosInstance.post<ApiResponse<CreateFeedbackResponse>>(
-    '/feedback',
-    payload
-  );
+  const response = await axiosInstance.post<
+    ApiResponse<CreateFeedbackResponse>
+  >('/feedback', payload);
 
   return response.data.metadata;
 };

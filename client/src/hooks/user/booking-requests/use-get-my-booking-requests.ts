@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { userBookingRequestsApi } from '@/apis/user/booking-requests.api';
-import type {
-  BookingRequestStatus,
-} from '@/types/user/booking-request-api';
+import type { BookingRequestStatus } from '@/types/user/booking-request-api';
 
 export const useGetMyBookingRequests = (status?: BookingRequestStatus) => {
   return useQuery({

@@ -26,7 +26,6 @@ const DashboardPage: React.FC = () => {
   const { data, isLoading, isError } = useAdminDashboard();
   console.log(data);
 
-
   const stats = useMemo<Stat[]>(() => {
     return (
       data?.stats.map(stat => ({

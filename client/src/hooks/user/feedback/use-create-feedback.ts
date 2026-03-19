@@ -3,9 +3,7 @@ import { isAxiosError } from 'axios';
 import { toast } from 'react-toastify';
 
 import { userFeedbackApi } from '@/apis/user/feedback.api';
-import type {
-  CreateFeedbackPayload,
-} from '@/types/user/feedback-api';
+import type { CreateFeedbackPayload } from '@/types/user/feedback-api';
 
 export const useCreateFeedback = () => {
   return useMutation({

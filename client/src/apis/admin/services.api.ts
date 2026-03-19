@@ -24,27 +24,26 @@ export type {
 } from '@/types/admin/services.api.types';
 
 const list = async (): Promise<ListServicesResponse> => {
-  const response = await axiosInstance.get<ApiResponse<ListServicesResponse>>(
-    '/services'
-  );
+  const response =
+    await axiosInstance.get<ApiResponse<ListServicesResponse>>('/services');
   return response.data.metadata;
 };
 
 const create = async (
   payload: CreateServiceRequest
 ): Promise<CreateServiceResponse> => {
-  const response = await axiosInstance.post<
-    ApiResponse<CreateServiceResponse>
-  >('/services', payload);
+  const response = await axiosInstance.post<ApiResponse<CreateServiceResponse>>(
+    '/services',
+    payload
+  );
   return response.data.metadata;
 };
 
 const update = async (
   payload: UpdateServiceRequest
 ): Promise<UpdateServiceResponse> => {
-  const response = await axiosInstance.put<
-    ApiResponse<UpdateServiceResponse>
-  >(`/services/${payload.id}`,
+  const response = await axiosInstance.put<ApiResponse<UpdateServiceResponse>>(
+    `/services/${payload.id}`,
     {
       name: payload.name,
       description: payload.description,

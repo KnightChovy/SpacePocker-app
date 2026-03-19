@@ -1,6 +1,11 @@
 {
   "stats": [
-    { "label": "Events Today", "value": 12, "icon": "shield", "color": "indigo" },
+    {
+      "label": "Events Today",
+      "value": 12,
+      "icon": "shield",
+      "color": "indigo"
+    },
     { "label": "Warnings", "value": 2, "icon": "warning", "color": "orange" },
     { "label": "Errors", "value": 0, "icon": "error", "color": "red" },
     { "label": "Blocked IPs", "value": 1, "icon": "block", "color": "emerald" }

@@ -1,5 +1,9 @@
 import type { RoomAmenitiesServicesResponse } from '@/types/user/booking-request-api';
-import type { ApiRoom, GetAllRoomsResponse, RoomQueryParams } from '@/types/user/room-api';
+import type {
+  ApiRoom,
+  GetAllRoomsResponse,
+  RoomQueryParams,
+} from '@/types/user/room-api';
 
 export type ListRoomsRequest = { params?: RoomQueryParams };
 export type ListRoomsResponse = GetAllRoomsResponse;

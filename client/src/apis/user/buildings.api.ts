@@ -1,9 +1,6 @@
 import axiosInstance from '@/lib/axios';
 import type { ApiResponse } from '@/apis/api.types';
-import type {
-  BuildingDetail,
-  BuildingQueryParams,
-} from '@/types/user/types';
+import type { BuildingDetail, BuildingQueryParams } from '@/types/user/types';
 
 import type {
   GetBuildingByIdResponse,
@@ -17,7 +14,9 @@ export type {
   ListBuildingsResponse,
 } from '@/types/user/buildings.api.types';
 
-const list = async (params?: BuildingQueryParams): Promise<ListBuildingsResponse> => {
+const list = async (
+  params?: BuildingQueryParams
+): Promise<ListBuildingsResponse> => {
   const response = await axiosInstance.get<ApiResponse<ListBuildingsResponse>>(
     '/buildings',
     { params }
@@ -26,9 +25,9 @@ const list = async (params?: BuildingQueryParams): Promise<ListBuildingsResponse
 };
 
 const getById = async (id: string): Promise<BuildingDetail> => {
-  const response = await axiosInstance.get<ApiResponse<GetBuildingByIdResponse>>(
-    `/buildings/${id}`
-  );
+  const response = await axiosInstance.get<
+    ApiResponse<GetBuildingByIdResponse>
+  >(`/buildings/${id}`);
   return response.data.metadata.building;
 };
 

@@ -32,7 +32,9 @@ const getSources = async (): Promise<GetAdminDashboardSourcesResponse> => {
     axiosInstance.get<ApiResponse<GetAllRoomsResponse>>('/rooms', {
       params: { limit: 100, offset: 0 },
     }),
-    axiosInstance.get<ApiResponse<BookingRequestForManager[]>>('/allBookingRequest'),
+    axiosInstance.get<ApiResponse<BookingRequestForManager[]>>(
+      '/allBookingRequest'
+    ),
   ]);
 
   return {

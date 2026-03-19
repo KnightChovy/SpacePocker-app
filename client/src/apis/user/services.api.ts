@@ -1,6 +1,9 @@
 import axiosInstance from '@/lib/axios';
 import type { ApiResponse } from '@/apis/api.types';
-import type { ApiService, ApiServiceCategory } from '@/types/user/booking-request-api';
+import type {
+  ApiService,
+  ApiServiceCategory,
+} from '@/types/user/booking-request-api';
 
 import type {
   ListServicesByCategoryIdsResponse,

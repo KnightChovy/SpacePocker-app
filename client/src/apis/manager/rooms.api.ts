@@ -58,7 +58,10 @@ const create = async (payload: CreateRoomRequest): Promise<ApiRoom> => {
   return response.data.metadata.room;
 };
 
-const update = async (roomId: string, payload: UpdateRoomPayload): Promise<ApiRoom> => {
+const update = async (
+  roomId: string,
+  payload: UpdateRoomPayload
+): Promise<ApiRoom> => {
   const response = await axiosInstance.patch<ApiResponse<UpdateRoomResponse>>(
     `/rooms/${roomId}`,
     payload
@@ -83,10 +86,10 @@ const attachAmenities = async (
 
   await Promise.all(
     ids.map(amenityId =>
-      axiosInstance.post<AttachSingleRoomAmenityResponse>(
-        '/room-amenities',
-        { roomId, amenityId } satisfies AttachSingleRoomAmenityRequest
-      )
+      axiosInstance.post<AttachSingleRoomAmenityResponse>('/room-amenities', {
+        roomId,
+        amenityId,
+      } satisfies AttachSingleRoomAmenityRequest)
     )
   );
 };
@@ -104,13 +107,10 @@ const syncAmenities = async (
 
   await Promise.all([
     ...toAttach.map(amenityId =>
-      axiosInstance.post<AttachSingleRoomAmenityResponse>(
-        '/room-amenities',
-        {
-          roomId: params.roomId,
-          amenityId,
-        } satisfies AttachSingleRoomAmenityRequest
-      )
+      axiosInstance.post<AttachSingleRoomAmenityResponse>('/room-amenities', {
+        roomId: params.roomId,
+        amenityId,
+      } satisfies AttachSingleRoomAmenityRequest)
     ),
     ...toDetach.map(amenityId =>
       axiosInstance.delete<DeleteSingleRoomAmenityResponse>(

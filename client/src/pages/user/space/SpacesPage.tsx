@@ -1,5 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
-import type { Amenity, FilterState, Space, SpaceType } from '@/types/user/types';
+import type {
+  Amenity,
+  FilterState,
+  Space,
+  SpaceType,
+} from '@/types/user/types';
 
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/features/space/filter/Sidebar';

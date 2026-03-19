@@ -1,8 +1,6 @@
 import axiosInstance from '@/lib/axios';
 import type { ApiResponse } from '@/apis/api.types';
-import type {
-  BookingRequestStatus,
-} from '@/types/user/booking-request-api';
+import type { BookingRequestStatus } from '@/types/user/booking-request-api';
 
 import type {
   CancelMyBookingRequestResponse,

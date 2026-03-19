@@ -1,4 +1,7 @@
-import type { GetUsersResponse, UsersQueryParams } from '@/types/admin/users-api';
+import type {
+  GetUsersResponse,
+  UsersQueryParams,
+} from '@/types/admin/users-api';
 
 export type ListUsersRequest = { params?: UsersQueryParams };
 export type ListUsersResponse = GetUsersResponse;

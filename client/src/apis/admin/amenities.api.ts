@@ -22,27 +22,28 @@ export type {
 } from '@/types/admin/amenities.api.types';
 
 const list = async (): Promise<ListAmenitiesResponse> => {
-  const response = await axiosInstance.get<ApiResponse<ListAmenitiesResponse>>(
-    '/amenities'
-  );
+  const response =
+    await axiosInstance.get<ApiResponse<ListAmenitiesResponse>>('/amenities');
   return response.data.metadata;
 };
 
 const create = async (
   payload: CreateAmenityRequest
 ): Promise<CreateAmenityResponse> => {
-  const response = await axiosInstance.post<
-    ApiResponse<CreateAmenityResponse>
-  >('/amenities', payload);
+  const response = await axiosInstance.post<ApiResponse<CreateAmenityResponse>>(
+    '/amenities',
+    payload
+  );
   return response.data.metadata;
 };
 
 const update = async (
   payload: UpdateAmenityRequest
 ): Promise<UpdateAmenityResponse> => {
-  const response = await axiosInstance.put<
-    ApiResponse<UpdateAmenityResponse>
-  >(`/amenities/${payload.id}`, { name: payload.name });
+  const response = await axiosInstance.put<ApiResponse<UpdateAmenityResponse>>(
+    `/amenities/${payload.id}`,
+    { name: payload.name }
+  );
   return response.data.metadata;
 };
 

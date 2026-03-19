@@ -1,4 +1,8 @@
-import type { BookingDistribution, ChartDataItem, StatItem } from '@/types/user/types';
+import type {
+  BookingDistribution,
+  ChartDataItem,
+  StatItem,
+} from '@/types/user/types';
 
 export const dashboardService = {
   getStats: async (): Promise<StatItem[]> => {
