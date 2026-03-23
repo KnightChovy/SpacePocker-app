@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { X, Building2, MapPin, GraduationCap, Calendar } from 'lucide-react';
-import type { BuildingDetail } from '@/types/types';
+import type { BuildingDetail } from '@/types/user/types';
 
 interface ViewBuildingModalProps {
   isOpen: boolean;

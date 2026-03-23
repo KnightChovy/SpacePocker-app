@@ -1,102 +1,33 @@
 {
-  "securityLogs": [
-    {
-      "id": "1",
-      "timestamp": "Feb 28, 2026 14:32",
-      "event": "Login Success",
-      "user": "admin@spacepocker.com",
-      "ipAddress": "192.168.1.105",
-      "status": "success",
-      "details": "Administrator logged in successfully"
-    },
-    {
-      "id": "2",
-      "timestamp": "Feb 28, 2026 14:15",
-      "event": "Failed Login Attempt",
-      "user": "unknown@suspicious.com",
-      "ipAddress": "45.123.45.67",
-      "status": "warning",
-      "details": "Multiple failed login attempts detected"
-    },
-    {
-      "id": "3",
-      "timestamp": "Feb 28, 2026 13:58",
-      "event": "Password Changed",
-      "user": "sarah.wilson@example.com",
-      "ipAddress": "192.168.1.42",
-      "status": "success",
-      "details": "User changed password successfully"
-    },
-    {
-      "id": "4",
-      "timestamp": "Feb 28, 2026 13:45",
-      "event": "Rate Limit Exceeded",
-      "user": "james.rod@test.com",
-      "ipAddress": "103.45.67.89",
-      "status": "error",
-      "details": "API rate limit exceeded - 429 Too Many Requests"
-    },
-    {
-      "id": "5",
-      "timestamp": "Feb 28, 2026 12:30",
-      "event": "Admin Access",
-      "user": "admin@spacepocker.com",
-      "ipAddress": "192.168.1.105",
-      "status": "success",
-      "details": "Admin accessed sensitive user data"
-    },
-    {
-      "id": "6",
-      "timestamp": "Feb 28, 2026 11:20",
-      "event": "Suspicious Activity",
-      "user": "bot@spammer.net",
-      "ipAddress": "178.45.23.12",
-      "status": "error",
-      "details": "Automated bot activity detected and blocked"
-    },
-    {
-      "id": "7",
-      "timestamp": "Feb 28, 2026 10:15",
-      "event": "Session Expired",
-      "user": "elena.li@example.com",
-      "ipAddress": "192.168.1.88",
-      "status": "warning",
-      "details": "User session expired after inactivity"
-    },
-    {
-      "id": "8",
-      "timestamp": "Feb 28, 2026 09:42",
-      "event": "Two-Factor Auth",
-      "user": "marcus.chen@admin.com",
-      "ipAddress": "192.168.1.1",
-      "status": "success",
-      "details": "2FA verification successful"
-    }
-  ],
   "stats": [
     {
-      "label": "Total Logs Today",
-      "value": "2,847",
-      "icon": "article",
+      "label": "Events Today",
+      "value": 12,
+      "icon": "shield",
       "color": "indigo"
     },
+    { "label": "Warnings", "value": 2, "icon": "warning", "color": "orange" },
+    { "label": "Errors", "value": 0, "icon": "error", "color": "red" },
+    { "label": "Blocked IPs", "value": 1, "icon": "block", "color": "emerald" }
+  ],
+  "securityLogs": [
     {
-      "label": "Security Alerts",
-      "value": "12",
-      "icon": "warning",
-      "color": "orange"
+      "id": "log-001",
+      "timestamp": "2026-03-19 09:10",
+      "event": "Login",
+      "user": "admin@spacepocker.com",
+      "ipAddress": "127.0.0.1",
+      "status": "success",
+      "details": "Successful login"
     },
     {
-      "label": "Blocked IPs",
-      "value": "38",
-      "icon": "block",
-      "color": "red"
-    },
-    {
-      "label": "Active Sessions",
-      "value": "156",
-      "icon": "person",
-      "color": "emerald"
+      "id": "log-002",
+      "timestamp": "2026-03-19 09:22",
+      "event": "Password Attempt",
+      "user": "unknown",
+      "ipAddress": "10.0.0.2",
+      "status": "warning",
+      "details": "Multiple failed attempts detected"
     }
   ]
 }

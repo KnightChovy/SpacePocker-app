@@ -6,7 +6,7 @@ import type {
   CreateBuildingPayload,
   UpdateBuildingPayload,
   BuildingQueryParams,
-} from '@/types/types';
+} from '@/types/user/types';
 import AppHeader from '@/components/layouts/AppHeader';
 import AddBuildingModal from '@/components/features/manager/buildingManager/AddBuildingModal';
 import EditBuildingModal from '@/components/features/manager/buildingManager/EditBuildingModal';

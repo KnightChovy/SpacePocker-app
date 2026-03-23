@@ -4,6 +4,7 @@ export const BookingStatus = {
   PENDING: 'Pending Approval',
   COMPLETED: 'Completed',
   CANCELLED: 'Cancelled',
+  REJECTED: 'Rejected',
 } as const;
 
 export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus];

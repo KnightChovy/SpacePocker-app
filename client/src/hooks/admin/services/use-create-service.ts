@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
 import { toast } from 'react-toastify';
-import type { ApiService } from '@/types/booking-request-api';
+import { adminServicesApi } from '@/apis/admin/services.api';
 
 export interface CreateServicePayload {
   name: string;
@@ -15,11 +14,7 @@ export const useCreateService = () => {
 
   return useMutation({
     mutationFn: async (payload: CreateServicePayload) => {
-      const response = await axiosInstance.post<{ metadata: ApiService }>(
-        '/services',
-        payload
-      );
-      return response.data.metadata;
+      return adminServicesApi.create(payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services', 'list'] });

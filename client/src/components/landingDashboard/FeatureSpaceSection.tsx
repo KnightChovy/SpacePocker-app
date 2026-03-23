@@ -3,8 +3,8 @@ import SpaceCard from './SpaceCard';
 import { ChevronDown, Shuffle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useGetRooms } from '@/hooks/user/rooms/use-get-rooms';
-import type { ApiRoom } from '@/types/room-api';
-import type { Space } from '@/types/types';
+import type { ApiRoom } from '@/types/user/room-api';
+import type { Space } from '@/types/user/types';
 
 interface FeatureSpaceSectionProps {
   searchQuery?: string;

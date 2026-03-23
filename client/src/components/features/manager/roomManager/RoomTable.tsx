@@ -1,5 +1,5 @@
 import { MoreVertical } from 'lucide-react';
-import type { Room } from '@/types/types';
+import type { Room } from '@/types/user/types';
 import { formatVND } from '@/lib/utils';
 
 interface RoomTableProps {

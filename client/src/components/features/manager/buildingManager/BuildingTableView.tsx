@@ -1,5 +1,5 @@
 import { Building2, ChevronLeft, ChevronRight } from 'lucide-react';
-import type { BuildingDetail } from '@/types/types';
+import type { BuildingDetail } from '@/types/user/types';
 import BuildingRow from './BuildingRow';
 
 interface BuildingTableViewProps {

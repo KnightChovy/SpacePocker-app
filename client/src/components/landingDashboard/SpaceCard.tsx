@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Space } from '@/types/types';
+import type { Space } from '@/types/user/types';
 import { Button } from '../ui/button';
 import { formatVND } from '@/lib/utils';
 

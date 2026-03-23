@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
+import { adminServicesApi } from '@/apis/admin/services.api';
 import { toast } from 'react-toastify';
 
 export const useDeleteService = () => {
@@ -7,8 +7,7 @@ export const useDeleteService = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await axiosInstance.delete(`/services/${id}`);
-      return id;
+      return adminServicesApi.remove(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services', 'list'] });

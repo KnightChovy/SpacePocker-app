@@ -7,7 +7,7 @@ import SpaceDetailInfo from '@/components/features/space/spaceDetail/SpaceDetail
 import SpaceDetailAmenities from '@/components/features/space/spaceDetail/SpaceDetailAmenities';
 import SpaceDetailLocation from '@/components/features/space/spaceDetail/SpaceDetailLocation';
 import SpaceDetailBooking from '@/components/features/space/spaceDetail/SpaceDetaillBooking';
-import type { AmenityDetail } from '@/types/types';
+import type { AmenityDetail } from '@/types/user/types';
 import { useGetRoomById } from '@/hooks/user/rooms/use-get-room-by-id';
 import { useGetBuildingById } from '@/hooks/user/buildings/use-get-building-by-id';
 import { ChevronLeft, Heart, MapPin, Share } from 'lucide-react';

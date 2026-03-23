@@ -15,11 +15,11 @@ import BookingNotificationsBell from '@/components/features/user/dashboard/Booki
 import { useGetMyBookingRequests } from '@/hooks/user/booking-requests/use-get-my-booking-requests';
 import { useCancelMyBookingRequest } from '@/hooks/user/booking-requests/use-cancel-my-booking-request';
 import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
-import type { BookingUser } from '@/types/user-type';
+import type { BookingUser } from '@/types/user/user-type';
 import type {
   BookingRequestStatus,
   MyBookingRequest,
-} from '@/types/booking-request-api';
+} from '@/types/user/booking-request-api';
 import { useBookingDraftStore } from '@/stores/bookingDraft.store';
 
 type DateRangeValue = {

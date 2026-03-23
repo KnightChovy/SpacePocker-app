@@ -1,10 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
+import { adminDashboardApi } from '@/apis/admin/dashboard.api';
 import { getAvatarUrl } from '@/lib/utils';
-import type { GetUsersResponse } from '@/types/users-api';
-import type { GetAllRoomsResponse } from '@/types/room-api';
-import type { BookingRequestForManager } from '@/types/booking-request-api';
-import type { LogEntry, Transaction } from '@/types/admin-types';
+import type { BookingRequestForManager } from '@/types/user/booking-request-api';
+import type { LogEntry, Transaction } from '@/types/admin/admin-types';
 
 type DashboardIconKey = 'DollarSign' | 'Building2' | 'UserPlus' | 'Server';
 
@@ -126,35 +124,8 @@ export const useAdminDashboard = () => {
   return useQuery({
     queryKey: ['admin', 'dashboard', 'overview'],
     queryFn: async (): Promise<AdminDashboardData> => {
-      const [
-        usersAllResponse,
-        usersManagersResponse,
-        usersAdminsResponse,
-        roomsResponse,
-        bookingRequestsResponse,
-      ] = await Promise.all([
-        axiosInstance.get<{ metadata: GetUsersResponse }>('/users', {
-          params: { page: 1, limit: 100 },
-        }),
-        axiosInstance.get<{ metadata: GetUsersResponse }>('/users', {
-          params: { role: 'MANAGER', page: 1, limit: 100 },
-        }),
-        axiosInstance.get<{ metadata: GetUsersResponse }>('/users', {
-          params: { role: 'ADMIN', page: 1, limit: 1 },
-        }),
-        axiosInstance.get<{ metadata: GetAllRoomsResponse }>('/rooms', {
-          params: { limit: 100, offset: 0 },
-        }),
-        axiosInstance.get<{ metadata: BookingRequestForManager[] }>(
-          '/allBookingRequest'
-        ),
-      ]);
-
-      const usersAll = usersAllResponse.data.metadata;
-      const managerUsers = usersManagersResponse.data.metadata;
-      const adminUsers = usersAdminsResponse.data.metadata;
-      const rooms = roomsResponse.data.metadata;
-      const bookingRequests = bookingRequestsResponse.data.metadata ?? [];
+      const { usersAll, managerUsers, adminUsers, rooms, bookingRequests } =
+        await adminDashboardApi.getSources();
 
       const roomPriceById = new Map(
         (rooms.rooms ?? []).map(room => [room.id, room.pricePerHour])

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Review } from '@/types/types';
+import type { Review } from '@/types/user/types';
 
 interface SpaceDetailReviewsProps {
   reviews?: Review[];

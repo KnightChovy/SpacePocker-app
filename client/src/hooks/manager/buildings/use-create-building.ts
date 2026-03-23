@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
-import type { CreateBuildingPayload, BuildingDetail } from '@/types/types';
+import { managerBuildingsApi } from '@/apis/manager/buildings.api';
+import type { CreateBuildingPayload } from '@/types/user/types';
 import { toast } from 'react-toastify';
 import { useAuthStore } from '@/stores/auth.store';
 
@@ -15,10 +15,7 @@ export const useCreateBuilding = () => {
         managerId: body.managerId || currentUser?.id,
       };
 
-      const response = await axiosInstance.post<{
-        metadata: { createBuilding: BuildingDetail };
-      }>('/buildings', payload);
-      return response.data.metadata.createBuilding;
+      return managerBuildingsApi.create(payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['buildings', 'list'] });

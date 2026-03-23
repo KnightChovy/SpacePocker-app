@@ -8,8 +8,8 @@ import {
   Timer,
 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import type { BookingUser } from '@/types/user-type';
-import type { MyBookingRequest } from '@/types/booking-request-api';
+import type { BookingUser } from '@/types/user/user-type';
+import type { MyBookingRequest } from '@/types/user/booking-request-api';
 import {
   Sheet,
   SheetContent,

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { X, ChevronDown } from 'lucide-react';
-import type { BuildingDetail, UpdateBuildingPayload } from '@/types/types';
+import type { BuildingDetail, UpdateBuildingPayload } from '@/types/user/types';
 
 interface EditBuildingModalProps {
   isOpen: boolean;

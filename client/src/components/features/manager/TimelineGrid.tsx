@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { ROOMS, BOOKINGS } from '../../../data/constantManager';
-import type { BookingType } from '@/types/types';
+import { ROOMS, BOOKINGS } from '@/data/constantManager';
+import type { BookingType } from '@/types/user/types';
 
 const TIME_SLOTS = [
   '09:00',

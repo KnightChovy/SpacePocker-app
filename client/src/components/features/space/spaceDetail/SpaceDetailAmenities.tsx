@@ -1,6 +1,6 @@
 import React from 'react';
 import { Wifi, Tv, Projector, AirVent, PenLine } from 'lucide-react';
-import type { AmenityDetail } from '@/types/types';
+import type { AmenityDetail } from '@/types/user/types';
 
 interface SpaceDetailAmenitiesProps {
   amenities?: AmenityDetail[];

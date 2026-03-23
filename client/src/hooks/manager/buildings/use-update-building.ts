@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
-import type { UpdateBuildingPayload, BuildingDetail } from '@/types/types';
+import { managerBuildingsApi } from '@/apis/manager/buildings.api';
+import type { UpdateBuildingPayload } from '@/types/user/types';
 import { toast } from 'react-toastify';
 
 export const useUpdateBuilding = () => {
@@ -13,10 +13,7 @@ export const useUpdateBuilding = () => {
       id: string;
       body: UpdateBuildingPayload;
     }) => {
-      const response = await axiosInstance.patch<{
-        metadata: { updateBuilding: BuildingDetail };
-      }>(`/buildings/${id}`, body);
-      return response.data.metadata.updateBuilding;
+      return managerBuildingsApi.update(id, body);
     },
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['buildings', 'detail', id] });

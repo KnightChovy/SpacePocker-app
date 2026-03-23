@@ -1,15 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
-import type { GetAllRoomsResponse, RoomQueryParams } from '@/types/room-api';
+import { userRoomsApi } from '@/apis/user/rooms.api';
+import type { RoomQueryParams } from '@/types/user/room-api';
 
 export const useGetRooms = (params?: RoomQueryParams) => {
   return useQuery({
     queryKey: ['user', 'rooms', 'list', params],
     queryFn: async () => {
-      const response = await axiosInstance.get<{
-        metadata: GetAllRoomsResponse;
-      }>('/rooms', { params });
-      return response.data.metadata;
+      return userRoomsApi.list(params);
     },
   });
 };

@@ -11,7 +11,7 @@ import {
 import { Card } from '@/components/common/Card';
 import { useGetBookingRequestsForManager } from '@/hooks/manager/booking-requests/use-get-booking-requests';
 import { useGetRooms } from '@/hooks/manager/rooms/use-get-rooms';
-import type { BookingRequestForManager } from '@/types/booking-request-api';
+import type { BookingRequestForManager } from '@/types/user/booking-request-api';
 import { formatVND } from '@/lib/utils';
 
 interface RevenueOverviewProps {

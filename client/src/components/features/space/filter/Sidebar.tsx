@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FilterState, SpaceType, Amenity } from '@/types/types';
+import type { FilterState, SpaceType, Amenity } from '@/types/user/types';
 import PriceRangeFilter from './PriceRangeFilter';
 import SpaceTypeFilter from './SpaceTypeFilter';
 import AmenitiesFilter from './AmenitiesFilter';

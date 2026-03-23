@@ -1,4 +1,4 @@
-import type { USER_DATA } from '@/types/auth-type';
+import type { USER_DATA } from '@/types/auth/auth-type';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 

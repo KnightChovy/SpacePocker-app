@@ -1,4 +1,4 @@
-import type { Space } from '@/types/types';
+import type { Space } from '@/types/user/types';
 import SpaceCard from './SpaceCard';
 
 interface SpaceListProps {

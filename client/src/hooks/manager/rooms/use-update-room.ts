@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
+import { managerRoomsApi } from '@/apis/manager/rooms.api';
 import { toast } from 'react-toastify';
-import type { ApiRoom, UpdateRoomPayload } from '@/types/room-api';
+import type { UpdateRoomPayload } from '@/types/user/room-api';
 
 export const useUpdateRoom = () => {
   const queryClient = useQueryClient();
@@ -14,10 +14,7 @@ export const useUpdateRoom = () => {
       roomId: string;
       body: UpdateRoomPayload;
     }) => {
-      const response = await axiosInstance.patch<{
-        metadata: { room: ApiRoom };
-      }>(`/rooms/${roomId}`, body);
-      return response.data.metadata.room;
+      return managerRoomsApi.update(roomId, body);
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['rooms', 'list'] });

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Feature } from '@/types/types';
+import type { Feature } from '@/types/user/types';
 import { ShieldCheck, Snowflake, Zap } from 'lucide-react';
 
 const FeatureCard: React.FC<{ feature: Feature }> = ({ feature }) => {

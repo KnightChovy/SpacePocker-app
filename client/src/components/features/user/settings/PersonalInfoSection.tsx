@@ -1,7 +1,7 @@
 import InputField from './InputField';
 import { Pencil } from 'lucide-react';
 import { getAvatarUrl } from '@/lib/utils';
-import type { UserRole } from '@/types/auth-type';
+import type { UserRole } from '@/types/auth/auth-type';
 
 interface PersonalInfoSectionProps {
   name: string;
@@ -65,7 +65,7 @@ const PersonalInfoSection = ({
             type="email"
             disabled
           />
-            <InputField label="Role / Title" icon="work" value={role} disabled />
+          <InputField label="Role / Title" icon="work" value={role} disabled />
           <InputField
             label="Full Name"
             icon="person"

@@ -7,7 +7,7 @@ import {
   Calendar,
   PieChart,
 } from 'lucide-react';
-import type { StatSummary } from '@/types/types';
+import type { StatSummary } from '@/types/user/types';
 
 interface StatCardProps {
   stat: StatSummary;

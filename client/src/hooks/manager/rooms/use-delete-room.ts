@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
+import { managerRoomsApi } from '@/apis/manager/rooms.api';
 import { toast } from 'react-toastify';
 
 export const useDeleteRoom = () => {
@@ -7,8 +7,7 @@ export const useDeleteRoom = () => {
 
   return useMutation({
     mutationFn: async (roomId: string) => {
-      await axiosInstance.delete(`/rooms/${roomId}`);
-      return roomId;
+      return managerRoomsApi.remove(roomId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rooms', 'list'] });

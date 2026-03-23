@@ -1,3 +1,5 @@
+import type React from 'react';
+
 export interface Transaction {
   id: string;
   userName: string;

@@ -1,86 +1,86 @@
 import axiosInstance from '@/lib/axios';
+import type { ApiResponse } from '@/apis/api.types';
 
-export interface AuthError {
-  message: string;
-  status?: number;
-}
+import type {
+  GetProfileResponse,
+  LoginRequest,
+  LoginResponse,
+  LogoutResponse,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
+  SignupRequest,
+  SignupResponse,
+  UpdateProfileRequest,
+  UpdateProfileResponse,
+} from '@/types/auth/auth.api.types';
 
-export interface UserProfileResponse {
-  id: string;
-  name: string;
-  email: string;
-  phoneNumber: string | null;
-  role: 'USER' | 'MANAGER' | 'ADMIN';
-  createdAt?: string;
-  updatedAt?: string;
-}
+export type {
+  AuthError,
+  AuthSuccessResponse,
+  AuthTokens,
+  GetProfileRequest,
+  GetProfileResponse,
+  LoginRequest,
+  LoginResponse,
+  LogoutRequest,
+  LogoutResponse,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
+  SignupRequest,
+  SignupResponse,
+  UpdateProfileRequest,
+  UpdateProfileResponse,
+  UpdateUserProfilePayload,
+  UserProfileResponse,
+} from '@/types/auth/auth.api.types';
 
-export interface UpdateUserProfilePayload {
-  name?: string;
-  phoneNumber?: string | null;
-}
-
-const login = async ({
-  email,
-  password,
-}: {
-  email: string;
-  password: string;
-}) => {
-  const response = await axiosInstance.post('/auth/login', { email, password });
+const login = async (payload: LoginRequest): Promise<LoginResponse> => {
+  const response = await axiosInstance.post<ApiResponse<LoginResponse>>(
+    '/auth/login',
+    payload
+  );
   return response.data.metadata;
 };
 
-const signup = async ({
-  email,
-  password,
-  name,
-  phone,
-}: {
-  email: string;
-  password: string;
-  name: string;
-  phone?: string;
-}) => {
-  const response = await axiosInstance.post('/auth/signup', {
-    email,
-    password,
-    name,
-    phone,
-  });
+const signup = async (payload: SignupRequest): Promise<SignupResponse> => {
+  const response = await axiosInstance.post<ApiResponse<SignupResponse>>(
+    '/auth/signup',
+    payload
+  );
   return response.data.metadata;
 };
 
-const logout = async (userId: string) => {
-  const response = await axiosInstance.post('/auth/logout', { userId });
+const logout = async (userId: string): Promise<LogoutResponse> => {
+  const response = await axiosInstance.post<ApiResponse<LogoutResponse>>(
+    '/auth/logout',
+    { userId }
+  );
   return response.data.metadata;
 };
 
-const refreshToken = async ({
-  refreshToken,
-  userId,
-  email,
-}: {
-  refreshToken: string;
-  userId: string;
-  email: string;
-}) => {
-  const response = await axiosInstance.post('/auth/refresh-token', {
-    refreshToken,
-    userId,
-    email,
-  });
+const refreshToken = async (
+  payload: RefreshTokenRequest
+): Promise<RefreshTokenResponse> => {
+  const response = await axiosInstance.post<ApiResponse<RefreshTokenResponse>>(
+    '/auth/refresh-token',
+    payload
+  );
   return response.data.metadata;
 };
 
-const getProfile = async () => {
-  const response = await axiosInstance.get('/users/profile');
-  return response.data.metadata as UserProfileResponse;
+const getProfile = async (): Promise<GetProfileResponse> => {
+  const response =
+    await axiosInstance.get<ApiResponse<GetProfileResponse>>('/users/profile');
+  return response.data.metadata;
 };
 
-const updateProfile = async (payload: UpdateUserProfilePayload) => {
-  const response = await axiosInstance.patch('/users/profile', payload);
-  return response.data.metadata as UserProfileResponse;
+const updateProfile = async (
+  payload: UpdateProfileRequest
+): Promise<UpdateProfileResponse> => {
+  const response = await axiosInstance.patch<
+    ApiResponse<UpdateProfileResponse>
+  >('/users/profile', payload);
+  return response.data.metadata;
 };
 
 export const authAPI = {

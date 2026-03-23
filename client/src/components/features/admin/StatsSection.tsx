@@ -1,5 +1,5 @@
 import React from 'react';
-import type { InventoryStats } from '@/types/admin-types';
+import type { InventoryStats } from '@/types/admin/admin-types';
 
 interface StatsSectionProps {
   stats: InventoryStats;

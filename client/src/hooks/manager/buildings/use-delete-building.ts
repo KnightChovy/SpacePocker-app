@@ -1,15 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '@/lib/axios';
+import { managerBuildingsApi } from '@/apis/manager/buildings.api';
 import { toast } from 'react-toastify';
 
 export const useDeleteBuilding = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await axiosInstance.delete<{
-        metadata: { message: string };
-      }>(`/buildings/${id}`);
-      return response.data.metadata;
+      return managerBuildingsApi.remove(id);
     },
     onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: ['buildings', 'list'] });

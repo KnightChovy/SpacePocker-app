@@ -7,7 +7,7 @@ import { useCreateServiceCategory } from '@/hooks/manager/service-categories/use
 import { useGetServiceCategoriesManager } from '@/hooks/manager/service-categories/use-get-service-categories';
 import { useUpdateServiceCategory } from '@/hooks/manager/service-categories/use-update-service-category';
 import { useDeleteServiceCategory } from '@/hooks/manager/service-categories/use-delete-service-category';
-import type { ApiServiceCategory } from '@/types/booking-request-api';
+import type { ApiServiceCategory } from '@/types/user/booking-request-api';
 
 type CategoryModalMode = 'create' | 'edit';
 

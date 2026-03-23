@@ -1,6 +1,6 @@
 import { X, Calendar, Clock, User, MapPin, DollarSign } from 'lucide-react';
-import type { Booking, BookingStatus } from '@/types/types';
-import { BookingStatusLabel } from '@/types/types';
+import type { Booking, BookingStatus } from '@/types/user/types';
+import { BookingStatusLabel } from '@/types/user/types';
 import { formatVND } from '@/lib/utils';
 
 interface BookingDetailModalProps {

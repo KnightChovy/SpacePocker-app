@@ -6,7 +6,7 @@ import StatCard from '@/components/features/admin/StatCard';
 import TransactionChart from '@/components/features/admin/TransactionChart';
 import SystemHealth from '@/components/features/admin/SystemHealth';
 import TransactionTable from '@/components/features/admin/TransactionTable';
-import type { Stat, Transaction, LogEntry } from '@/types/admin-types';
+import type { Stat, Transaction, LogEntry } from '@/types/admin/admin-types';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
 import { useAdminDashboard } from '@/hooks/admin/dashboard/use-admin-dashboard';
@@ -25,7 +25,6 @@ const DashboardPage: React.FC = () => {
   const user = useAuthStore(state => state.user);
   const { data, isLoading, isError } = useAdminDashboard();
   console.log(data);
-
 
   const stats = useMemo<Stat[]>(() => {
     return (

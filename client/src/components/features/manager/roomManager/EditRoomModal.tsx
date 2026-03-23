@@ -8,7 +8,7 @@ import type {
   ApiRoomStatus,
   ApiRoomType,
   UpdateRoomPayload,
-} from '@/types/room-api';
+} from '@/types/user/room-api';
 
 interface EditRoomModalProps {
   isOpen: boolean;
