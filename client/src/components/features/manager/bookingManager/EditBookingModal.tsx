@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { X, ChevronDown, Calendar, Clock } from 'lucide-react';
 import type { Booking, BookingStatus } from '@/types/user/types';
 import { bookingService } from '@/services/bookingService';
+import {
+  parseBookingAmount,
+  validateBookingTimeRange,
+} from '@/validations/manager/booking.validation';
 
 interface EditBookingModalProps {
   isOpen: boolean;
@@ -68,6 +72,23 @@ const EditBookingModal = ({
     e.preventDefault();
     if (!booking) return;
 
+    const timeError = validateBookingTimeRange(
+      formData.startTime,
+      formData.endTime
+    );
+    if (timeError) {
+      alert(timeError);
+      return;
+    }
+
+    const amountResult = parseBookingAmount(formData.amount);
+    if (!amountResult.ok) {
+      alert(amountResult.message);
+      return;
+    }
+
+    const amount = amountResult.value;
+
     setIsSubmitting(true);
     try {
       const room = ROOM_MAP[formData.roomId] ?? {
@@ -85,7 +106,7 @@ const EditBookingModal = ({
         scheduleDate: formData.scheduleDate,
         startTime: formData.startTime,
         endTime: formData.endTime,
-        amount: parseFloat(formData.amount),
+        amount,
         status: formData.status,
       });
       onUpdated();

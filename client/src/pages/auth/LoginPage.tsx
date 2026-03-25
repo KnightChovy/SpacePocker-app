@@ -1,6 +1,5 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
@@ -10,13 +9,7 @@ import { Input } from '@/components/ui/input';
 import LeftSide from '@/components/auth/LeftSide';
 import { useLogin } from '@/hooks/auth/use-login';
 import type { USER_DATA } from '@/types/auth/auth-type';
-
-const loginSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email format'),
-  password: z.string().min(1, 'Password is required'),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+import { loginSchema, type LoginFormData } from '@/validations/user/auth.validation';
 
 const LoginPage = () => {
   const navigate = useNavigate();

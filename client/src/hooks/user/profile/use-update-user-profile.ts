@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { toast } from 'react-toastify';
-import { authAPI, type UpdateUserProfilePayload } from '@/apis/auth.api';
+import { authAPI, type UpdateUserProfilePayload } from '@/apis/auth/auth.api';
 
 export const useUpdateUserProfile = () => {
   const queryClient = useQueryClient();

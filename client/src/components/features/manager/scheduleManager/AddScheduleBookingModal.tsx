@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { X, ChevronDown, Clock } from 'lucide-react';
 import type { ScheduleRoom, BookingType } from '@/types/user/types';
+import {
+  validateEndAfterStart,
+  validateVietnamOperatingHoursForTimes,
+} from '@/validations/common/time.validation';
 
 interface AddScheduleBookingModalProps {
   isOpen: boolean;
@@ -60,6 +64,22 @@ const AddScheduleBookingModal = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const timeError = validateEndAfterStart(formData.startTime, formData.endTime);
+    if (timeError) {
+      alert(timeError);
+      return;
+    }
+
+    const operatingHoursError = validateVietnamOperatingHoursForTimes(
+      formData.startTime,
+      formData.endTime
+    );
+    if (operatingHoursError) {
+      alert(operatingHoursError);
+      return;
+    }
+
     onAdd(formData);
     setFormData({
       roomId: '',
