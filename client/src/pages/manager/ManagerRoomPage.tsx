@@ -27,6 +27,8 @@ import { useAuthStore } from '@/stores/auth.store';
 import { formatVND, getAvatarUrl } from '@/lib/utils';
 import { parseRoomNumbers } from '@/validations/manager/room.validation';
 
+const MANAGER_NOTIFICATIONS_READ_KEY = 'spacepocker-manager-notifications-read';
+
 const StatusBadge = ({ status }: { status: ApiRoomStatus }) => {
   const config: Record<string, { bg: string; text: string; label: string }> = {
     AVAILABLE: {
@@ -166,11 +168,27 @@ const ManagerRoomPage = () => {
   }>();
   const user = useAuthStore(state => state.user);
 
+  const [hasReadNotifications, setHasReadNotifications] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.localStorage.getItem(MANAGER_NOTIFICATIONS_READ_KEY) === 'true'
+    );
+  });
+
+  const handleNotificationsClick = () => {
+    setHasReadNotifications(true);
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(MANAGER_NOTIFICATIONS_READ_KEY, 'true');
+    }
+  };
+
   const headerActions = [
     {
       id: 'notifications',
       icon: <Bell className="h-5 w-5" />,
-      badge: true,
+      badge: !hasReadNotifications,
+      onClick: handleNotificationsClick,
     },
     {
       id: 'messages',
