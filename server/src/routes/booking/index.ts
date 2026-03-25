@@ -1,5 +1,6 @@
 import express from "express";
 import { bookingController } from "../../container/booking.container";
+import { checkInController } from "../../container/checkIn.container";
 import { asyncHandler } from "../../helper/asyncHandler";
 import { authentication, authorizeRoles } from "../../auth/authUtils";
 
@@ -36,6 +37,24 @@ router.patch(
   authentication,
   authorizeRoles("MANAGER", "ADMIN"),
   asyncHandler(bookingController.managerCancelPaidBookingAndNotifyRefund),
+);
+
+router.post(
+  "/bookings/:id/check-in",
+  authentication,
+  asyncHandler(checkInController.checkIn),
+);
+
+router.post(
+  "/bookings/:id/check-out",
+  authentication,
+  asyncHandler(checkInController.checkOut),
+);
+
+router.get(
+  "/bookings/:id/check-in-status",
+  authentication,
+  asyncHandler(checkInController.getCheckInStatus),
 );
 
 export default router;
