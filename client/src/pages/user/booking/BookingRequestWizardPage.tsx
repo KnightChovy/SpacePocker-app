@@ -379,12 +379,14 @@ const BookingRequestWizardPage = () => {
   );
 
   const endTimeMin = useMemo(() => {
-    if (!minEndLocal || endDate !== formatDateInput(minEndLocal)) return '00:00';
+    if (!minEndLocal || endDate !== formatDateInput(minEndLocal))
+      return '00:00';
     return formatTimeInput(minEndLocal);
   }, [endDate, minEndLocal]);
 
   const endTimeMax = useMemo(() => {
-    if (!maxEndLocal || endDate !== formatDateInput(maxEndLocal)) return '23:59';
+    if (!maxEndLocal || endDate !== formatDateInput(maxEndLocal))
+      return '23:59';
     return formatTimeInput(maxEndLocal);
   }, [endDate, maxEndLocal]);
 

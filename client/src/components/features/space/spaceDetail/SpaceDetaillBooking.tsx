@@ -131,17 +131,20 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
   }, [date, effectiveStartTime]);
 
   const availableEndOptions = useMemo(() => {
-    if (!startDateTime) return [] as Array<{
-      value: string;
-      date: string;
-      time: string;
-      label: string;
-      hours: number;
-    }>;
+    if (!startDateTime)
+      return [] as Array<{
+        value: string;
+        date: string;
+        time: string;
+        label: string;
+        hours: number;
+      }>;
 
     return Array.from({ length: MAX_BOOKING_HOURS }, (_, index) => {
       const duration = index + MIN_BOOKING_HOURS;
-      const endDateTime = new Date(startDateTime.getTime() + duration * HOUR_IN_MS);
+      const endDateTime = new Date(
+        startDateTime.getTime() + duration * HOUR_IN_MS
+      );
 
       return {
         value: endDateTime.toISOString(),
