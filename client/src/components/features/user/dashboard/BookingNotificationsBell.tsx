@@ -9,6 +9,9 @@ import {
 import { useGetMyBookingRequests } from '@/hooks/user/booking-requests/use-get-my-booking-requests';
 import type { BookingRequestStatus } from '@/types/user/booking-request-api';
 
+const READ_BOOKING_NOTIFICATION_IDS_KEY =
+  'spacepocker-read-booking-notification-ids';
+
 const STATUS_LABEL: Record<BookingRequestStatus, string> = {
   PENDING: 'Waiting for approval',
   APPROVED: 'Approved - waiting for payment',
@@ -42,6 +45,25 @@ export default function BookingNotificationsBell() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const bookingRequestsQuery = useGetMyBookingRequests();
+  const [readNotificationIds, setReadNotificationIds] = useState<Set<string>>(
+    () => {
+      if (typeof window === 'undefined') return new Set<string>();
+
+      try {
+        const raw = window.localStorage.getItem(
+          READ_BOOKING_NOTIFICATION_IDS_KEY
+        );
+        if (!raw) return new Set<string>();
+        const parsed = JSON.parse(raw) as unknown;
+        if (!Array.isArray(parsed)) return new Set<string>();
+        return new Set<string>(
+          parsed.filter((id): id is string => typeof id === 'string')
+        );
+      } catch {
+        return new Set<string>();
+      }
+    }
+  );
 
   const notifications = useMemo(() => {
     const requests = bookingRequestsQuery.data ?? [];
@@ -55,14 +77,38 @@ export default function BookingNotificationsBell() {
 
   const unreadCount = useMemo(
     () =>
-      (bookingRequestsQuery.data ?? []).filter(req => req.status !== 'PENDING')
-        .length,
-    [bookingRequestsQuery.data]
+      (bookingRequestsQuery.data ?? []).filter(
+        req => !readNotificationIds.has(req.id)
+      ).length,
+    [bookingRequestsQuery.data, readNotificationIds]
   );
+
+  const markAsRead = (notificationId: string) => {
+    setReadNotificationIds(prev => {
+      if (prev.has(notificationId)) return prev;
+
+      const next = new Set(prev);
+      next.add(notificationId);
+
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(
+          READ_BOOKING_NOTIFICATION_IDS_KEY,
+          JSON.stringify(Array.from(next))
+        );
+      }
+
+      return next;
+    });
+  };
 
   const goToBookings = () => {
     setOpen(false);
     navigate('/user/bookings');
+  };
+
+  const handleNotificationClick = (notificationId: string) => {
+    markAsRead(notificationId);
+    goToBookings();
   };
 
   return (
@@ -115,31 +161,57 @@ export default function BookingNotificationsBell() {
 
           {!bookingRequestsQuery.isLoading &&
             !bookingRequestsQuery.isError &&
-            notifications.map(notification => (
-              <button
-                key={notification.id}
-                type="button"
-                onClick={goToBookings}
-                className="w-full text-left px-4 py-3 border-b last:border-b-0 border-border-light dark:border-border-dark hover:bg-background-light dark:hover:bg-background-dark transition-colors"
-              >
-                <div className="flex items-start gap-2">
-                  <span
-                    className={`mt-1.5 h-2 w-2 rounded-full ${STATUS_DOT_CLASS[notification.status]}`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-text-main-light dark:text-text-main-dark truncate">
-                      {notification.room?.name ?? 'Booking request'}
-                    </p>
-                    <p className="text-xs text-text-sub-light dark:text-text-sub-dark mt-0.5">
-                      {STATUS_LABEL[notification.status]}
-                    </p>
-                    <p className="text-[11px] text-text-sub-light dark:text-text-sub-dark mt-1">
-                      {formatNotificationTime(notification.createdAt)}
-                    </p>
+            notifications.map(notification => {
+              const isRead = readNotificationIds.has(notification.id);
+
+              return (
+                <button
+                  key={notification.id}
+                  type="button"
+                  onClick={() => handleNotificationClick(notification.id)}
+                  className={`w-full text-left px-4 py-3 border-b last:border-b-0 border-border-light dark:border-border-dark transition-colors ${
+                    isRead
+                      ? 'bg-slate-50/50 dark:bg-slate-900/20 hover:bg-slate-100 dark:hover:bg-slate-900/40'
+                      : 'hover:bg-background-light dark:hover:bg-background-dark'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <span
+                      className={`mt-1.5 h-2 w-2 rounded-full ${STATUS_DOT_CLASS[notification.status]}`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={`text-sm truncate ${
+                          isRead
+                            ? 'font-normal text-slate-500 dark:text-slate-400'
+                            : 'font-semibold text-text-main-light dark:text-text-main-dark'
+                        }`}
+                      >
+                        {notification.room?.name ?? 'Booking request'}
+                      </p>
+                      <p
+                        className={`text-xs mt-0.5 ${
+                          isRead
+                            ? 'text-slate-400 dark:text-slate-500'
+                            : 'text-text-sub-light dark:text-text-sub-dark'
+                        }`}
+                      >
+                        {STATUS_LABEL[notification.status]}
+                      </p>
+                      <p
+                        className={`text-[11px] mt-1 ${
+                          isRead
+                            ? 'text-slate-400 dark:text-slate-500'
+                            : 'text-text-sub-light dark:text-text-sub-dark'
+                        }`}
+                      >
+                        {formatNotificationTime(notification.createdAt)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
         </div>
 
         <div className="p-2 border-t border-border-light dark:border-border-dark">
