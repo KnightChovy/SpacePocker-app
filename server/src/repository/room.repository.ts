@@ -16,7 +16,11 @@ export class RoomRepository implements IRoomRepository {
         },
         serviceCategories: {
           include: {
-            category: true,
+            category: {
+              include: {
+                services: true,
+              },
+            },
           },
         },
       },

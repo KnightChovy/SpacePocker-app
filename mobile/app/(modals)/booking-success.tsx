@@ -1,5 +1,3 @@
-import bookingService from '@/services/booking.service';
-import { Booking } from '@/types/booking.type';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ArrowRight,
@@ -8,8 +6,8 @@ import {
   Clock,
   Home,
 } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import React from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 function formatDate(iso: string): string {
@@ -36,21 +34,17 @@ function shortId(id: string): string {
 }
 
 export default function BookingSuccessScreen() {
-  const { bookingId } = useLocalSearchParams<{ bookingId: string }>();
-  const [booking, setBooking] = useState<Booking | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { bookingId, roomName, roomCode, amount, startTime, endTime } =
+    useLocalSearchParams<{
+      bookingId: string;
+      roomName: string;
+      roomCode: string;
+      amount: string;
+      startTime: string;
+      endTime: string;
+    }>();
 
-  useEffect(() => {
-    if (!bookingId) {
-      setLoading(false);
-      return;
-    }
-    bookingService
-      .getBookingById(bookingId)
-      .then(res => setBooking(res.metadata))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [bookingId]);
+  const totalCost = Number(amount ?? 0);
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
@@ -67,89 +61,73 @@ export default function BookingSuccessScreen() {
           Your booking request has been submitted successfully.
         </Text>
 
-        {loading ? (
-          <ActivityIndicator size="large" color="#5B4FE9" />
-        ) : booking ? (
-          <View
-            className="w-full bg-white border border-gray-100 rounded-3xl p-5 gap-4"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.07,
-              shadowRadius: 10,
-              elevation: 4,
-            }}
-          >
-            {/* Booking ID */}
-            <View className="items-center pb-4 border-b border-gray-100">
-              <Text className="text-xs text-gray-400 font-medium mb-0.5">
-                Booking ID
-              </Text>
-              <Text className="text-base font-bold text-[#5B4FE9] tracking-wider">
-                {shortId(booking.id)}
-              </Text>
-            </View>
-
-            {/* Room name */}
-            <View className="pb-3 border-b border-gray-100">
-              <Text className="text-xs text-gray-400 font-medium mb-0.5">
-                Room
-              </Text>
-              <Text
-                className="text-sm font-bold text-gray-900"
-                numberOfLines={1}
-              >
-                {booking.room?.name ?? '—'}
-              </Text>
-              <Text className="text-xs text-[#5B4FE9] font-semibold mt-0.5">
-                {booking.room?.roomCode ?? ''}
-              </Text>
-            </View>
-
-            {/* Date & Time */}
-            <View className="flex-row gap-3 pb-3 border-b border-gray-100">
-              <View className="flex-1">
-                <View className="flex-row items-center gap-1 mb-0.5">
-                  <Calendar size={12} color="#9CA3AF" strokeWidth={2} />
-                  <Text className="text-xs text-gray-400 font-medium">
-                    Date
-                  </Text>
-                </View>
-                <Text className="text-sm font-semibold text-gray-900">
-                  {formatDate(booking.startTime)}
-                </Text>
-              </View>
-              <View className="flex-1">
-                <View className="flex-row items-center gap-1 mb-0.5">
-                  <Clock size={12} color="#9CA3AF" strokeWidth={2} />
-                  <Text className="text-xs text-gray-400 font-medium">
-                    Time
-                  </Text>
-                </View>
-                <Text className="text-sm font-semibold text-gray-900">
-                  {formatTime(booking.startTime)} –{' '}
-                  {formatTime(booking.endTime)}
-                </Text>
-              </View>
-            </View>
-
-            {/* Total cost */}
-            <View className="flex-row justify-between items-center">
-              <Text className="text-sm text-gray-500 font-medium">
-                Total Cost
-              </Text>
-              <Text className="text-lg font-extrabold text-[#5B4FE9]">
-                ${booking.totalCost?.toFixed(2) ?? '0.00'}
-              </Text>
-            </View>
-          </View>
-        ) : (
-          <View className="bg-gray-50 rounded-2xl px-6 py-4">
-            <Text className="text-sm text-gray-400 text-center">
-              Booking ID: {shortId(bookingId ?? '')}
+        <View
+          className="w-full bg-white border border-gray-100 rounded-3xl p-5 gap-4"
+          style={{
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.07,
+            shadowRadius: 10,
+            elevation: 4,
+          }}
+        >
+          {/* Booking ID */}
+          <View className="items-center pb-4 border-b border-gray-100">
+            <Text className="text-xs text-gray-400 font-medium mb-0.5">
+              Booking ID
+            </Text>
+            <Text className="text-base font-bold text-[#5B4FE9] tracking-wider">
+              {shortId(bookingId ?? '')}
             </Text>
           </View>
-        )}
+
+          {/* Room name */}
+          <View className="pb-3 border-b border-gray-100">
+            <Text className="text-xs text-gray-400 font-medium mb-0.5">
+              Room
+            </Text>
+            <Text className="text-sm font-bold text-gray-900" numberOfLines={1}>
+              {roomName || '—'}
+            </Text>
+            {!!roomCode && (
+              <Text className="text-xs text-[#5B4FE9] font-semibold mt-0.5">
+                {roomCode}
+              </Text>
+            )}
+          </View>
+
+          {/* Date & Time */}
+          <View className="flex-row gap-3 pb-3 border-b border-gray-100">
+            <View className="flex-1">
+              <View className="flex-row items-center gap-1 mb-0.5">
+                <Calendar size={12} color="#9CA3AF" strokeWidth={2} />
+                <Text className="text-xs text-gray-400 font-medium">Date</Text>
+              </View>
+              <Text className="text-sm font-semibold text-gray-900">
+                {formatDate(startTime)}
+              </Text>
+            </View>
+            <View className="flex-1">
+              <View className="flex-row items-center gap-1 mb-0.5">
+                <Clock size={12} color="#9CA3AF" strokeWidth={2} />
+                <Text className="text-xs text-gray-400 font-medium">Time</Text>
+              </View>
+              <Text className="text-sm font-semibold text-gray-900">
+                {formatTime(startTime)} – {formatTime(endTime)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Total cost */}
+          <View className="flex-row justify-between items-center">
+            <Text className="text-sm text-gray-500 font-medium">
+              Total Cost
+            </Text>
+            <Text className="text-lg font-extrabold text-[#5B4FE9]">
+              {totalCost > 0 ? totalCost.toLocaleString('vi-VN') + 'đ' : '—'}
+            </Text>
+          </View>
+        </View>
       </View>
 
       {/* CTA Buttons */}
@@ -157,8 +135,15 @@ export default function BookingSuccessScreen() {
         <TouchableOpacity
           onPress={() =>
             router.replace({
-              pathname: '/(modals)/room-detail' as any,
-              params: { bookingId },
+              pathname: '/(modals)/booking-detail' as any,
+              params: {
+                bookingId,
+                roomName,
+                roomCode,
+                amount,
+                startTime,
+                endTime,
+              },
             })
           }
           activeOpacity={0.85}

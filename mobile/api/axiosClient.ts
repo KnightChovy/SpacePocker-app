@@ -18,7 +18,7 @@ axiosClient.interceptors.request.use(
     const { accessToken, user } = useAuthStore.getState();
 
     if (accessToken) {
-      config.headers['authorization'] = `Bearer ${accessToken}`;
+      config.headers['authorization'] = accessToken;
       if (user?.id) {
         config.headers['x-client-id'] = user.id;
       }
@@ -60,7 +60,7 @@ axiosClient.interceptors.response.use(
         const { useAuthStore } = require('@/store/authStore');
         useAuthStore.setState({ accessToken });
 
-        originalRequest.headers['authorization'] = `Bearer ${accessToken}`;
+        originalRequest.headers['authorization'] = accessToken;
         originalRequest.headers['x-client-id'] = user?.id;
 
         return axiosClient(originalRequest);

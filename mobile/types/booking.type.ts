@@ -16,12 +16,27 @@ export type CreateBookingRequest = {
     serviceId: string;
     quantity: number;
   }[];
+  locale?: string;
+};
+
+export type CreateBookingPaymentUrlResponse = {
+  bookingRequestId: string;
+  status: BookingStatus;
+  paymentUrl: string;
+  txnRef: string;
+  amount: number;
+  roomName: string;
 };
 
 export type BookingRoom = {
   id: string;
   name: string;
   roomCode: string;
+  building?: {
+    id: string;
+    buildingName: string;
+    campus: string;
+  } | null;
 };
 
 export type BookingUser = {

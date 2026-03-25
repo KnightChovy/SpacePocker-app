@@ -69,9 +69,9 @@ function RoomCard({ room }: { room: Room }) {
           </Text>
           <View className="flex-row items-baseline gap-0.5">
             <Text className="text-[#5B4FE9] font-extrabold text-lg">
-              ${room.pricePerHour}
+              {room.pricePerHour.toLocaleString('vi-VN')}đ
             </Text>
-            <Text className="text-gray-400 text-xs">/hr</Text>
+            <Text className="text-gray-400 text-xs">/giờ</Text>
           </View>
         </View>
 

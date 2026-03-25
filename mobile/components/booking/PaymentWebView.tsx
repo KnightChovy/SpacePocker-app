@@ -18,10 +18,9 @@ type Props = {
 };
 
 function extractBookingId(url: string): string {
-  // Try query param: ?bookingId=xxx or &bookingId=xxx
   const qMatch = url.match(/[?&]bookingId=([^&#]+)/);
   if (qMatch?.[1]) return decodeURIComponent(qMatch[1]);
-  // Fallback: path segment after "success/"
+
   const pMatch = url.match(/\/success\/([^/?&#]+)/);
   return pMatch?.[1] ? decodeURIComponent(pMatch[1]) : '';
 }
@@ -51,21 +50,44 @@ export default function PaymentWebView({
     );
   };
 
-  const handleNavigationChange = (navState: WebViewNavigation) => {
-    const url = navState.url;
-    if (!url || handledRef.current) return;
+  const handleUrl = (url: string): boolean => {
+    if (!url || handledRef.current) return true;
+
+    // Intercept VNPAY return URL — block the request and handle locally
+    if (url.includes('vnpay-return')) {
+      handledRef.current = true;
+      const responseCode = url.match(/[?&]vnp_ResponseCode=([^&#]+)/)?.[1];
+      const bookingId = extractBookingId(url);
+      if (responseCode === '00') {
+        onSuccess(bookingId);
+      } else {
+        onFailed();
+      }
+      return false; // block WebView from loading this URL
+    }
 
     if (url.includes('payment/success')) {
       handledRef.current = true;
       const bookingId = extractBookingId(url);
       onSuccess(bookingId);
-      return;
+      return false;
     }
 
     if (url.includes('payment/failed') || url.includes('payment/cancel')) {
       handledRef.current = true;
       onFailed();
+      return false;
     }
+
+    return true; // allow all other URLs
+  };
+
+  const handleShouldStartLoad = (request: WebViewNavigation): boolean => {
+    return handleUrl(request.url);
+  };
+
+  const handleNavigationChange = (navState: WebViewNavigation) => {
+    handleUrl(navState.url);
   };
 
   return (
@@ -91,6 +113,7 @@ export default function PaymentWebView({
         <WebView
           ref={webViewRef}
           source={{ uri: paymentUrl }}
+          onShouldStartLoadWithRequest={handleShouldStartLoad}
           onNavigationStateChange={handleNavigationChange}
           onLoadStart={() => setLoading(true)}
           onLoadEnd={() => setLoading(false)}
@@ -100,7 +123,6 @@ export default function PaymentWebView({
           style={{ flex: 1 }}
         />
 
-        {/* Loading overlay */}
         {loading && (
           <View className="absolute inset-0 items-center justify-center bg-white">
             <ActivityIndicator size="large" color="#5B4FE9" />

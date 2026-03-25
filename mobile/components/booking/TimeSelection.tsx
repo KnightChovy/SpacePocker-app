@@ -64,6 +64,12 @@ function formatSummaryDate(dateStr: string) {
   });
 }
 
+function isSlotPast(dateStr: string, slot: string): boolean {
+  if (!dateStr || dateStr !== todayStr) return false;
+  const slotDate = new Date(toISO(dateStr, slotHour(slot)));
+  return slotDate <= new Date();
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function TimeSelection({ value, onChange, onNext }: Props) {
@@ -112,8 +118,9 @@ export default function TimeSelection({ value, onChange, onNext }: Props) {
   };
 
   const handleSlotPress = (slot: string) => {
+    if (isSlotPast(selectedDate, slot)) return;
     setSelectedSlot(slot);
-    // Reset duration if new slot makes current duration exceed 21:00
+
     const newDur =
       selectedDuration && slotHour(slot) + selectedDuration > 22
         ? null
@@ -196,20 +203,33 @@ export default function TimeSelection({ value, onChange, onNext }: Props) {
               <View key={ri} className="flex-row gap-2 mb-2">
                 {row.map(slot => {
                   const selected = slot === selectedSlot;
+                  const past = isSlotPast(selectedDate, slot);
                   return (
                     <TouchableOpacity
                       key={slot}
-                      onPress={() => handleSlotPress(slot)}
-                      activeOpacity={0.8}
+                      onPress={() => !past && handleSlotPress(slot)}
+                      activeOpacity={past ? 1 : 0.8}
+                      disabled={past}
                       className="flex-1 py-2.5 rounded-xl items-center border"
                       style={{
-                        backgroundColor: selected ? '#5B4FE9' : 'white',
+                        backgroundColor: selected
+                          ? '#5B4FE9'
+                          : past
+                            ? '#F3F4F6'
+                            : 'white',
                         borderColor: selected ? '#5B4FE9' : '#E5E7EB',
+                        opacity: past ? 0.4 : 1,
                       }}
                     >
                       <Text
                         className="text-xs font-semibold"
-                        style={{ color: selected ? 'white' : '#374151' }}
+                        style={{
+                          color: selected
+                            ? 'white'
+                            : past
+                              ? '#9CA3AF'
+                              : '#374151',
+                        }}
                       >
                         {formatSlotLabel(slot)}
                       </Text>

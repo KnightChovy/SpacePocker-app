@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from "express";
-import { BookingStatus } from "@prisma/client";
-import BookingRequestService from "../services/bookingRequest.service";
-import { Created, OK } from "../core/success.response";
+import { Request, Response, NextFunction } from 'express';
+import { BookingStatus } from '@prisma/client';
+import BookingRequestService from '../services/bookingRequest.service';
+import { Created, OK } from '../core/success.response';
 
 class BookingRequestController {
   constructor(private bookingRequestService: BookingRequestService) {}
@@ -9,15 +9,15 @@ class BookingRequestController {
   private getStatusFromQuery(status?: string): BookingStatus {
     const normalized = status?.toUpperCase();
     const allowedStatus: BookingStatus[] = [
-      "PENDING",
-      "APPROVED",
-      "REJECTED",
-      "CANCELLED",
-      "COMPLETED",
+      'PENDING',
+      'APPROVED',
+      'REJECTED',
+      'CANCELLED',
+      'COMPLETED',
     ];
 
     if (!normalized || !allowedStatus.includes(normalized as BookingStatus)) {
-      return "PENDING";
+      return 'PENDING';
     }
 
     return normalized as BookingStatus;
@@ -29,7 +29,7 @@ class BookingRequestController {
     next: NextFunction,
   ) => {
     new Created({
-      message: "Booking request created successfully",
+      message: 'Booking request created successfully',
       metadata: await this.bookingRequestService.createBookingRequest({
         userId: req.user?.userId,
         ...req.body,
@@ -43,7 +43,7 @@ class BookingRequestController {
     next: NextFunction,
   ) => {
     new OK({
-      message: " Get booking request successfully",
+      message: ' Get booking request successfully',
       metadata: await this.bookingRequestService.getBookingRequestById(
         String(req.params.id),
       ),
@@ -60,7 +60,7 @@ class BookingRequestController {
       : undefined;
 
     new OK({
-      message: "Get my booking requests successfully",
+      message: 'Get my booking requests successfully',
       metadata: await this.bookingRequestService.getMyBookingRequests(
         String(req.user?.userId),
         status,
@@ -74,11 +74,11 @@ class BookingRequestController {
     next: NextFunction,
   ) => {
     new OK({
-      message: "Get booking requests successfully",
+      message: 'Get booking requests successfully',
       metadata: await this.bookingRequestService.getBookingRequestsForManager(
         String(req.user?.userId),
-        String(req.user?.email || ""),
-        this.getStatusFromQuery(String(req.query.status || "PENDING")),
+        String(req.user?.email || ''),
+        this.getStatusFromQuery(String(req.query.status || 'PENDING')),
       ),
     }).send(res);
   };
@@ -89,7 +89,7 @@ class BookingRequestController {
     next: NextFunction,
   ) => {
     new OK({
-      message: "Get all booking requests successfully",
+      message: 'Get all booking requests successfully',
       metadata: await this.bookingRequestService.getAllBookingRequestsForAdmin(
         String(req.user?.userId),
       ),
@@ -102,11 +102,11 @@ class BookingRequestController {
     next: NextFunction,
   ) => {
     new OK({
-      message: "Booking request approved successfully",
+      message: 'Booking request approved successfully',
       metadata: await this.bookingRequestService.approveBookingRequest(
         String(req.params.id),
         String(req.user?.userId),
-        String(req.user?.email || ""),
+        String(req.user?.email || ''),
       ),
     }).send(res);
   };
@@ -117,11 +117,11 @@ class BookingRequestController {
     next: NextFunction,
   ) => {
     new OK({
-      message: "Booking request rejected successfully",
+      message: 'Booking request rejected successfully',
       metadata: await this.bookingRequestService.rejectBookingRequest(
         String(req.params.id),
         String(req.user?.userId),
-        String(req.user?.email || ""),
+        String(req.user?.email || ''),
       ),
     }).send(res);
   };
@@ -132,7 +132,7 @@ class BookingRequestController {
     next: NextFunction,
   ) => {
     new OK({
-      message: "Booking request cancelled successfully",
+      message: 'Booking request cancelled successfully',
       metadata: await this.bookingRequestService.cancelMyBookingRequest(
         String(req.params.id),
         String(req.user?.userId),
@@ -146,21 +146,21 @@ class BookingRequestController {
     next: NextFunction,
   ) => {
     const ipAddr =
-      (req.headers["x-forwarded-for"] as string | undefined)
-        ?.split(",")[0]
+      (req.headers['x-forwarded-for'] as string | undefined)
+        ?.split(',')[0]
         ?.trim() ||
       req.socket.remoteAddress ||
-      "127.0.0.1";
+      '127.0.0.1';
 
     new OK({
-      message: "Create VNPAY payment URL successfully",
+      message: 'Create VNPAY payment URL successfully',
       metadata:
         await this.bookingRequestService.createPaymentUrlForApprovedBookingRequest(
           {
             bookingRequestId: String(req.params.id),
             userId: String(req.user?.userId),
             ipAddr,
-            locale: req.body?.locale === "en" ? "en" : "vn",
+            locale: req.body?.locale === 'en' ? 'en' : 'vn',
           },
         ),
     }).send(res);
@@ -171,15 +171,17 @@ class BookingRequestController {
     res: Response,
     next: NextFunction,
   ) => {
-    const ipAddr =
-      (req.headers["x-forwarded-for"] as string | undefined)
-        ?.split(",")[0]
+    const rawIp =
+      (req.headers['x-forwarded-for'] as string | undefined)
+        ?.split(',')[0]
         ?.trim() ||
       req.socket.remoteAddress ||
-      "127.0.0.1";
+      '127.0.0.1';
+    // Strip IPv6-mapped IPv4 prefix (e.g. "::ffff:192.168.1.1" → "192.168.1.1")
+    const ipAddr = rawIp.replace(/^::ffff:/, '');
 
     new Created({
-      message: "Create booking request and VNPAY payment URL successfully",
+      message: 'Create booking request and VNPAY payment URL successfully',
       metadata:
         await this.bookingRequestService.createBookingRequestAndPaymentUrlForMobile(
           {
@@ -191,7 +193,7 @@ class BookingRequestController {
             amenityIds: req.body?.amenityIds,
             services: req.body?.services,
             ipAddr,
-            locale: req.body?.locale === "en" ? "en" : "vn",
+            locale: req.body?.locale === 'en' ? 'en' : 'vn',
           },
         ),
     }).send(res);
@@ -204,7 +206,7 @@ class BookingRequestController {
   ) => {
     const normalizedQuery: Record<string, string> = {};
     Object.entries(req.query).forEach(([key, value]) => {
-      if (typeof value === "string") normalizedQuery[key] = value;
+      if (typeof value === 'string') normalizedQuery[key] = value;
       else if (Array.isArray(value) && value.length > 0) {
         normalizedQuery[key] = String(value[0]);
       }
@@ -212,9 +214,9 @@ class BookingRequestController {
 
     const result =
       await this.bookingRequestService.processVnpayPayment(normalizedQuery);
-    const clientUrl = process.env.CLIENT_URL || "";
-    const status = result.success ? "success" : "failed";
-    const redirectUrl = `${clientUrl}/user/bookings?paymentStatus=${status}&bookingRequestId=${result.bookingRequestId || ""}`;
+    const clientUrl = process.env.CLIENT_URL || '';
+    const status = result.success ? 'success' : 'failed';
+    const redirectUrl = `${clientUrl}/user/bookings?paymentStatus=${status}&bookingRequestId=${result.bookingRequestId || ''}`;
 
     return res.redirect(redirectUrl);
   };
@@ -222,7 +224,7 @@ class BookingRequestController {
   handleVnpayIpn = async (req: Request, res: Response, next: NextFunction) => {
     const normalizedQuery: Record<string, string> = {};
     Object.entries(req.query).forEach(([key, value]) => {
-      if (typeof value === "string") normalizedQuery[key] = value;
+      if (typeof value === 'string') normalizedQuery[key] = value;
       else if (Array.isArray(value) && value.length > 0) {
         normalizedQuery[key] = String(value[0]);
       }
@@ -234,12 +236,12 @@ class BookingRequestController {
     if (result.success) {
       return res
         .status(200)
-        .json({ RspCode: "00", Message: "Confirm Success" });
+        .json({ RspCode: '00', Message: 'Confirm Success' });
     }
 
     return res.status(200).json({
-      RspCode: result.code || "99",
-      Message: result.message || "Payment failed",
+      RspCode: result.code || '99',
+      Message: result.message || 'Payment failed',
     });
   };
 }

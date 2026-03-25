@@ -25,12 +25,12 @@ export default function BookingFooter({ room, onBookPress }: Props) {
         <View>
           <View className="flex-row items-baseline gap-1">
             <Text className="text-2xl font-extrabold text-gray-900">
-              ${room.pricePerHour}
+              {room.pricePerHour.toLocaleString('vi-VN')}đ
             </Text>
-            <Text className="text-gray-400 text-sm">/hour</Text>
+            <Text className="text-gray-400 text-sm">/giờ</Text>
           </View>
           <Text className="text-xs text-gray-400 mt-0.5">
-            +${room.securityDeposit} deposit
+            +{room.securityDeposit.toLocaleString('vi-VN')}đ đặt cọc
           </Text>
         </View>
 

@@ -47,6 +47,13 @@ export default function BookingScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [createdBookingId, setCreatedBookingId] = useState<string | null>(null);
+  const [bookingMeta, setBookingMeta] = useState<{
+    roomName: string;
+    roomCode: string;
+    amount: string;
+    startTime: string;
+    endTime: string;
+  } | null>(null);
 
   const [form, setForm] = useState<BookingForm>({
     roomId: params.roomId ?? '',
@@ -104,7 +111,14 @@ export default function BookingScreen() {
       if (url.includes('payment/success')) {
         router.replace({
           pathname: '/(modals)/booking-success' as any,
-          params: { bookingId: bId },
+          params: {
+            bookingId: bId,
+            roomName: bookingMeta?.roomName ?? '',
+            roomCode: bookingMeta?.roomCode ?? '',
+            amount: bookingMeta?.amount ?? '0',
+            startTime: bookingMeta?.startTime ?? '',
+            endTime: bookingMeta?.endTime ?? '',
+          },
         });
       } else if (
         url.includes('payment/failed') ||
@@ -122,28 +136,37 @@ export default function BookingScreen() {
   const handleConfirm = async () => {
     setSubmitting(true);
     try {
-      const res = await bookingService.createBooking({
+      const payload = {
         roomId: form.roomId,
         startTime: form.startTime,
         endTime: form.endTime,
         purpose: form.purpose,
         amenityIds: form.amenityIds,
         services: form.services,
-      });
+        locale: 'vn',
+      };
+      console.log(
+        '[Booking] Submitting payload:',
+        JSON.stringify(payload, null, 2)
+      );
+      const res = await bookingService.createBooking(payload);
       const booking = res.metadata;
-      setCreatedBookingId(booking.id);
-
-      if (booking.paymentUrl) {
-        setPaymentUrl(booking.paymentUrl);
-      } else {
-        // No payment gateway — go straight to success
-        router.replace({
-          pathname: '/(modals)/booking-success' as any,
-          params: { bookingId: booking.id },
-        });
-      }
-    } catch {
-      Alert.alert('Error', 'Failed to create booking. Please try again.');
+      setCreatedBookingId(booking.bookingRequestId);
+      setPaymentUrl(booking.paymentUrl);
+      setBookingMeta({
+        roomName: params.roomName ?? booking.roomName ?? '',
+        roomCode: params.roomCode ?? '',
+        amount: String(booking.amount ?? 0),
+        startTime: form.startTime,
+        endTime: form.endTime,
+      });
+    } catch (err: any) {
+      const serverMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to create booking. Please try again.';
+      console.error('[Booking] Error:', err?.response?.data ?? err);
+      Alert.alert('Booking Error', serverMsg);
     } finally {
       setSubmitting(false);
     }
@@ -156,7 +179,14 @@ export default function BookingScreen() {
         onSuccess={bookingId =>
           router.replace({
             pathname: '/(modals)/booking-success' as any,
-            params: { bookingId: bookingId || createdBookingId || '' },
+            params: {
+              bookingId: bookingId || createdBookingId || '',
+              roomName: bookingMeta?.roomName ?? '',
+              roomCode: bookingMeta?.roomCode ?? '',
+              amount: bookingMeta?.amount ?? '0',
+              startTime: bookingMeta?.startTime ?? '',
+              endTime: bookingMeta?.endTime ?? '',
+            },
           })
         }
         onFailed={() =>

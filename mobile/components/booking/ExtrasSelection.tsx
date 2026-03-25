@@ -17,14 +17,7 @@ import {
 import React from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
-import {
-  RoomAmenity,
-  RoomServiceCategory,
-  ServiceCategory,
-} from '@/types/room.type';
-
-// forward-compat: real API may include price
-type ServiceCategoryWithPrice = ServiceCategory & { price?: number };
+import { RoomAmenity, RoomServiceCategory } from '@/types/room.type';
 
 export type ExtrasValue = {
   amenityIds: string[];
@@ -77,6 +70,8 @@ export default function ExtrasSelection({
   };
 
   // ── Service helpers ──
+  const MAX_QTY = 10;
+
   const getQty = (serviceId: string) =>
     value.services.find(s => s.serviceId === serviceId)?.quantity ?? 0;
 
@@ -99,15 +94,18 @@ export default function ExtrasSelection({
 
   // ── Running total ──
   const runningTotal = value.services.reduce((sum, entry) => {
-    const cat = serviceCategories.find(c => c.category.id === entry.serviceId)
-      ?.category as ServiceCategoryWithPrice | undefined;
-    return sum + (cat?.price ?? 0) * entry.quantity;
+    for (const rsc of serviceCategories) {
+      const svc = rsc.category.services?.find(s => s.id === entry.serviceId);
+      if (svc) return sum + svc.price * entry.quantity;
+    }
+    return sum;
   }, 0);
-  const hasPrices = serviceCategories.some(
-    c => (c.category as ServiceCategoryWithPrice).price != null
+
+  const hasServices = serviceCategories.some(
+    c => (c.category.services?.length ?? 0) > 0
   );
 
-  const hasAnything = amenities.length > 0 || serviceCategories.length > 0;
+  const hasAnything = amenities.length > 0 || hasServices;
 
   return (
     <View className="flex-1 bg-white">
@@ -193,7 +191,7 @@ export default function ExtrasSelection({
         )}
 
         {/* ── Services ── */}
-        {serviceCategories.length > 0 && (
+        {hasServices && (
           <View className="mb-4">
             <View className="flex-row items-center mb-1">
               <Package size={16} color="#5B4FE9" strokeWidth={2} />
@@ -205,68 +203,77 @@ export default function ExtrasSelection({
               Add services billed per booking
             </Text>
             <View className="gap-3">
-              {serviceCategories.map(({ category }) => {
-                const cat = category as ServiceCategoryWithPrice;
-                const qty = getQty(cat.id);
-                return (
-                  <View
-                    key={cat.id}
-                    className="flex-row items-center rounded-2xl px-4 py-3.5 border"
-                    style={{
-                      backgroundColor: qty > 0 ? '#F8F7FF' : '#F9FAFB',
-                      borderColor: qty > 0 ? '#5B4FE9' : '#E5E7EB',
-                    }}
-                  >
-                    {/* Info */}
-                    <View className="flex-1 mr-3">
-                      <Text className="text-sm font-semibold text-gray-900">
-                        {cat.name}
-                      </Text>
-                      {cat.price != null ? (
+              {serviceCategories.map(({ category }) =>
+                (category.services ?? []).map(svc => {
+                  const qty = getQty(svc.id);
+                  return (
+                    <View
+                      key={svc.id}
+                      className="flex-row items-center rounded-2xl px-4 py-3.5 border"
+                      style={{
+                        backgroundColor: qty > 0 ? '#F8F7FF' : '#F9FAFB',
+                        borderColor: qty > 0 ? '#5B4FE9' : '#E5E7EB',
+                      }}
+                    >
+                      {/* Info */}
+                      <View className="flex-1 mr-3">
+                        <Text className="text-sm font-semibold text-gray-900">
+                          {svc.name}
+                        </Text>
                         <Text className="text-xs text-[#5B4FE9] font-medium mt-0.5">
-                          ${cat.price}/hr
+                          {svc.price.toLocaleString('vi-VN')}đ
                         </Text>
-                      ) : cat.description ? (
-                        <Text
-                          className="text-xs text-gray-400 mt-0.5"
-                          numberOfLines={1}
+                        {svc.description ? (
+                          <Text
+                            className="text-xs text-gray-400 mt-0.5"
+                            numberOfLines={1}
+                          >
+                            {svc.description}
+                          </Text>
+                        ) : null}
+                      </View>
+
+                      {/* Stepper */}
+                      <View className="flex-row items-center gap-3">
+                        <TouchableOpacity
+                          onPress={() => setQty(svc.id, qty - 1)}
+                          disabled={qty === 0}
+                          className="w-8 h-8 rounded-full items-center justify-center"
+                          style={{
+                            backgroundColor: qty > 0 ? '#5B4FE9' : '#E5E7EB',
+                          }}
                         >
-                          {cat.description}
+                          <Minus
+                            size={13}
+                            color={qty > 0 ? 'white' : '#9CA3AF'}
+                            strokeWidth={2.5}
+                          />
+                        </TouchableOpacity>
+
+                        <Text className="text-sm font-bold text-gray-900 w-5 text-center">
+                          {qty}
                         </Text>
-                      ) : null}
+
+                        <TouchableOpacity
+                          onPress={() => setQty(svc.id, qty + 1)}
+                          disabled={qty >= MAX_QTY}
+                          className="w-8 h-8 rounded-full items-center justify-center"
+                          style={{
+                            backgroundColor:
+                              qty >= MAX_QTY ? '#E5E7EB' : '#5B4FE9',
+                          }}
+                        >
+                          <Plus
+                            size={13}
+                            color={qty >= MAX_QTY ? '#9CA3AF' : 'white'}
+                            strokeWidth={2.5}
+                          />
+                        </TouchableOpacity>
+                      </View>
                     </View>
-
-                    {/* Stepper */}
-                    <View className="flex-row items-center gap-3">
-                      <TouchableOpacity
-                        onPress={() => setQty(cat.id, qty - 1)}
-                        disabled={qty === 0}
-                        className="w-8 h-8 rounded-full items-center justify-center"
-                        style={{
-                          backgroundColor: qty > 0 ? '#5B4FE9' : '#E5E7EB',
-                        }}
-                      >
-                        <Minus
-                          size={13}
-                          color={qty > 0 ? 'white' : '#9CA3AF'}
-                          strokeWidth={2.5}
-                        />
-                      </TouchableOpacity>
-
-                      <Text className="text-sm font-bold text-gray-900 w-5 text-center">
-                        {qty}
-                      </Text>
-
-                      <TouchableOpacity
-                        onPress={() => setQty(cat.id, qty + 1)}
-                        className="w-8 h-8 rounded-full items-center justify-center bg-[#5B4FE9]"
-                      >
-                        <Plus size={13} color="white" strokeWidth={2.5} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                );
-              })}
+                  );
+                })
+              )}
             </View>
           </View>
         )}
@@ -284,11 +291,11 @@ export default function ExtrasSelection({
         }}
       >
         {/* Running total */}
-        {hasPrices && runningTotal > 0 && (
+        {runningTotal > 0 && (
           <View className="flex-row items-center justify-between mb-3">
             <Text className="text-sm text-gray-500 font-medium">Extras</Text>
             <Text className="text-sm font-bold text-[#5B4FE9]">
-              +${runningTotal.toFixed(2)}
+              +{runningTotal.toLocaleString('vi-VN')}đ
             </Text>
           </View>
         )}

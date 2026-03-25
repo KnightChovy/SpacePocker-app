@@ -324,19 +324,19 @@ export default function ReviewBooking({
         >
           <SectionLabel title="Cost Breakdown" />
           <CostRow
-            label="Room rental"
-            sub={`$${pricePerHour}/hr × ${duration}h`}
-            value={`$${roomCost.toFixed(2)}`}
+            label="Thuê phòng"
+            sub={`${pricePerHour.toLocaleString('vi-VN')}đ/giờ × ${duration}h`}
+            value={`${roomCost.toLocaleString('vi-VN')}đ`}
           />
           <CostRow
-            label="Security deposit"
-            sub="Refundable after checkout"
-            value={`$${securityDeposit.toFixed(2)}`}
+            label="Tiền đặt cọc"
+            sub="Hoàn trả sau khi trả phòng"
+            value={`${securityDeposit.toLocaleString('vi-VN')}đ`}
           />
           <View className="border-t border-gray-200 mt-1 pt-1">
             <CostRow
-              label="Total"
-              value={`$${totalCost.toFixed(2)}`}
+              label="Tổng cộng"
+              value={`${totalCost.toLocaleString('vi-VN')}đ`}
               bold
               last
             />

@@ -3,18 +3,17 @@ import { ApiResponse } from '@/types/api.type';
 import {
   Booking,
   BookingFilterState,
+  CreateBookingPaymentUrlResponse,
   CreateBookingRequest,
-  CreateBookingResponse,
 } from '@/types/booking.type';
 
 const bookingService = {
   createBooking: async (
     data: CreateBookingRequest
-  ): Promise<ApiResponse<CreateBookingResponse>> => {
-    const res = await axiosClient.post<ApiResponse<CreateBookingResponse>>(
-      '/v1/api/booking-requests',
-      data
-    );
+  ): Promise<ApiResponse<CreateBookingPaymentUrlResponse>> => {
+    const res = await axiosClient.post<
+      ApiResponse<CreateBookingPaymentUrlResponse>
+    >('/mobile/booking-requests/payment-url', data);
     return res.data;
   },
 
@@ -22,7 +21,7 @@ const bookingService = {
     params?: Partial<BookingFilterState>
   ): Promise<ApiResponse<Booking[]>> => {
     const res = await axiosClient.get<ApiResponse<Booking[]>>(
-      '/v1/api/my-booking-requests',
+      '/my-booking-requests',
       { params }
     );
     return res.data;
@@ -30,14 +29,14 @@ const bookingService = {
 
   getBookingById: async (id: string): Promise<ApiResponse<Booking>> => {
     const res = await axiosClient.get<ApiResponse<Booking>>(
-      `/v1/api/booking-requests/${id}`
+      `/booking-requests/${id}`
     );
     return res.data;
   },
 
   cancelBooking: async (id: string): Promise<ApiResponse<Booking>> => {
     const res = await axiosClient.patch<ApiResponse<Booking>>(
-      `/v1/api/booking-requests/${id}/cancel`
+      `/booking-requests/${id}/cancel`
     );
     return res.data;
   },
