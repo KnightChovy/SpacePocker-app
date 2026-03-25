@@ -259,20 +259,26 @@ const BookingList = ({
     <div className="flex flex-col gap-5">
       {bookings.map((booking, idx) => {
         const req = requests[idx];
+        const now = new Date();
+        const startTime = req?.startTime ? new Date(req.startTime) : null;
+        const isBeforeStart = startTime ? now < startTime : false;
+        
         const canWriteFeedback =
           req?.status === 'COMPLETED' &&
           !!req?.roomId &&
-          !submittedRoomIds.has(req.roomId);
+          !submittedRoomIds.has(req.roomId) &&
+          !isBeforeStart;
         const isFeedbackSubmitted =
           !!req?.roomId && submittedRoomIds.has(req.roomId);
 
-        const canPay = req?.status === 'APPROVED';
+        const canPay = req?.status === 'APPROVED' && isBeforeStart;  
         const isPaid = req?.status === 'COMPLETED';
         const canCancelRequest =
           !!req?.id &&
           req.status !== 'COMPLETED' &&
           req.status !== 'CANCELLED' &&
-          req.status !== 'REJECTED';
+          req.status !== 'REJECTED' &&
+          isBeforeStart;
 
         return (
           <div
@@ -292,7 +298,13 @@ const BookingList = ({
                     <span className="text-xs font-mono font-bold text-text-sub-light dark:text-text-sub-dark bg-background-light dark:bg-background-dark px-2 py-1 rounded-md border border-border-light dark:border-border-dark">
                       {booking.id}
                     </span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${
+                        booking.status === 'Completed'
+                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                          : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700'
+                      }`}
+                    >
                       {booking.status}
                     </span>
                   </div>
@@ -367,7 +379,7 @@ const BookingList = ({
                     className="px-5 py-2 rounded-xl text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default flex items-center gap-2 ml-auto"
                     disabled
                   >
-                    <CircleCheckBig className="h-5 w-5" /> Paid
+                    <CircleCheckBig className="h-5 w-5 text-emerald-600" /> Paid
                   </button>
                 ) : null}
 
