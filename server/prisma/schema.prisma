@@ -12,3 +12,256 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum Role {
+  USER
+  MANAGER
+  ADMIN
+}
+
+enum RoomType {
+  MEETING
+  CLASSROOM
+  EVENT
+  OTHER
+}
+
+enum RoomStatus {
+  AVAILABLE
+  UNAVAILABLE
+  PROCESS
+  MAINTAIN
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  phoneNumber   String?
+  role          Role     @default(USER)
+  password      String
+
+  bookingRequests BookingRequest[]
+  bookings        Booking[]
+  keys            Key[]
+  feedbacks       Feedback[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Manager {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  phoneNumber String?
+  role        Role     @default(MANAGER)
+
+  buildings        Building[]       @relation("ManagerBuildings")
+  rooms            Room[]           @relation("ManagerRooms")
+  approvedRequests BookingRequest[] @relation("ApprovedByManager")
+  serviceCategories ServiceCategory[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Building {
+  id           String   @id @default(uuid())
+  buildingName String
+  campus       String
+  address      String
+  latitude     Decimal? @db.Decimal(10, 7)
+  longitude    Decimal? @db.Decimal(10, 7)
+
+  managerId String
+  manager   Manager @relation("ManagerBuildings", fields: [managerId], references: [id], onDelete: Cascade)
+
+  rooms Room[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([managerId])
+}
+
+model Room {
+  id              String   @id @default(uuid())
+  buildingId      String
+  managerId       String
+  name            String
+  description     String?
+  pricePerHour    Float
+  securityDeposit Float?
+  capacity        Int
+  roomType        RoomType
+  area            Float?
+  status          RoomStatus @default(AVAILABLE)
+  roomCode        String   @unique
+  images          String[] @default([])
+
+  building Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  manager  Manager  @relation("ManagerRooms", fields: [managerId], references: [id], onDelete: Cascade)
+
+  amenities       RoomAmenity[]
+  bookingRequests BookingRequest[]
+  bookings        Booking[]
+  feedbacks       Feedback[]
+  serviceCategories RoomServiceCategory[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([buildingId])
+  @@index([managerId])
+}
+
+model Amenity {
+  id   String @id @default(uuid())
+  name String @unique
+
+  rooms RoomAmenity[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RoomAmenity {
+  roomId    String
+  amenityId String
+
+  room    Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([roomId, amenityId])
+  @@index([amenityId])
+}
+
+model BookingRequest {
+  id        String        @id @default(uuid())
+  userId    String
+  roomId    String
+  startTime DateTime
+  endTime   DateTime
+  purpose   String?
+  status    BookingStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+
+  approvedBy String?
+  manager    Manager? @relation("ApprovedByManager", fields: [approvedBy], references: [id])
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([roomId])
+  @@index([approvedBy])
+}
+
+model Booking {
+  id        String        @id @default(uuid())
+  userId    String
+  roomId    String
+  startTime DateTime
+  endTime   DateTime
+  purpose   String?
+  status    BookingStatus @default(APPROVED)
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([roomId])
+}
+
+model Key {
+  id                String   @id @default(uuid())
+
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  privateKey        String
+  publicKey         String
+
+  refreshTokensUsed String[] @default([])
+  refreshToken      String
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("Keys")
+  @@index([userId])
+}
+
+model Feedback {
+  id        String   @id @default(uuid())
+  userId    String
+  roomId    String
+  rating    Int
+  comment   String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([roomId])
+}
+
+model ServiceCategory {
+  id          String   @id @default(uuid())
+  managerId   String
+  name        String   @unique
+  description String?
+
+  manager Manager @relation(fields: [managerId], references: [id], onDelete: Cascade)
+  services Service[]
+  rooms    RoomServiceCategory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([managerId])
+}
+
+model Service {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  categoryId  String
+
+  category ServiceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+}
+
+model RoomServiceCategory {
+  roomId     String
+  categoryId String
+
+  room     Room            @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  category ServiceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([roomId, categoryId])
+  @@index([categoryId])
+}

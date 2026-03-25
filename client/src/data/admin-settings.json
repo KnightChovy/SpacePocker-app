@@ -1,0 +1,13 @@
+{
+  "defaultSettings": {
+    "siteName": "SpacePocker",
+    "siteEmail": "admin@spacepocker.com",
+    "currency": "VND",
+    "timezone": "UTC+7",
+    "allowNewRegistrations": true,
+    "requireEmailVerification": false,
+    "enableNotifications": true,
+    "autoApproveSpaces": false,
+    "commissionRate": 10
+  }
+}

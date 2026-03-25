@@ -1,0 +1,567 @@
+{
+  "info": {
+    "name": "SpacePocker - VNPAY Payment & Mail",
+    "_postman_id": "f73f74a5-29ed-4eb6-8d92-e69f5168646e",
+    "description": "Postman collection for testing VNPAY payment flow and booking confirmation email on server.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1) Login USER",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/api/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "api", "auth", "login"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.environment.set('accessToken', json.metadata.tokens.accessToken);",
+              "pm.environment.set('refreshToken', json.metadata.tokens.refreshToken);",
+              "pm.environment.set('userId', json.metadata.user.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2) [Optional] Approve Booking Request (MANAGER)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "x-client-id",
+            "value": "{{managerUserId}}"
+          },
+          {
+            "key": "authorization",
+            "value": "{{managerAccessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/v1/api/booking-requests/approve/{{bookingRequestId}}",
+          "host": ["{{baseUrl}}"],
+          "path": [
+            "v1",
+            "api",
+            "booking-requests",
+            "approve",
+            "{{bookingRequestId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('approve returns success', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3) Create Payment URL",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "x-client-id",
+            "value": "{{userId}}"
+          },
+          {
+            "key": "authorization",
+            "value": "{{accessToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"locale\": \"vn\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/api/booking-requests/{{bookingRequestId}}/payment-url",
+          "host": ["{{baseUrl}}"],
+          "path": [
+            "v1",
+            "api",
+            "booking-requests",
+            "{{bookingRequestId}}",
+            "payment-url"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.test('paymentUrl exists', function () {",
+              "  pm.expect(json.metadata.paymentUrl).to.be.a('string').and.not.empty;",
+              "});",
+              "",
+              "pm.environment.set('txnRef', json.metadata.txnRef);",
+              "pm.environment.set('paymentAmountRaw', String(Math.round((json.metadata.amount || 0) * 100)));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4) Simulate IPN Success (create booking + send email)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function pad(n) { return String(n).padStart(2, '0'); }",
+              "function formatDateTime(d) {",
+              "  return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());",
+              "}",
+              "function buildQueryString(params) {",
+              "  return Object.keys(params)",
+              "    .sort()",
+              "    .map(function (key) {",
+              "      return key + '=' + encodeURIComponent(params[key]).replace(/%20/g, '+');",
+              "    })",
+              "    .join('&');",
+              "}",
+              "",
+              "var bookingRequestId = pm.environment.get('bookingRequestId');",
+              "var tmnCode = pm.environment.get('vnp_TmnCode');",
+              "var hashSecret = pm.environment.get('vnp_HashSecret');",
+              "var txnRef = pm.environment.get('txnRef');",
+              "if (!txnRef) {",
+              "  txnRef = 'br_' + bookingRequestId + '_' + Date.now();",
+              "  pm.environment.set('txnRef', txnRef);",
+              "}",
+              "",
+              "var params = {",
+              "  vnp_Amount: pm.environment.get('paymentAmountRaw') || '100000',",
+              "  vnp_Command: 'pay',",
+              "  vnp_CreateDate: formatDateTime(new Date()),",
+              "  vnp_CurrCode: 'VND',",
+              "  vnp_Locale: 'vn',",
+              "  vnp_OrderInfo: 'Thanh toan booking ' + bookingRequestId,",
+              "  vnp_OrderType: 'other',",
+              "  vnp_ResponseCode: '00',",
+              "  vnp_TmnCode: tmnCode,",
+              "  vnp_TransactionNo: String(Date.now()).slice(-8),",
+              "  vnp_TransactionStatus: '00',",
+              "  vnp_TxnRef: txnRef,",
+              "  vnp_Version: '2.1.0'",
+              "};",
+              "",
+              "var signData = buildQueryString(params);",
+              "var secureHash = CryptoJS.HmacSHA512(signData, hashSecret).toString(CryptoJS.enc.Hex);",
+              "",
+              "Object.keys(params).forEach(function (k) { pm.variables.set(k, params[k]); });",
+              "pm.variables.set('vnp_SecureHash', secureHash);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('RspCode is 00', function () {",
+              "  pm.expect(json.RspCode).to.eql('00');",
+              "});",
+              "pm.test('message is confirm success', function () {",
+              "  pm.expect(json.Message).to.eql('Confirm Success');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/api/payment/vnpay-ipn?vnp_Amount={{vnp_Amount}}&vnp_Command={{vnp_Command}}&vnp_CreateDate={{vnp_CreateDate}}&vnp_CurrCode={{vnp_CurrCode}}&vnp_Locale={{vnp_Locale}}&vnp_OrderInfo={{vnp_OrderInfo}}&vnp_OrderType={{vnp_OrderType}}&vnp_ResponseCode={{vnp_ResponseCode}}&vnp_TmnCode={{vnp_TmnCode}}&vnp_TransactionNo={{vnp_TransactionNo}}&vnp_TransactionStatus={{vnp_TransactionStatus}}&vnp_TxnRef={{vnp_TxnRef}}&vnp_Version={{vnp_Version}}&vnp_SecureHash={{vnp_SecureHash}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "api", "payment", "vnpay-ipn"],
+          "query": [
+            {
+              "key": "vnp_Amount",
+              "value": "{{vnp_Amount}}"
+            },
+            {
+              "key": "vnp_Command",
+              "value": "{{vnp_Command}}"
+            },
+            {
+              "key": "vnp_CreateDate",
+              "value": "{{vnp_CreateDate}}"
+            },
+            {
+              "key": "vnp_CurrCode",
+              "value": "{{vnp_CurrCode}}"
+            },
+            {
+              "key": "vnp_Locale",
+              "value": "{{vnp_Locale}}"
+            },
+            {
+              "key": "vnp_OrderInfo",
+              "value": "{{vnp_OrderInfo}}"
+            },
+            {
+              "key": "vnp_OrderType",
+              "value": "{{vnp_OrderType}}"
+            },
+            {
+              "key": "vnp_ResponseCode",
+              "value": "{{vnp_ResponseCode}}"
+            },
+            {
+              "key": "vnp_TmnCode",
+              "value": "{{vnp_TmnCode}}"
+            },
+            {
+              "key": "vnp_TransactionNo",
+              "value": "{{vnp_TransactionNo}}"
+            },
+            {
+              "key": "vnp_TransactionStatus",
+              "value": "{{vnp_TransactionStatus}}"
+            },
+            {
+              "key": "vnp_TxnRef",
+              "value": "{{vnp_TxnRef}}"
+            },
+            {
+              "key": "vnp_Version",
+              "value": "{{vnp_Version}}"
+            },
+            {
+              "key": "vnp_SecureHash",
+              "value": "{{vnp_SecureHash}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "5) Simulate IPN Invalid Checksum",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/api/payment/vnpay-ipn?vnp_Amount=100000&vnp_Command=pay&vnp_CreateDate=20260317120000&vnp_CurrCode=VND&vnp_Locale=vn&vnp_OrderInfo=Bad%20checksum&vnp_OrderType=other&vnp_ResponseCode=00&vnp_TmnCode={{vnp_TmnCode}}&vnp_TransactionNo=11111111&vnp_TransactionStatus=00&vnp_TxnRef=br_{{bookingRequestId}}_{{timestamp}}&vnp_Version=2.1.0&vnp_SecureHash=invalid_hash",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "api", "payment", "vnpay-ipn"],
+          "query": [
+            {
+              "key": "vnp_Amount",
+              "value": "100000"
+            },
+            {
+              "key": "vnp_Command",
+              "value": "pay"
+            },
+            {
+              "key": "vnp_CreateDate",
+              "value": "20260317120000"
+            },
+            {
+              "key": "vnp_CurrCode",
+              "value": "VND"
+            },
+            {
+              "key": "vnp_Locale",
+              "value": "vn"
+            },
+            {
+              "key": "vnp_OrderInfo",
+              "value": "Bad checksum"
+            },
+            {
+              "key": "vnp_OrderType",
+              "value": "other"
+            },
+            {
+              "key": "vnp_ResponseCode",
+              "value": "00"
+            },
+            {
+              "key": "vnp_TmnCode",
+              "value": "{{vnp_TmnCode}}"
+            },
+            {
+              "key": "vnp_TransactionNo",
+              "value": "11111111"
+            },
+            {
+              "key": "vnp_TransactionStatus",
+              "value": "00"
+            },
+            {
+              "key": "vnp_TxnRef",
+              "value": "br_{{bookingRequestId}}_{{timestamp}}"
+            },
+            {
+              "key": "vnp_Version",
+              "value": "2.1.0"
+            },
+            {
+              "key": "vnp_SecureHash",
+              "value": "invalid_hash"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.variables.set('timestamp', String(Date.now()));"]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('RspCode is 97 for invalid checksum', function () {",
+              "  pm.expect(json.RspCode).to.eql('97');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6) Simulate IPN Failed Payment",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function pad(n) { return String(n).padStart(2, '0'); }",
+              "function formatDateTime(d) {",
+              "  return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());",
+              "}",
+              "function buildQueryString(params) {",
+              "  return Object.keys(params)",
+              "    .sort()",
+              "    .map(function (key) {",
+              "      return key + '=' + encodeURIComponent(params[key]).replace(/%20/g, '+');",
+              "    })",
+              "    .join('&');",
+              "}",
+              "",
+              "var bookingRequestId = pm.environment.get('bookingRequestId');",
+              "var tmnCode = pm.environment.get('vnp_TmnCode');",
+              "var hashSecret = pm.environment.get('vnp_HashSecret');",
+              "var params = {",
+              "  vnp_Amount: '100000',",
+              "  vnp_Command: 'pay',",
+              "  vnp_CreateDate: formatDateTime(new Date()),",
+              "  vnp_CurrCode: 'VND',",
+              "  vnp_Locale: 'vn',",
+              "  vnp_OrderInfo: 'Failed payment test',",
+              "  vnp_OrderType: 'other',",
+              "  vnp_ResponseCode: '24',",
+              "  vnp_TmnCode: tmnCode,",
+              "  vnp_TransactionNo: String(Date.now()).slice(-8),",
+              "  vnp_TransactionStatus: '02',",
+              "  vnp_TxnRef: 'br_' + bookingRequestId + '_' + Date.now(),",
+              "  vnp_Version: '2.1.0'",
+              "};",
+              "var signData = buildQueryString(params);",
+              "var secureHash = CryptoJS.HmacSHA512(signData, hashSecret).toString(CryptoJS.enc.Hex);",
+              "Object.keys(params).forEach(function (k) { pm.variables.set(k, params[k]); });",
+              "pm.variables.set('vnp_SecureHash', secureHash);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('RspCode is not 00', function () {",
+              "  pm.expect(json.RspCode).to.not.eql('00');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/api/payment/vnpay-ipn?vnp_Amount={{vnp_Amount}}&vnp_Command={{vnp_Command}}&vnp_CreateDate={{vnp_CreateDate}}&vnp_CurrCode={{vnp_CurrCode}}&vnp_Locale={{vnp_Locale}}&vnp_OrderInfo={{vnp_OrderInfo}}&vnp_OrderType={{vnp_OrderType}}&vnp_ResponseCode={{vnp_ResponseCode}}&vnp_TmnCode={{vnp_TmnCode}}&vnp_TransactionNo={{vnp_TransactionNo}}&vnp_TransactionStatus={{vnp_TransactionStatus}}&vnp_TxnRef={{vnp_TxnRef}}&vnp_Version={{vnp_Version}}&vnp_SecureHash={{vnp_SecureHash}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "api", "payment", "vnpay-ipn"],
+          "query": [
+            {
+              "key": "vnp_Amount",
+              "value": "{{vnp_Amount}}"
+            },
+            {
+              "key": "vnp_Command",
+              "value": "{{vnp_Command}}"
+            },
+            {
+              "key": "vnp_CreateDate",
+              "value": "{{vnp_CreateDate}}"
+            },
+            {
+              "key": "vnp_CurrCode",
+              "value": "{{vnp_CurrCode}}"
+            },
+            {
+              "key": "vnp_Locale",
+              "value": "{{vnp_Locale}}"
+            },
+            {
+              "key": "vnp_OrderInfo",
+              "value": "{{vnp_OrderInfo}}"
+            },
+            {
+              "key": "vnp_OrderType",
+              "value": "{{vnp_OrderType}}"
+            },
+            {
+              "key": "vnp_ResponseCode",
+              "value": "{{vnp_ResponseCode}}"
+            },
+            {
+              "key": "vnp_TmnCode",
+              "value": "{{vnp_TmnCode}}"
+            },
+            {
+              "key": "vnp_TransactionNo",
+              "value": "{{vnp_TransactionNo}}"
+            },
+            {
+              "key": "vnp_TransactionStatus",
+              "value": "{{vnp_TransactionStatus}}"
+            },
+            {
+              "key": "vnp_TxnRef",
+              "value": "{{vnp_TxnRef}}"
+            },
+            {
+              "key": "vnp_Version",
+              "value": "{{vnp_Version}}"
+            },
+            {
+              "key": "vnp_SecureHash",
+              "value": "{{vnp_SecureHash}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "7) Manager Refund-Cancel Paid Booking + Queue Refund Mail",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "x-client-id",
+            "value": "{{managerUserId}}"
+          },
+          {
+            "key": "authorization",
+            "value": "{{managerAccessToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"{{refundReason}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/api/manager/bookings/{{bookingId}}/refund-cancel",
+          "host": ["{{baseUrl}}"],
+          "path": [
+            "v1",
+            "api",
+            "manager",
+            "bookings",
+            "{{bookingId}}",
+            "refund-cancel"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.test('refund status is SUCCESS', function () {",
+              "  pm.expect(json.metadata.refund.status).to.eql('SUCCESS');",
+              "});",
+              "pm.test('booking status is CANCELLED', function () {",
+              "  pm.expect(json.metadata.booking.status).to.eql('CANCELLED');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

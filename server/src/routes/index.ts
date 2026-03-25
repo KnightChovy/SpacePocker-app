@@ -1,0 +1,26 @@
+import express from 'express';
+const router = express.Router();
+import accessRoutes from './access';
+import buildingRouter from './building';
+import bookingRoutes from './booking';
+import bookingRequestRoutes from './bookingRequest';
+import adminRoutes from './admin';
+import feedbackRoutes from './feedback';
+import amenityRoutes from './amenity';
+import userRoutes from './user';
+import roomRouter from './room';
+import serviceRoutes from './service';
+import serviceCategoryRoutes from './serviceCategory';
+
+router.use('/v1/api', accessRoutes);
+router.use('/v1/api', bookingRoutes);
+router.use('/v1/api', bookingRequestRoutes);
+router.use('/v1/api', buildingRouter);
+router.use('/v1/api', roomRouter);
+router.use('/v1/api', adminRoutes);
+router.use('/v1/api', feedbackRoutes);
+router.use('/v1/api', amenityRoutes);
+router.use('/v1/api', userRoutes);
+router.use('/v1/api', serviceRoutes);
+router.use('/v1/api', serviceCategoryRoutes);
+export default router;

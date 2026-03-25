@@ -1,0 +1,33 @@
+{
+  "stats": [
+    {
+      "label": "Events Today",
+      "value": 12,
+      "icon": "shield",
+      "color": "indigo"
+    },
+    { "label": "Warnings", "value": 2, "icon": "warning", "color": "orange" },
+    { "label": "Errors", "value": 0, "icon": "error", "color": "red" },
+    { "label": "Blocked IPs", "value": 1, "icon": "block", "color": "emerald" }
+  ],
+  "securityLogs": [
+    {
+      "id": "log-001",
+      "timestamp": "2026-03-19 09:10",
+      "event": "Login",
+      "user": "admin@spacepocker.com",
+      "ipAddress": "127.0.0.1",
+      "status": "success",
+      "details": "Successful login"
+    },
+    {
+      "id": "log-002",
+      "timestamp": "2026-03-19 09:22",
+      "event": "Password Attempt",
+      "user": "unknown",
+      "ipAddress": "10.0.0.2",
+      "status": "warning",
+      "details": "Multiple failed attempts detected"
+    }
+  ]
+}
