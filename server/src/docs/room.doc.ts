@@ -118,6 +118,14 @@
  *           type: string
  *           format: date-time
  *           example: "2026-02-01T10:00:00.000Z"
+ *         isPeakHour:
+ *           type: boolean
+ *           description: "True nếu giờ hiện tại >= 18:00 theo giờ Việt Nam (UTC+7). Giá sẽ tăng 20% trong khung giờ này."
+ *           example: true
+ *         originalPricePerHour:
+ *           type: number
+ *           description: "Giá gốc trước khi áp dụng phụ phí giờ cao điểm. Bằng pricePerHour nếu không trong giờ cao điểm."
+ *           example: 50.00
  *         building:
  *           $ref: "#/components/schemas/RoomBuilding"
  *         manager:
@@ -359,6 +367,11 @@
  *       - Filter by building, room type, and availability
  *       - Filter by price range and minimum capacity
  *       - Sort by various fields
+ *
+ *       **Peak Hour Pricing:**
+ *       - Từ 18:00 đến 23:59 theo giờ Việt Nam (UTC+7), `pricePerHour` sẽ tự động tăng 20%.
+ *       - `originalPricePerHour` luôn trả về giá gốc.
+ *       - `isPeakHour: true` khi đang trong khung giờ cao điểm.
  *     tags: [Room]
  *     parameters:
  *       - in: query
@@ -457,7 +470,13 @@
  * /v1/api/rooms/{id}:
  *   get:
  *     summary: Get room details by ID
- *     description: Retrieve detailed information about a specific room including building, manager, and amenities.
+ *     description: |
+ *       Retrieve detailed information about a specific room including building, manager, and amenities.
+ *
+ *       **Peak Hour Pricing:**
+ *       - Từ 18:00 đến 23:59 theo giờ Việt Nam (UTC+7), `pricePerHour` sẽ tự động tăng 20%.
+ *       - `originalPricePerHour` luôn trả về giá gốc.
+ *       - `isPeakHour: true` khi đang trong khung giờ cao điểm.
  *     tags: [Room]
  *     parameters:
  *       - in: path
@@ -496,7 +515,7 @@
  *   post:
  *     summary: Create a new room
  *     description: |
- *       Create a new room in a building. Requires authentication.
+ *       Create a new room in a building. Requires authentication with **MANAGER** or **ADMIN** role.
  *
  *       **Validation rules:**
  *       - Building must exist
@@ -541,6 +560,12 @@
  *               $ref: "#/components/schemas/ErrorResponse"
  *       401:
  *         description: Unauthorized - Invalid or expired token
+ *       403:
+ *         description: Forbidden - Requires MANAGER or ADMIN role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
  *       404:
  *         description: Building not found
  *         content:
@@ -563,7 +588,7 @@
  *   patch:
  *     summary: Update room information
  *     description: |
- *       Update an existing room's information. Requires authentication.
+ *       Update an existing room's information. Requires authentication with **MANAGER** or **ADMIN** role.
  *
  *       **Validation rules:**
  *       - Room must exist
@@ -615,6 +640,12 @@
  *               $ref: "#/components/schemas/ErrorResponse"
  *       401:
  *         description: Unauthorized - Invalid or expired token
+ *       403:
+ *         description: Forbidden - Requires MANAGER or ADMIN role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
  *       404:
  *         description: Room not found
  *         content:
@@ -631,7 +662,7 @@
  *   delete:
  *     summary: Delete a room
  *     description: |
- *       Delete an existing room. Requires authentication.
+ *       Delete an existing room. Requires authentication with **MANAGER** or **ADMIN** role.
  *
  *       **Note:** This will cascade delete related records (amenities, booking requests, bookings).
  *     tags: [Room]
@@ -673,6 +704,12 @@
  *               $ref: "#/components/schemas/ErrorResponse"
  *       401:
  *         description: Unauthorized - Invalid or expired token
+ *       403:
+ *         description: Forbidden - Requires MANAGER or ADMIN role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
  *       404:
  *         description: Room not found
  *         content:

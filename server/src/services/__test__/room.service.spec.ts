@@ -75,6 +75,14 @@ describe('RoomService', () => {
     };
     roomService = new RoomService(mockRoomRepo, mockBuildingRepo);
     jest.clearAllMocks();
+    // Default to off-peak: 10:00 AM Vietnam time = 03:00 UTC
+    jest
+      .spyOn(Date, 'now')
+      .mockReturnValue(new Date('2026-01-01T03:00:00Z').getTime());
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('createRoom()', () => {
@@ -373,12 +381,15 @@ describe('RoomService', () => {
       expect(mockRoomRepo.findById).toHaveBeenCalledWith('non-existent');
     });
 
-    it('should return room if found', async () => {
+    it('should return room with peak pricing fields (off-peak)', async () => {
       mockRoomRepo.findById.mockResolvedValue(mockRoom);
 
       const result = await roomService.getRoomById('r-001');
 
-      expect(result).toEqual({ room: mockRoom });
+      expect(result.room).toMatchObject(mockRoom);
+      expect(result.room.isPeakHour).toBe(false);
+      expect(result.room.originalPricePerHour).toBe(mockRoom.pricePerHour);
+      expect(result.room.pricePerHour).toBe(mockRoom.pricePerHour);
       expect(mockRoomRepo.findById).toHaveBeenCalledWith('r-001');
     });
   });
@@ -667,7 +678,7 @@ describe('RoomService', () => {
     });
 
     describe('Response Format', () => {
-      it('should return rooms with pagination and filters', async () => {
+      it('should return rooms with pagination and filters (off-peak pricing)', async () => {
         mockRoomRepo.count.mockResolvedValue(1);
         mockRoomRepo.findAll.mockResolvedValue(mockRooms);
 
@@ -678,25 +689,28 @@ describe('RoomService', () => {
           offset: 0,
         });
 
-        expect(result).toEqual({
-          rooms: mockRooms,
-          pagination: {
-            total: 1,
-            limit: 10,
-            offset: 0,
-            hasMore: false,
-          },
-          filters: {
-            search: 'Conference',
-            buildingId: 'b-001',
-            roomType: null,
-            status: null,
-            minPrice: null,
-            maxPrice: null,
-            minCapacity: null,
-            sortBy: null,
-            sortOrder: null,
-          },
+        expect(result.rooms[0]).toMatchObject(mockRoom);
+        expect(result.rooms[0].isPeakHour).toBe(false);
+        expect(result.rooms[0].originalPricePerHour).toBe(
+          mockRoom.pricePerHour,
+        );
+        expect(result.rooms[0].pricePerHour).toBe(mockRoom.pricePerHour);
+        expect(result.pagination).toEqual({
+          total: 1,
+          limit: 10,
+          offset: 0,
+          hasMore: false,
+        });
+        expect(result.filters).toEqual({
+          search: 'Conference',
+          buildingId: 'b-001',
+          roomType: null,
+          status: null,
+          minPrice: null,
+          maxPrice: null,
+          minCapacity: null,
+          sortBy: null,
+          sortOrder: null,
         });
       });
     });
@@ -887,6 +901,132 @@ describe('RoomService', () => {
 
       expect(result).toEqual({ room: mockRoom });
       expect(mockRoomRepo.delete).toHaveBeenCalledWith('r-001');
+    });
+  });
+
+  describe('Peak Hour Pricing', () => {
+    // Vietnam time is UTC+7
+    // Peak hour: >= 18:00 VN = >= 11:00 UTC
+    // Off-peak: < 18:00 VN = < 11:00 UTC
+
+    describe('applyPeakPricing via getRoomById()', () => {
+      it('should NOT apply surcharge before 18:00 Vietnam time (17:59 VN = 10:59 UTC)', async () => {
+        jest
+          .spyOn(Date, 'now')
+          .mockReturnValue(new Date('2026-01-01T10:59:00Z').getTime());
+        mockRoomRepo.findById.mockResolvedValue(mockRoom);
+
+        const result = await roomService.getRoomById('r-001');
+
+        expect(result.room.isPeakHour).toBe(false);
+        expect(result.room.pricePerHour).toBe(50);
+        expect(result.room.originalPricePerHour).toBe(50);
+      });
+
+      it('should apply +20% surcharge at exactly 18:00 Vietnam time (11:00 UTC)', async () => {
+        jest
+          .spyOn(Date, 'now')
+          .mockReturnValue(new Date('2026-01-01T11:00:00Z').getTime());
+        mockRoomRepo.findById.mockResolvedValue(mockRoom);
+
+        const result = await roomService.getRoomById('r-001');
+
+        expect(result.room.isPeakHour).toBe(true);
+        expect(result.room.pricePerHour).toBe(60); // 50 * 1.2 = 60
+        expect(result.room.originalPricePerHour).toBe(50);
+      });
+
+      it('should apply +20% surcharge at 19:00 Vietnam time (12:00 UTC)', async () => {
+        jest
+          .spyOn(Date, 'now')
+          .mockReturnValue(new Date('2026-01-01T12:00:00Z').getTime());
+        mockRoomRepo.findById.mockResolvedValue(mockRoom);
+
+        const result = await roomService.getRoomById('r-001');
+
+        expect(result.room.isPeakHour).toBe(true);
+        expect(result.room.pricePerHour).toBe(60);
+        expect(result.room.originalPricePerHour).toBe(50);
+      });
+
+      it('should round peak price to 2 decimal places', async () => {
+        jest
+          .spyOn(Date, 'now')
+          .mockReturnValue(new Date('2026-01-01T12:00:00Z').getTime());
+        const roomWithDecimalPrice = { ...mockRoom, pricePerHour: 33.33 };
+        mockRoomRepo.findById.mockResolvedValue(roomWithDecimalPrice);
+
+        const result = await roomService.getRoomById('r-001');
+
+        // 33.33 * 1.2 = 39.996 → rounded to 40.00
+        expect(result.room.pricePerHour).toBe(40);
+        expect(result.room.originalPricePerHour).toBe(33.33);
+        expect(result.room.isPeakHour).toBe(true);
+      });
+
+      it('should always preserve originalPricePerHour as the stored price', async () => {
+        jest
+          .spyOn(Date, 'now')
+          .mockReturnValue(new Date('2026-01-01T12:00:00Z').getTime());
+        mockRoomRepo.findById.mockResolvedValue(mockRoom);
+
+        const result = await roomService.getRoomById('r-001');
+
+        expect(result.room.originalPricePerHour).toBe(mockRoom.pricePerHour);
+        expect(result.room.pricePerHour).not.toBe(mockRoom.pricePerHour);
+      });
+    });
+
+    describe('applyPeakPricing via getAllRooms()', () => {
+      it('should apply peak pricing to all rooms when peak hour', async () => {
+        jest
+          .spyOn(Date, 'now')
+          .mockReturnValue(new Date('2026-01-01T12:00:00Z').getTime());
+        const multipleRooms = [
+          { ...mockRoom, id: 'r-001', pricePerHour: 50 },
+          { ...mockRoom, id: 'r-002', pricePerHour: 100 },
+        ];
+        mockRoomRepo.count.mockResolvedValue(2);
+        mockRoomRepo.findAll.mockResolvedValue(multipleRooms);
+
+        const result = await roomService.getAllRooms({});
+
+        expect(result.rooms[0].isPeakHour).toBe(true);
+        expect(result.rooms[0].pricePerHour).toBe(60); // 50 * 1.2
+        expect(result.rooms[0].originalPricePerHour).toBe(50);
+        expect(result.rooms[1].isPeakHour).toBe(true);
+        expect(result.rooms[1].pricePerHour).toBe(120); // 100 * 1.2
+        expect(result.rooms[1].originalPricePerHour).toBe(100);
+      });
+
+      it('should NOT apply peak pricing when off-peak', async () => {
+        jest
+          .spyOn(Date, 'now')
+          .mockReturnValue(new Date('2026-01-01T03:00:00Z').getTime());
+        mockRoomRepo.count.mockResolvedValue(1);
+        mockRoomRepo.findAll.mockResolvedValue([mockRoom]);
+
+        const result = await roomService.getAllRooms({});
+
+        expect(result.rooms[0].isPeakHour).toBe(false);
+        expect(result.rooms[0].pricePerHour).toBe(mockRoom.pricePerHour);
+        expect(result.rooms[0].originalPricePerHour).toBe(
+          mockRoom.pricePerHour,
+        );
+      });
+
+      it('should return empty rooms array without error during peak hours', async () => {
+        jest
+          .spyOn(Date, 'now')
+          .mockReturnValue(new Date('2026-01-01T12:00:00Z').getTime());
+        mockRoomRepo.count.mockResolvedValue(0);
+        mockRoomRepo.findAll.mockResolvedValue([]);
+
+        const result = await roomService.getAllRooms({});
+
+        expect(result.rooms).toEqual([]);
+        expect(result.pagination.total).toBe(0);
+      });
     });
   });
 });
