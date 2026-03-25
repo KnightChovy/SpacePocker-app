@@ -61,7 +61,6 @@ export default function RoomDetailScreen() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* Floating header over carousel */}
       <View
         className="absolute top-0 left-0 right-0 z-10 flex-row items-center justify-between px-4 pt-12 pb-3"
         style={{ pointerEvents: 'box-none' }}
@@ -89,21 +88,15 @@ export default function RoomDetailScreen() {
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        {/* Image Carousel — full bleed */}
         <ImageCarousel images={room.images} height={300} />
 
-        {/* White card content */}
         <View className="bg-white rounded-t-3xl -mt-6 pb-4">
-          {/* Name, code, building, availability */}
           <RoomInfoHeader room={room} />
 
-          {/* Divider */}
           <View className="h-px bg-gray-100 mx-5 mb-5" />
 
-          {/* Stats: capacity, area, price, deposit */}
           <RoomStats room={room} />
 
-          {/* Description */}
           {room.description && (
             <View className="px-5 mb-5">
               <Text className="text-base font-bold text-gray-900 mb-2">
@@ -115,13 +108,10 @@ export default function RoomDetailScreen() {
             </View>
           )}
 
-          {/* Amenities + Service Categories */}
           <RoomFeatures room={room} />
 
-          {/* Manager info */}
           <ManagerCard manager={room.manager} />
 
-          {/* Bottom padding for footer */}
           <View className="h-2" />
         </View>
       </ScrollView>

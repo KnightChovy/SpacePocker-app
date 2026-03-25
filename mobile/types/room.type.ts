@@ -36,6 +36,16 @@ export type RoomAmenity = {
   amenity: Amenity;
 };
 
+export type ServiceItem = {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  categoryId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type ServiceCategory = {
   id: string;
   managerId: string;
@@ -43,6 +53,7 @@ export type ServiceCategory = {
   description: string;
   createdAt: string;
   updatedAt: string;
+  services: ServiceItem[];
 };
 
 export type RoomServiceCategory = {

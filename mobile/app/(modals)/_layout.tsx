@@ -10,6 +10,10 @@ export default function ModalsLayout() {
       }}
     >
       <Stack.Screen name="room-detail" />
+      <Stack.Screen name="booking" />
+      <Stack.Screen name="booking-success" />
+      <Stack.Screen name="booking-failed" />
+      <Stack.Screen name="booking-detail" />
     </Stack>
   );
 }
