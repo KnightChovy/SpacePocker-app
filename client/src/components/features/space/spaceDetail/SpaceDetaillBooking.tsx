@@ -215,7 +215,10 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
   }, [date, dateKey, effectiveStartTime, hours, selectedEndOption]);
 
   const hasValidBookingWindow = Boolean(
-    date && effectiveStartTime && selectedEndOption && !bookingTimeValidationMessage
+    date &&
+    effectiveStartTime &&
+    selectedEndOption &&
+    !bookingTimeValidationMessage
   );
 
   const handleBooking = async () => {

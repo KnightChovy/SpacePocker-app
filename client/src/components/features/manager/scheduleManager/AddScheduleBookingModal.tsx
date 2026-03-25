@@ -65,7 +65,10 @@ const AddScheduleBookingModal = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const timeError = validateEndAfterStart(formData.startTime, formData.endTime);
+    const timeError = validateEndAfterStart(
+      formData.startTime,
+      formData.endTime
+    );
     if (timeError) {
       alert(timeError);
       return;

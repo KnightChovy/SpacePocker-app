@@ -8,7 +8,10 @@ import LeftSide from '@/components/auth/LeftSide';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useSignup } from '@/hooks/auth/use-signup';
-import { registerSchema, type RegisterFormData } from '@/validations/user/auth.validation';
+import {
+  registerSchema,
+  type RegisterFormData,
+} from '@/validations/user/auth.validation';
 
 const RegisterPage = () => {
   const navigate = useNavigate();

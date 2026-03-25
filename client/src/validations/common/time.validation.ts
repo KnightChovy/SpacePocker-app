@@ -120,7 +120,10 @@ export const validateVietnamOperatingHoursForDateTimes = (
     return `End time must be within ${VIETNAM_OPERATING_HOURS.open}–${VIETNAM_OPERATING_HOURS.close}.`;
   }
 
-  if (effectiveEndMinutes <= openMinutes || effectiveEndMinutes > closeMinutes) {
+  if (
+    effectiveEndMinutes <= openMinutes ||
+    effectiveEndMinutes > closeMinutes
+  ) {
     return `End time must be within ${VIETNAM_OPERATING_HOURS.open}–${VIETNAM_OPERATING_HOURS.close}.`;
   }
 

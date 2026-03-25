@@ -263,9 +263,8 @@ const BookingList = ({
         const startTime = req?.startTime ? new Date(req.startTime) : null;
         const isBeforeStart = startTime ? now < startTime : false;
         const reviewed =
-          isBookingReviewed(req?.id) ||
-          isRoomReviewed(req?.roomId);
-        
+          isBookingReviewed(req?.id) || isRoomReviewed(req?.roomId);
+
         const canWriteFeedback =
           req?.status === 'COMPLETED' &&
           !!req?.roomId &&
@@ -273,7 +272,7 @@ const BookingList = ({
           !isBeforeStart;
         const isFeedbackSubmitted = !!req?.roomId && reviewed;
 
-        const canPay = req?.status === 'APPROVED' && isBeforeStart;  
+        const canPay = req?.status === 'APPROVED' && isBeforeStart;
         const isPaid = req?.status === 'COMPLETED';
         const canCancelRequest =
           !!req?.id &&

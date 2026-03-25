@@ -9,7 +9,10 @@ import { Input } from '@/components/ui/input';
 import LeftSide from '@/components/auth/LeftSide';
 import { useLogin } from '@/hooks/auth/use-login';
 import type { USER_DATA } from '@/types/auth/auth-type';
-import { loginSchema, type LoginFormData } from '@/validations/user/auth.validation';
+import {
+  loginSchema,
+  type LoginFormData,
+} from '@/validations/user/auth.validation';
 
 const LoginPage = () => {
   const navigate = useNavigate();

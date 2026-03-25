@@ -10,7 +10,10 @@ interface BookingReviewState {
 
   markBookingReviewed: (bookingRequestId: string) => void;
   markRoomReviewed: (roomId: string) => void;
-  markReviewed: (input: { bookingRequestId?: string | null; roomId?: string | null }) => void;
+  markReviewed: (input: {
+    bookingRequestId?: string | null;
+    roomId?: string | null;
+  }) => void;
 
   clearAll: () => void;
 }

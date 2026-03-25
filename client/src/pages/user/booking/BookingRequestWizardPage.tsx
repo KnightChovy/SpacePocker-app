@@ -478,7 +478,16 @@ const BookingRequestWizardPage = () => {
     }
 
     return null;
-  }, [endDate, endLocal, endTime, hours, now, startDate, startLocal, startTime]);
+  }, [
+    endDate,
+    endLocal,
+    endTime,
+    hours,
+    now,
+    startDate,
+    startLocal,
+    startTime,
+  ]);
 
   const pricing = useMemo(() => {
     const rate = effectiveRoom?.pricePerHour ?? 0;
