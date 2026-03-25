@@ -374,7 +374,7 @@ const BookingList = ({
                   >
                     <CreditCard className="h-5 w-5" /> Pay
                   </button>
-                ) : isPaid ? (
+                ) : isPaid && !canWriteFeedback ? (
                   <button
                     className="px-5 py-2 rounded-xl text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default flex items-center gap-2 ml-auto"
                     disabled
