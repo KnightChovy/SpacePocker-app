@@ -8,6 +8,28 @@ import {
 import { RoomType, RoomStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 
+const PEAK_HOUR_START = 18;
+const PEAK_PRICE_MULTIPLIER = 1.2;
+
+function isVietnamPeakHour(): boolean {
+  const nowVietnam = new Date(Date.now() + 7 * 60 * 60 * 1000);
+  return nowVietnam.getUTCHours() >= PEAK_HOUR_START;
+}
+
+function applyPeakPricing<T extends { pricePerHour: number }>(
+  room: T,
+  isPeak: boolean,
+): T & { isPeakHour: boolean; originalPricePerHour: number } {
+  return {
+    ...room,
+    originalPricePerHour: room.pricePerHour,
+    pricePerHour: isPeak
+      ? Math.round(room.pricePerHour * PEAK_PRICE_MULTIPLIER * 100) / 100
+      : room.pricePerHour,
+    isPeakHour: isPeak,
+  };
+}
+
 export default class RoomService {
   constructor(
     private roomRepo: IRoomRepository,
@@ -106,7 +128,8 @@ export default class RoomService {
       throw new NotFoundError('Room not found');
     }
 
-    return { room };
+    const isPeak = isVietnamPeakHour();
+    return { room: applyPeakPricing(room, isPeak) };
   }
 
   async getAllRooms(query: any) {
@@ -225,8 +248,11 @@ export default class RoomService {
       safeOffset,
     );
 
+    const isPeak = isVietnamPeakHour();
+    const pricedRooms = rooms.map((room) => applyPeakPricing(room, isPeak));
+
     return {
-      rooms,
+      rooms: pricedRooms,
       pagination: {
         total,
         limit: safeLimit,
