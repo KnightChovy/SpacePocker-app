@@ -83,12 +83,14 @@ export default function BookingNotificationsBell() {
     [bookingRequestsQuery.data, readNotificationIds]
   );
 
-  const markAsRead = (notificationId: string) => {
+  const markAllAsRead = () => {
     setReadNotificationIds(prev => {
-      if (prev.has(notificationId)) return prev;
-
       const next = new Set(prev);
-      next.add(notificationId);
+      (bookingRequestsQuery.data ?? []).forEach(req => {
+        next.add(req.id);
+      });
+
+      if (next.size === prev.size) return prev;
 
       if (typeof window !== 'undefined') {
         window.localStorage.setItem(
@@ -101,18 +103,25 @@ export default function BookingNotificationsBell() {
     });
   };
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      markAllAsRead();
+    }
+
+    setOpen(nextOpen);
+  };
+
   const goToBookings = () => {
     setOpen(false);
     navigate('/user/bookings');
   };
 
-  const handleNotificationClick = (notificationId: string) => {
-    markAsRead(notificationId);
+  const handleNotificationClick = () => {
     goToBookings();
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -168,7 +177,7 @@ export default function BookingNotificationsBell() {
                 <button
                   key={notification.id}
                   type="button"
-                  onClick={() => handleNotificationClick(notification.id)}
+                  onClick={handleNotificationClick}
                   className={`w-full text-left px-4 py-3 border-b last:border-b-0 border-border-light dark:border-border-dark transition-colors ${
                     isRead
                       ? 'bg-slate-50/50 dark:bg-slate-900/20 hover:bg-slate-100 dark:hover:bg-slate-900/40'
