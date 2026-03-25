@@ -1,5 +1,5 @@
 import { Gem, CalendarIcon, Users } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
@@ -19,6 +19,56 @@ interface SpaceDetailBookingProps {
   capacity: number;
 }
 
+const MIN_BOOKING_HOURS = 1;
+const MAX_BOOKING_HOURS = 8;
+const HOUR_IN_MS = 60 * 60 * 1000;
+
+const pad2 = (value: number) => value.toString().padStart(2, '0');
+
+const getDateKey = (date: Date) => {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+};
+
+const buildDateWithTime = (date: Date, time: string) => {
+  const [hour, minute] = time.split(':').map(Number);
+  const result = new Date(date);
+  result.setHours(hour, minute, 0, 0);
+  return result;
+};
+
+const formatHHmm = (date: Date) => {
+  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+};
+
+const formatTimeDisplay = (time: string) => {
+  const [hour] = time.split(':').map(Number);
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}:00 ${period}`;
+};
+
+const formatEndDateTimeDisplay = (target: Date, start: Date) => {
+  const dayOffset = Math.floor(
+    (new Date(
+      target.getFullYear(),
+      target.getMonth(),
+      target.getDate()
+    ).getTime() -
+      new Date(
+        start.getFullYear(),
+        start.getMonth(),
+        start.getDate()
+      ).getTime()) /
+      (24 * HOUR_IN_MS)
+  );
+
+  if (dayOffset > 0) {
+    return `${formatTimeDisplay(formatHHmm(target))} (+${dayOffset} day)`;
+  }
+
+  return formatTimeDisplay(formatHHmm(target));
+};
+
 const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
   spaceId,
   price,
@@ -26,8 +76,16 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
 }) => {
   const [date, setDate] = useState<Date>();
   const [startTime, setStartTime] = useState<string>('10:00');
-  const [endTime, setEndTime] = useState<string>('14:00');
+  const [endValue, setEndValue] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [now, setNow] = useState<Date>(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 60_000);
+    return () => clearInterval(timer);
+  }, []);
 
   const maxDate = useMemo(() => {
     const today = new Date();
@@ -36,27 +94,12 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
     return max;
   }, []);
 
-  const hours = useMemo(() => {
-    const [startHour, startMinute] = startTime.split(':').map(Number);
-    const [endHour, endMinute] = endTime.split(':').map(Number);
-
-    const startInMinutes = startHour * 60 + startMinute;
-    const endInMinutes = endHour * 60 + endMinute;
-
-    const diffInMinutes = endInMinutes - startInMinutes;
-    return Math.max(0, diffInMinutes / 60);
-  }, [startTime, endTime]);
-
-  const totalPrice = useMemo(() => {
-    return price * hours;
-  }, [hours, price]);
-
   const navigate = useNavigate();
   const user = useAuthStore(s => s.user);
   const accessToken = useAuthStore(s => s.accessToken);
 
   const timeSlots = useMemo(() => {
-    const slots = [];
+    const slots: string[] = [];
     for (let hour = 6; hour <= 23; hour++) {
       const timeString = `${hour.toString().padStart(2, '0')}:00`;
       slots.push(timeString);
@@ -64,36 +107,86 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
     return slots;
   }, []);
 
-  const availableEndTimes = useMemo(() => {
-    const [startHour] = startTime.split(':').map(Number);
-    return timeSlots.filter(time => {
-      const [hour] = time.split(':').map(Number);
-      return hour > startHour;
+  const dateKey = useMemo(() => (date ? getDateKey(date) : null), [date]);
+  const todayKey = useMemo(() => getDateKey(now), [now]);
+
+  const availableStartTimes = useMemo(() => {
+    if (!date || !dateKey) return timeSlots;
+    if (dateKey !== todayKey) return timeSlots;
+
+    return timeSlots.filter(slot => {
+      const slotDateTime = buildDateWithTime(date, slot);
+      return slotDateTime.getTime() >= now.getTime();
     });
-  }, [startTime, timeSlots]);
+  }, [date, dateKey, now, timeSlots, todayKey]);
 
-  useMemo(() => {
-    const [startHour] = startTime.split(':').map(Number);
-    const [endHour] = endTime.split(':').map(Number);
-    if (endHour <= startHour && availableEndTimes.length > 0) {
-      setEndTime(availableEndTimes[0]);
+  const effectiveStartTime = useMemo(() => {
+    if (availableStartTimes.includes(startTime)) return startTime;
+    return availableStartTimes[0] ?? '';
+  }, [availableStartTimes, startTime]);
+
+  const startDateTime = useMemo(() => {
+    if (!date || !effectiveStartTime) return null;
+    return buildDateWithTime(date, effectiveStartTime);
+  }, [date, effectiveStartTime]);
+
+  const availableEndOptions = useMemo(() => {
+    if (!startDateTime) return [] as Array<{
+      value: string;
+      date: string;
+      time: string;
+      label: string;
+      hours: number;
+    }>;
+
+    return Array.from({ length: MAX_BOOKING_HOURS }, (_, index) => {
+      const duration = index + MIN_BOOKING_HOURS;
+      const endDateTime = new Date(startDateTime.getTime() + duration * HOUR_IN_MS);
+
+      return {
+        value: endDateTime.toISOString(),
+        date: getDateKey(endDateTime),
+        time: formatHHmm(endDateTime),
+        label: formatEndDateTimeDisplay(endDateTime, startDateTime),
+        hours: duration,
+      };
+    });
+  }, [startDateTime]);
+
+  const effectiveEndValue = useMemo(() => {
+    if (availableEndOptions.length === 0) return '';
+    if (availableEndOptions.some(option => option.value === endValue)) {
+      return endValue;
     }
-  }, [startTime, endTime, availableEndTimes]);
+    return availableEndOptions[0].value;
+  }, [availableEndOptions, endValue]);
 
-  const formatTimeDisplay = (time: string) => {
-    const [hour] = time.split(':').map(Number);
-    const period = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour % 12 || 12;
-    return `${displayHour}:00 ${period}`;
-  };
+  const selectedEndOption = useMemo(
+    () =>
+      availableEndOptions.find(option => option.value === effectiveEndValue) ??
+      null,
+    [availableEndOptions, effectiveEndValue]
+  );
+
+  const hours = useMemo(() => {
+    return selectedEndOption?.hours ?? 0;
+  }, [selectedEndOption]);
+
+  const totalPrice = useMemo(() => {
+    return price * hours;
+  }, [hours, price]);
+
+  const hasValidBookingWindow = Boolean(
+    date && effectiveStartTime && selectedEndOption
+  );
 
   const handleBooking = async () => {
-    if (!date) {
+    if (!date || !selectedEndOption || !effectiveStartTime) {
       alert('Please select a date');
       return;
     }
 
-    if (hours <= 0) {
+    if (hours < MIN_BOOKING_HOURS || hours > MAX_BOOKING_HOURS) {
       alert('Please select valid time range');
       return;
     }
@@ -109,9 +202,9 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
       const search = new URLSearchParams({
         roomId: spaceId,
         startDate: day,
-        endDate: day,
-        startTime,
-        endTime,
+        endDate: selectedEndOption.date,
+        startTime: effectiveStartTime,
+        endTime: selectedEndOption.time,
       });
 
       navigate(`/user/booking?${search.toString()}`);
@@ -191,11 +284,12 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <select
-                value={startTime}
+                value={effectiveStartTime}
                 onChange={e => setStartTime(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm"
+                disabled={!date || availableStartTimes.length === 0}
               >
-                {timeSlots.map(time => (
+                {availableStartTimes.map(time => (
                   <option key={time} value={time}>
                     {formatTimeDisplay(time)}
                   </option>
@@ -205,14 +299,14 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
             <span className="text-gray-400">→</span>
             <div className="flex-1">
               <select
-                value={endTime}
-                onChange={e => setEndTime(e.target.value)}
+                value={effectiveEndValue}
+                onChange={e => setEndValue(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm"
-                disabled={availableEndTimes.length === 0}
+                disabled={!date || availableEndOptions.length === 0}
               >
-                {availableEndTimes.map(time => (
-                  <option key={time} value={time}>
-                    {formatTimeDisplay(time)}
+                {availableEndOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
                   </option>
                 ))}
               </select>
@@ -225,12 +319,20 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
                 : 'Invalid time range'}
             </span>
           </div>
+          {date && availableStartTimes.length === 0 && (
+            <p className="mt-2 text-xs text-red-600 text-center">
+              No valid start time left for this date.
+            </p>
+          )}
+          <p className="mt-1 text-[11px] text-gray-500 text-center">
+            Booking duration is limited from 1 to 8 hours.
+          </p>
         </div>
       </div>
 
       <button
         onClick={handleBooking}
-        disabled={isLoading || !date || hours <= 0}
+        disabled={isLoading || !hasValidBookingWindow || hours <= 0}
         className="w-full bg-linear-to-br from-cyan-400 to-cyan-500 hover:from-cyan-500 hover:to-cyan-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-cyan-200 transition-all transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
       >
         {isLoading ? 'Processing...' : 'Book Space'}
