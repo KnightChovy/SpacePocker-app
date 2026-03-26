@@ -33,7 +33,7 @@ export default class CheckInService {
       throw new ForbiddenError("You are not allowed to check in this booking");
     }
 
-    if (booking.status !== "APPROVED") {
+    if (booking.status !== "COMPLETED") {
       throw new BadRequestError(
         `Cannot check in: booking status is ${booking.status}`,
       );
@@ -51,7 +51,9 @@ export default class CheckInService {
     }
 
     if (now > booking.endTime) {
-      throw new BadRequestError("Cannot check in: booking period has already ended");
+      throw new BadRequestError(
+        "Cannot check in: booking period has already ended",
+      );
     }
 
     const existing = await prisma.checkInRecord.findUnique({
@@ -74,6 +76,10 @@ export default class CheckInService {
         where: { id: bookingId },
         data: { status: "CHECKED_IN" },
         include: { room: true, user: true },
+      }),
+      prisma.room.update({
+        where: { id: booking.roomId },
+        data: { status: "PROCESS" },
       }),
     ]);
 
@@ -144,6 +150,10 @@ export default class CheckInService {
         data: { status: "COMPLETED" },
         include: { room: true, user: true },
       }),
+      prisma.room.update({
+        where: { id: booking.roomId },
+        data: { status: "AVAILABLE" },
+      }),
     ]);
 
     return {
@@ -156,11 +166,7 @@ export default class CheckInService {
     };
   }
 
-  async getCheckInStatus(
-    bookingId: string,
-    userId: string,
-    userRole: string,
-  ) {
+  async getCheckInStatus(bookingId: string, userId: string, userRole: string) {
     if (!bookingId || bookingId.trim() === "") {
       throw new BadRequestError("Booking id is required");
     }
