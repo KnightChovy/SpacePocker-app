@@ -16,6 +16,7 @@ const StatusBadge = ({ status }: { status: BookingRequestStatus }) => {
     COMPLETED: { bg: 'bg-blue-50', text: 'text-blue-600' },
     CANCELLED: { bg: 'bg-red-50', text: 'text-red-400' },
     REJECTED: { bg: 'bg-red-50', text: 'text-red-600' },
+    CHECKED_IN: { bg: 'bg-indigo-50', text: 'text-indigo-600' },
   };
 
   const { bg, text } = config[status];
@@ -75,20 +76,23 @@ const SpacesPage: React.FC = () => {
   const rejectedQuery = useGetBookingRequestsForManager('REJECTED');
   const cancelledQuery = useGetBookingRequestsForManager('CANCELLED');
   const completedQuery = useGetBookingRequestsForManager('COMPLETED');
+  const checkedInQuery = useGetBookingRequestsForManager('CHECKED_IN');
 
   const isLoading =
     pendingQuery.isLoading ||
     approvedQuery.isLoading ||
     rejectedQuery.isLoading ||
     cancelledQuery.isLoading ||
-    completedQuery.isLoading;
+    completedQuery.isLoading ||
+    checkedInQuery.isLoading;
 
   const isError =
     pendingQuery.isError ||
     approvedQuery.isError ||
     rejectedQuery.isError ||
     cancelledQuery.isError ||
-    completedQuery.isError;
+    completedQuery.isError ||
+    checkedInQuery.isError;
 
   const stats: BookingRequestStats = useMemo(() => {
     const PENDING = pendingQuery.data?.length ?? 0;
@@ -96,14 +100,16 @@ const SpacesPage: React.FC = () => {
     const REJECTED = rejectedQuery.data?.length ?? 0;
     const CANCELLED = cancelledQuery.data?.length ?? 0;
     const COMPLETED = completedQuery.data?.length ?? 0;
+    const CHECKED_IN = checkedInQuery.data?.length ?? 0;
 
     return {
-      total: PENDING + APPROVED + REJECTED + CANCELLED + COMPLETED,
+      total: PENDING + APPROVED + REJECTED + CANCELLED + COMPLETED + CHECKED_IN,
       PENDING,
       APPROVED,
       REJECTED,
       CANCELLED,
       COMPLETED,
+      CHECKED_IN,
     };
   }, [
     pendingQuery.data?.length,
@@ -111,6 +117,7 @@ const SpacesPage: React.FC = () => {
     rejectedQuery.data?.length,
     cancelledQuery.data?.length,
     completedQuery.data?.length,
+    checkedInQuery.data?.length,
   ]);
 
   const bookingRequests = useMemo(() => {

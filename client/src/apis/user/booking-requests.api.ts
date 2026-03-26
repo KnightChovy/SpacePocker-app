@@ -71,7 +71,7 @@ const checkInBooking = async (
 ): Promise<CheckInBookingResponse> => {
   const response = await axiosInstance.post<
     ApiResponse<CheckInBookingResponse>
-  >(`/bookings/${bookingId}/check-in`);
+  >(`/bookings/${bookingId}/check-in`, {});
   return response.data.metadata;
 };
 
@@ -80,7 +80,7 @@ const checkOutBooking = async (
 ): Promise<CheckOutBookingResponse> => {
   const response = await axiosInstance.post<
     ApiResponse<CheckOutBookingResponse>
-  >(`/bookings/${bookingId}/check-out`);
+  >(`/bookings/${bookingId}/check-out`, {});
   return response.data.metadata;
 };
 

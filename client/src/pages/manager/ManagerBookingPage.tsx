@@ -20,7 +20,6 @@ const ManagerBookingPage: React.FC = () => {
   }>();
   const user = useAuthStore(state => state.user);
 
-
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] =
     useState<BookingRequestStatus>('PENDING');

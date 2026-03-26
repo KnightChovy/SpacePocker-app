@@ -269,6 +269,10 @@ export default class BookingService {
       throw new BadRequestError("Completed booking cannot be cancelled");
     }
 
+    if (booking.status === "CHECKED_IN") {
+      throw new BadRequestError("Cannot cancel a booking that is currently checked in");
+    }
+
     const cancelledBooking = await prisma.booking.update({
       where: { id },
       data: {
@@ -388,6 +392,18 @@ export default class BookingService {
 
     if (!bookingRequest) {
       throw new NotFoundError("Booking request not found");
+    }
+
+    if (bookingRequest.status === "CHECKED_IN") {
+      throw new BadRequestError("Cannot cancel a booking that is currently checked in");
+    }
+
+    const checkInRecord = await prisma.checkInRecord.findUnique({
+      where: { bookingRequestId }
+    });
+
+    if (bookingRequest.status === "COMPLETED" && checkInRecord?.checkedOutAt) {
+      throw new BadRequestError("Cannot cancel a booking that has already checked out");
     }
 
     const isManagerOrAdmin =
