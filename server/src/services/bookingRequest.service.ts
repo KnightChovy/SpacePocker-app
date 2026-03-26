@@ -250,21 +250,22 @@ export default class BookingRequestService {
           })
         : [];
 
-    const selectedServices = servicesData.length > 0
-      ? services!
-          .map((sel) => {
-            const svc = servicesData.find((s) => s.id === sel.serviceId);
-            if (!svc) return null;
-            return {
-              serviceId: svc.id,
-              name: svc.name,
-              price: svc.price,
-              quantity: sel.quantity,
-              lineTotal: svc.price * sel.quantity,
-            };
-          })
-          .filter((item): item is NonNullable<typeof item> => item !== null)
-      : [];
+    const selectedServices =
+      servicesData.length > 0
+        ? services!
+            .map((sel) => {
+              const svc = servicesData.find((s) => s.id === sel.serviceId);
+              if (!svc) return null;
+              return {
+                serviceId: svc.id,
+                name: svc.name,
+                price: svc.price,
+                quantity: sel.quantity,
+                lineTotal: svc.price * sel.quantity,
+              };
+            })
+            .filter((item): item is NonNullable<typeof item> => item !== null)
+        : [];
 
     return {
       ...bookingRequest,
@@ -795,7 +796,15 @@ export default class BookingRequestService {
   ) {
     const bookingRequest = await tx.bookingRequest.findUnique({
       where: { id: bookingRequestId },
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        roomId: true,
+        startTime: true,
+        endTime: true,
+        purpose: true,
+        status: true,
+        totalAmount: true,
         user: {
           select: {
             id: true,
@@ -948,6 +957,7 @@ export default class BookingRequestService {
             userId: string;
             user: { email: string; name: string };
             room: { name: string; pricePerHour: number };
+            totalAmount: number | null;
           };
           created: boolean;
         }
