@@ -63,6 +63,18 @@ const BookingList = ({
     return bookings[selectedIndex] ?? null;
   }, [bookings, selectedIndex]);
 
+  const selectedCancellationReason = useMemo(() => {
+    if (!selectedRequest) return null;
+
+    return (
+      selectedRequest.refund?.reason ??
+      selectedRequest.cancelReason ??
+      selectedRequest.rejectionReason ??
+      selectedRequest.reason ??
+      null
+    );
+  }, [selectedRequest]);
+
   const [rating, setRating] = useState<number>(5);
   const [comment, setComment] = useState<string>('');
 
@@ -476,6 +488,19 @@ const BookingList = ({
                         {selectedRequest.purpose || '—'}
                       </div>
                     </div>
+
+                    {(selectedRequest.status === 'CANCELLED' ||
+                      selectedRequest.status === 'REJECTED') &&
+                    selectedCancellationReason ? (
+                      <div>
+                        <div className="text-xs font-semibold mb-1">
+                          Cancellation reason
+                        </div>
+                        <div className="rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark p-3 text-text-sub-light dark:text-text-sub-dark whitespace-pre-wrap wrap-break-word">
+                          {selectedCancellationReason}
+                        </div>
+                      </div>
+                    ) : null}
 
                     <div>
                       <div className="text-xs font-semibold mb-1">
