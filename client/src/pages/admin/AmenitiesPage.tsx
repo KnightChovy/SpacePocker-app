@@ -8,6 +8,7 @@ import { useGetAmenities } from '@/hooks/admin/amenities/use-get-amenities';
 import { useCreateAmenity } from '@/hooks/admin/amenities/use-create-amenity';
 import { useUpdateAmenity } from '@/hooks/admin/amenities/use-update-amenity';
 import { useDeleteAmenity } from '@/hooks/admin/amenities/use-delete-amenity';
+import { parseAdminAmenityForm } from '@/validations/admin/amenity.validation';
 
 type AmenityModalMode = 'create' | 'edit';
 
@@ -67,8 +68,11 @@ const AmenitiesPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const name = nameInput.trim();
-    if (!name) return;
+
+    const parsed = parseAdminAmenityForm({ name: nameInput });
+    if (!parsed.ok) return;
+
+    const { name } = parsed.value;
 
     if (modalMode === 'create') {
       createMutation.mutate(

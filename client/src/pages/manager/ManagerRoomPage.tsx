@@ -25,6 +25,9 @@ import EditRoomModal from '@/components/features/manager/roomManager/EditRoomMod
 import DeleteRoomConfirmModal from '@/components/features/manager/roomManager/DeleteRoomConfirmModal';
 import { useAuthStore } from '@/stores/auth.store';
 import { formatVND, getAvatarUrl } from '@/lib/utils';
+import { parseRoomNumbers } from '@/validations/manager/room.validation';
+
+const MANAGER_NOTIFICATIONS_READ_KEY = 'spacepocker-manager-notifications-read';
 
 const StatusBadge = ({ status }: { status: ApiRoomStatus }) => {
   const config: Record<string, { bg: string; text: string; label: string }> = {
@@ -165,11 +168,27 @@ const ManagerRoomPage = () => {
   }>();
   const user = useAuthStore(state => state.user);
 
+  const [hasReadNotifications, setHasReadNotifications] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.localStorage.getItem(MANAGER_NOTIFICATIONS_READ_KEY) === 'true'
+    );
+  });
+
+  const handleNotificationsClick = () => {
+    setHasReadNotifications(true);
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(MANAGER_NOTIFICATIONS_READ_KEY, 'true');
+    }
+  };
+
   const headerActions = [
     {
       id: 'notifications',
       icon: <Bell className="h-5 w-5" />,
-      badge: true,
+      badge: !hasReadNotifications,
+      onClick: handleNotificationsClick,
     },
     {
       id: 'messages',
@@ -241,19 +260,31 @@ const ManagerRoomPage = () => {
   }) => {
     try {
       const normalizedRoomCode = data.roomCode?.trim();
+
+      const roomNumbers = parseRoomNumbers({
+        capacity: data.capacity,
+        area: data.area,
+        pricePerHour: data.pricePerHour,
+        securityDeposit: data.securityDeposit,
+      });
+
+      if (!roomNumbers.ok) {
+        throw new Error(roomNumbers.message);
+      }
+
+      const { capacity, area, pricePerHour, securityDeposit } =
+        roomNumbers.value;
+
       await createRoomMutation.mutateAsync({
         name: data.name,
         buildingId: data.buildingId,
-        capacity: parseInt(data.capacity, 10),
+        capacity,
         description: data.description?.trim() || undefined,
-        pricePerHour: parseFloat(data.pricePerHour),
-        securityDeposit:
-          data.securityDeposit?.trim() === ''
-            ? undefined
-            : parseFloat(data.securityDeposit),
+        pricePerHour,
+        securityDeposit,
         roomType: data.roomType,
         status: data.status,
-        area: data.area?.trim() === '' ? undefined : parseFloat(data.area),
+        area,
         roomCode: normalizedRoomCode || generateRoomCode(data.name),
         images: data.imageUrls,
         amenities: data.amenityIds,

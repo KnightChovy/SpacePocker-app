@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { X, ChevronDown, Calendar, Clock } from 'lucide-react';
 import { formatVND } from '@/lib/utils';
+import {
+  parseBookingAmount,
+  validateBookingTimeRange,
+} from '@/validations/manager/booking.validation';
 
 interface BookingFormData {
   customerName: string;
@@ -31,6 +35,22 @@ const AddBookingModal = ({ isOpen, onClose, onAdd }: AddBookingModalProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const timeError = validateBookingTimeRange(
+      formData.startTime,
+      formData.endTime
+    );
+    if (timeError) {
+      alert(timeError);
+      return;
+    }
+
+    const amountResult = parseBookingAmount(formData.amount);
+    if (!amountResult.ok) {
+      alert(amountResult.message);
+      return;
+    }
+
     onAdd(formData);
     setFormData({
       customerName: '',

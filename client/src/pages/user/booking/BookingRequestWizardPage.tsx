@@ -23,10 +23,32 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useBookingDraftStore } from '@/stores/bookingDraft.store';
 import { formatVND } from '@/lib/utils';
+import {
+  VIETNAM_OPERATING_HOURS,
+  validateVietnamOperatingHoursForDateTimes,
+} from '@/validations/common/time.validation';
 
 type Step = 1 | 2 | 3;
+const MIN_BOOKING_HOURS = 1;
+const MAX_BOOKING_HOURS = 8;
+const HOUR_IN_MS = 1000 * 60 * 60;
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
+
+const formatDateInput = (date: Date) => {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+};
+
+const formatTimeInput = (date: Date) => {
+  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+};
+
+const parseLocalDateTime = (date: string, time: string) => {
+  if (!date || !time) return null;
+  const dt = new Date(`${date}T${time}:00`);
+  if (Number.isNaN(dt.getTime())) return null;
+  return dt;
+};
 
 const formatDateLabel = (iso: string) => {
   const date = new Date(iso);
@@ -48,10 +70,8 @@ const formatTimeLabel = (iso: string) => {
 };
 
 const buildIsoFromDateTime = (date: string, time: string) => {
-  if (!date || !time) return '';
-  // Interpret as local time then convert to ISO.
-  const dt = new Date(`${date}T${time}:00`);
-  if (Number.isNaN(dt.getTime())) return '';
+  const dt = parseLocalDateTime(date, time);
+  if (!dt) return '';
   return dt.toISOString().replace(/\.\d{3}Z$/, 'Z');
 };
 
@@ -120,24 +140,52 @@ const BookingRequestWizardPage = () => {
     searchParams.get('roomId') ?? ''
   );
 
-  const today = useMemo(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+  const [now, setNow] = useState<Date>(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 60_000);
+    return () => clearInterval(timer);
   }, []);
+
+  const today = useMemo(() => {
+    return formatDateInput(now);
+  }, [now]);
+
+  const currentTime = useMemo(() => formatTimeInput(now), [now]);
+
+  const defaultEndDateTime = useMemo(() => {
+    const nextHour = new Date(now.getTime() + MIN_BOOKING_HOURS * HOUR_IN_MS);
+    return {
+      date: formatDateInput(nextHour),
+      time: formatTimeInput(nextHour),
+    };
+  }, [now]);
 
   const [startDate, setStartDate] = useState<string>(
     searchParams.get('startDate') ?? today
   );
   const [endDate, setEndDate] = useState<string>(
-    searchParams.get('endDate') ?? today
+    searchParams.get('endDate') ?? defaultEndDateTime.date
   );
   const [startTime, setStartTime] = useState<string>(
-    searchParams.get('startTime') ?? '09:00'
+    searchParams.get('startTime') ?? currentTime
   );
   const [endTime, setEndTime] = useState<string>(
-    searchParams.get('endTime') ?? '10:00'
+    searchParams.get('endTime') ?? defaultEndDateTime.time
   );
   const [purpose, setPurpose] = useState<string>('');
+
+  const startTimeMin = useMemo(() => {
+    const open = VIETNAM_OPERATING_HOURS.open;
+    if (startDate === today) {
+      return currentTime > open ? currentTime : open;
+    }
+    return open;
+  }, [currentTime, startDate, today]);
+
+  const startTimeMax = '23:00';
 
   const readExtrasDraft = (draftKey: string | null, draftRoomId: string) => {
     const storeDraft = draftRoomId ? getDraft(draftRoomId) : undefined;
@@ -318,15 +366,128 @@ const BookingRequestWizardPage = () => {
     () => buildIsoFromDateTime(startDate, startTime),
     [startDate, startTime]
   );
+
+  const startLocal = useMemo(
+    () => parseLocalDateTime(startDate, startTime),
+    [startDate, startTime]
+  );
+
+  const minEndLocal = useMemo(() => {
+    if (!startLocal) return null;
+    return new Date(startLocal.getTime() + MIN_BOOKING_HOURS * HOUR_IN_MS);
+  }, [startLocal]);
+
+  const maxEndLocal = useMemo(() => {
+    if (!startLocal) return null;
+    return new Date(startLocal.getTime() + MAX_BOOKING_HOURS * HOUR_IN_MS);
+  }, [startLocal]);
+
+  const endDateMin = useMemo(
+    () => (minEndLocal ? formatDateInput(minEndLocal) : undefined),
+    [minEndLocal]
+  );
+
+  const endDateMax = useMemo(
+    () => (maxEndLocal ? formatDateInput(maxEndLocal) : undefined),
+    [maxEndLocal]
+  );
+
+  const endTimeMin = useMemo(() => {
+    if (!minEndLocal || endDate !== formatDateInput(minEndLocal))
+      return '00:00';
+    return formatTimeInput(minEndLocal);
+  }, [endDate, minEndLocal]);
+
+  const endTimeMax = useMemo(() => {
+    if (!maxEndLocal || endDate !== formatDateInput(maxEndLocal))
+      return '23:59';
+    return formatTimeInput(maxEndLocal);
+  }, [endDate, maxEndLocal]);
+
   const endIso = useMemo(
     () => buildIsoFromDateTime(endDate, endTime),
     [endDate, endTime]
   );
 
+  const endLocal = useMemo(
+    () => parseLocalDateTime(endDate, endTime),
+    [endDate, endTime]
+  );
+
+  useEffect(() => {
+    if (!startLocal) return;
+    if (startLocal.getTime() >= now.getTime()) return;
+
+    const adjustedStart = new Date(now);
+    adjustedStart.setSeconds(0, 0);
+    adjustedStart.setMinutes(adjustedStart.getMinutes() + 1);
+
+    setStartDate(formatDateInput(adjustedStart));
+    setStartTime(formatTimeInput(adjustedStart));
+  }, [now, startLocal]);
+
+  useEffect(() => {
+    if (!minEndLocal || !maxEndLocal) return;
+
+    if (endDate !== startDate && endTime !== '00:00') {
+      setEndTime('00:00');
+      return;
+    }
+
+    const end = parseLocalDateTime(endDate, endTime);
+    if (!end || end.getTime() < minEndLocal.getTime()) {
+      setEndDate(formatDateInput(minEndLocal));
+      setEndTime(formatTimeInput(minEndLocal));
+      return;
+    }
+
+    if (end.getTime() > maxEndLocal.getTime()) {
+      setEndDate(formatDateInput(maxEndLocal));
+      setEndTime(formatTimeInput(maxEndLocal));
+    }
+  }, [endDate, endTime, maxEndLocal, minEndLocal, startDate]);
+
   const hours = useMemo(
     () => durationHours(startIso, endIso),
     [startIso, endIso]
   );
+
+  const bookingTimeValidationMessage = useMemo(() => {
+    if (!startLocal || !endLocal) {
+      return 'Please select a valid start and end time.';
+    }
+
+    if (startLocal.getTime() < now.getTime()) {
+      return 'Start time cannot be in the past.';
+    }
+
+    const operatingHoursError = validateVietnamOperatingHoursForDateTimes(
+      startDate,
+      startTime,
+      endDate,
+      endTime
+    );
+    if (operatingHoursError) return operatingHoursError;
+
+    if (hours < MIN_BOOKING_HOURS) {
+      return `Minimum booking duration is ${MIN_BOOKING_HOURS} hour.`;
+    }
+
+    if (hours > MAX_BOOKING_HOURS) {
+      return `Maximum booking duration is ${MAX_BOOKING_HOURS} hours.`;
+    }
+
+    return null;
+  }, [
+    endDate,
+    endLocal,
+    endTime,
+    hours,
+    now,
+    startDate,
+    startLocal,
+    startTime,
+  ]);
 
   const pricing = useMemo(() => {
     const rate = effectiveRoom?.pricePerHour ?? 0;
@@ -368,13 +529,8 @@ const BookingRequestWizardPage = () => {
   const canGoNextFromInfo = useMemo(() => {
     if (!roomId) return false;
     if (!startIso || !endIso) return false;
-    const start = new Date(startIso);
-    const end = new Date(endIso);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()))
-      return false;
-    if (start >= end) return false;
-    return true;
-  }, [roomId, startIso, endIso]);
+    return !bookingTimeValidationMessage;
+  }, [bookingTimeValidationMessage, endIso, roomId, startIso]);
 
   const selectedAmenityList = useMemo(() => {
     const ids = selectedAmenityIds;
@@ -601,6 +757,7 @@ const BookingRequestWizardPage = () => {
                             type="date"
                             value={startDate}
                             onChange={e => setStartDate(e.target.value)}
+                            min={today}
                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
                           />
                         </div>
@@ -613,6 +770,8 @@ const BookingRequestWizardPage = () => {
                           type="time"
                           value={startTime}
                           onChange={e => setStartTime(e.target.value)}
+                          min={startTimeMin}
+                          max={startTimeMax}
                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
                         />
                       </div>
@@ -626,6 +785,8 @@ const BookingRequestWizardPage = () => {
                             type="date"
                             value={endDate}
                             onChange={e => setEndDate(e.target.value)}
+                            min={endDateMin}
+                            max={endDateMax}
                             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
                           />
                         </div>
@@ -638,10 +799,21 @@ const BookingRequestWizardPage = () => {
                           type="time"
                           value={endTime}
                           onChange={e => setEndTime(e.target.value)}
+                          min={endDate !== startDate ? '00:00' : endTimeMin}
+                          max={endDate !== startDate ? '00:00' : endTimeMax}
                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
                         />
                       </div>
                     </div>
+                    <p className="mt-3 text-xs text-slate-500">
+                      Bookings are available from 07:00 to 24:00 (Vietnam time),
+                      with duration from 1 to 8 hours.
+                    </p>
+                    {bookingTimeValidationMessage && (
+                      <p className="mt-2 text-xs text-red-600">
+                        {bookingTimeValidationMessage}
+                      </p>
+                    )}
                   </section>
 
                   <div className="h-px bg-slate-100" />

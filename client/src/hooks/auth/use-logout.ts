@@ -1,4 +1,4 @@
-import { authAPI } from '@/apis/auth.api';
+import { authAPI } from '@/apis/auth/auth.api';
 import { useAuthStore } from '@/stores/auth.store';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'react-toastify';

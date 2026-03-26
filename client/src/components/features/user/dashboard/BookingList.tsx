@@ -8,6 +8,7 @@ import {
   Timer,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBookingReviewStore } from '@/stores/bookingReview.store';
 
 export interface DashboardBookingItem {
   id: string;
@@ -53,6 +54,7 @@ const BookingList = ({
   isError = false,
 }: BookingListProps) => {
   const navigate = useNavigate();
+  const isBookingReviewed = useBookingReviewStore(s => s.isBookingReviewed);
 
   if (isLoading) {
     return (
@@ -130,6 +132,10 @@ const BookingList = ({
                     <span className="flex items-center gap-1 bg-background-light dark:bg-background-dark px-2 py-1 rounded-md">
                       <Timer className="h-3 w-3" /> {booking.startTime} -{' '}
                       {booking.endTime}
+                    </span>
+                  ) : isBookingReviewed(booking.id) ? (
+                    <span className="flex items-center gap-1 text-emerald-600">
+                      Review Submitted
                     </span>
                   ) : (
                     <button className="flex items-center gap-1 text-primary hover:underline">
