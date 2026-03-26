@@ -5,6 +5,7 @@ import { authentication, authorizeRoles } from "../../auth/authUtils";
 
 const roomRouter = express.Router();
 
+roomRouter.get("/rooms/search", asyncHandler(roomController.searchAvailableRooms));
 roomRouter.get("/rooms", asyncHandler(roomController.getAllRooms));
 roomRouter.get("/rooms/:id", asyncHandler(roomController.getRoomById));
 roomRouter.get(

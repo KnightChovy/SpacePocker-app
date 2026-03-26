@@ -454,6 +454,86 @@
 
 /**
  * @openapi
+ * /v1/api/rooms/search:
+ *   get:
+ *     summary: Search for available rooms
+ *     description: Search for rooms that are available during a specific time range.
+ *     tags: [Room]
+ *     parameters:
+ *       - in: query
+ *         name: startTime
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Start time of the booking (ISO 8601)
+ *         example: "2026-03-27T09:00:00.000Z"
+ *       - in: query
+ *         name: endTime
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: End time of the booking (ISO 8601)
+ *         example: "2026-03-27T11:00:00.000Z"
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by room name or code
+ *       - in: query
+ *         name: buildingId
+ *         schema:
+ *           type: string
+ *         description: Filter by building ID
+ *       - in: query
+ *         name: roomType
+ *         schema:
+ *           type: string
+ *           enum: [MEETING, CLASSROOM, EVENT, OTHER]
+ *         description: Filter by room type
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *         description: Minimum price per hour
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *         description: Maximum price per hour
+ *       - in: query
+ *         name: minCapacity
+ *         schema:
+ *           type: integer
+ *         description: Minimum capacity
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *     responses:
+ *       200:
+ *         description: List of available rooms
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/RoomListResponse"
+ *       400:
+ *         description: Missing start/end time or invalid format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
+ */
+
+/**
+ * @openapi
  * /v1/api/rooms/{id}:
  *   get:
  *     summary: Get room details by ID
