@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { Response } from 'express';
 
 export const STATUS_CODE = {
   OK: 200,
@@ -6,8 +6,8 @@ export const STATUS_CODE = {
 } as const;
 
 export const ReasonStatusCode = {
-  OK: "Success",
-  CREATED: "Created",
+  OK: 'Success',
+  CREATED: 'Created',
 } as const;
 
 interface SuccessResponsePayload {
@@ -67,14 +67,13 @@ export class Created extends SuccessResponse {
 
   constructor(
     payload: SuccessResponsePayload = {},
-    options: Record<string, any> = {}
+    options: Record<string, any> = {},
   ) {
     super({
       ...payload,
       statusCode: STATUS_CODE.CREATED,
       reasonStatusCode: ReasonStatusCode.CREATED,
     });
-
     this.options = options;
   }
 }

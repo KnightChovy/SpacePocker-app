@@ -1,9 +1,10 @@
 import AccessService from '../services/access.service';
-import { OK, Created, SuccessResponse } from '../core/success.response';
+import { OK, Created } from '../core/success.response';
 import { NextFunction, Request, Response } from 'express';
 
 class AccessController {
   constructor(private accessService: AccessService) {}
+
   handleRefreshToken = async (
     req: Request,
     res: Response,
@@ -14,6 +15,7 @@ class AccessController {
       metadata: await this.accessService.handleRefreshToken(req.body),
     }).send(res);
   };
+
   logout = async (req: Request, res: Response, next: NextFunction) => {
     new OK({
       message: 'User logged out successfully',

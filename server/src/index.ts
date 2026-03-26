@@ -1,15 +1,17 @@
-import express, { Request, Response, NextFunction } from "express";
-import cors from "cors";
-import morgan from "morgan";
-import helmet from "helmet";
-import dotenv from "dotenv";
-import routes from "./routes";
-import swaggerUi from "swagger-ui-express";
-import { swaggerSpec } from "./config/swagger";
-import { ErrorResponse } from "./core/error.response";
+import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
+import helmet from 'helmet';
+import dotenv from 'dotenv';
+import routes from './routes';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
+import { ErrorResponse } from './core/error.response';
 //import compression from "compression";
 
 //init middleware
+
+//init db
 
 //handling error
 
@@ -21,13 +23,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.use(
   helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
   }),
 );
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.use(morgan("common"));
-app.use("", routes);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use(morgan('common'));
+app.use('', routes);
 
 // Global Error Handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -40,13 +42,13 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   }
 
   // Default error (500 Internal Server Error)
-  console.error("Unhandled Error:", err);
+  console.error('Unhandled Error:', err);
   return res.status(500).json({
-    message: err.message || "Internal Server Error",
+    message: err.message || 'Internal Server Error',
     status: 500,
   });
 });
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server running on port ${process.env.PORT}`);
+app.listen(3000, () => {
+  console.log('Server running on port 3000');
 });

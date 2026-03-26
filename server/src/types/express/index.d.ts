@@ -1,5 +1,5 @@
-import { Key } from "@prisma/client";
-import { JwtPayload } from "jsonwebtoken";
+import { Key } from '@prisma/client';
+import { JwtPayload } from 'jsonwebtoken';
 
 declare global {
   namespace Express {
