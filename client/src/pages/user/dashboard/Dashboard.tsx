@@ -10,7 +10,10 @@ import { useAuthStore } from '@/stores/auth.store';
 import { formatVND, getAvatarUrl } from '@/lib/utils';
 import { useGetMyBookingRequests } from '@/hooks/user/booking-requests/use-get-my-booking-requests';
 import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
-import { useBookingDraftStore, type LocalBookingRecord } from '@/stores/bookingDraft.store';
+import {
+  useBookingDraftStore,
+  type LocalBookingRecord,
+} from '@/stores/bookingDraft.store';
 import { useMemo } from 'react';
 
 const Dashboard = () => {
@@ -100,7 +103,7 @@ const Dashboard = () => {
 
   const stats = useMemo(() => {
     const requests = bookingRequestsQuery.data ?? [];
-    
+
     const persisted = readPersistedBookingStorage();
 
     const totalBookings = requests.length;
@@ -118,7 +121,9 @@ const Dashboard = () => {
       const hours = (end - start) / (1000 * 60 * 60);
 
       let extraPrice = 0;
-      const fromLocal = localBookingsById[request.id] ?? persisted?.localBookingsById?.[request.id];
+      const fromLocal =
+        localBookingsById[request.id] ??
+        persisted?.localBookingsById?.[request.id];
       if (fromLocal && fromLocal.services) {
         for (const svcItem of fromLocal.services) {
           if (!svcItem?.serviceId) continue;
