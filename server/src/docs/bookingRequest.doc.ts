@@ -148,6 +148,14 @@
  *           type: string
  *           enum: [PENDING, APPROVED, REJECTED, CANCELLED, COMPLETED]
  *           example: "PENDING"
+ *         paymentMethod:
+ *           type: string
+ *           enum: [VNPAY, CASH, BANK_TRANSFER]
+ *           example: "VNPAY"
+ *         totalAmount:
+ *           type: number
+ *           nullable: true
+ *           example: 500000
  *         approvedBy:
  *           type: string
  *           nullable: true
