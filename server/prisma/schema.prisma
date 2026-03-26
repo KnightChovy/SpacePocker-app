@@ -41,6 +41,19 @@ enum CheckInMethod {
   PIN_CODE
 }
 
+enum PaymentMethod {
+  VNPAY
+  CASH
+  BANK_TRANSFER
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
 model User {
   id            String   @id @default(uuid())
   name          String
@@ -54,6 +67,7 @@ model User {
   keys            Key[]
   feedbacks       Feedback[]
   checkInRecords  CheckInRecord[] @relation("CheckInRecords")
+  transactions    Transaction[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -154,8 +168,9 @@ model BookingRequest {
   roomId    String
   startTime DateTime
   endTime   DateTime
-  purpose   String?
-  status    BookingStatus @default(PENDING)
+  purpose       String?
+  status        BookingStatus @default(PENDING)
+  paymentMethod PaymentMethod @default(VNPAY)
 
   createdAt DateTime @default(now())
 
@@ -185,9 +200,37 @@ model Booking {
   room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
   checkInRecord CheckInRecord?
+  transaction   Transaction?
 
   @@index([userId])
   @@index([roomId])
+}
+
+model Transaction {
+  id               String            @id @default(uuid())
+  bookingId        String?           @unique
+  bookingRequestId String?
+  userId           String
+  amount           Float
+  paymentMethod    PaymentMethod
+  status           TransactionStatus @default(PENDING)
+  txnRef           String?
+  note             String?
+  paidAt           DateTime?
+  confirmedBy      String?
+
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([bookingId])
+  @@index([bookingRequestId])
+  @@index([paymentMethod])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model CheckInRecord {

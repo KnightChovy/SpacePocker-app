@@ -11,6 +11,7 @@ import userRoutes from "./user";
 import roomRouter from "./room";
 import serviceRoutes from "./service";
 import serviceCategoryRoutes from "./serviceCategory";
+import transactionRoutes from "./transaction";
 
 router.use("/v1/api", accessRoutes);
 router.use("/v1/api", bookingRoutes);
@@ -23,4 +24,5 @@ router.use("/v1/api", amenityRoutes);
 router.use("/v1/api", userRoutes);
 router.use("/v1/api", serviceRoutes);
 router.use("/v1/api", serviceCategoryRoutes);
+router.use("/v1/api", transactionRoutes);
 export default router;

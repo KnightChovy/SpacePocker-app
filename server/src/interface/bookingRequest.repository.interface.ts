@@ -1,4 +1,4 @@
-import { BookingRequest, Booking } from '@prisma/client';
+import { BookingRequest, Booking, PaymentMethod } from '@prisma/client';
 
 export interface CreateBookingRequestInput {
   userId: string;
@@ -6,6 +6,7 @@ export interface CreateBookingRequestInput {
   startTime: Date;
   endTime: Date;
   purpose?: string;
+  paymentMethod?: PaymentMethod;
 }
 
 export interface CheckUserPendingOverlapInput {

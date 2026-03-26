@@ -63,6 +63,12 @@ router.get(
   authentication,
   asyncHandler(bookingRequestController.getBookingRequestById),
 );
+router.patch(
+  "/booking-requests/:id/confirm-payment",
+  authentication,
+  authorizeRoles("MANAGER", "ADMIN"),
+  asyncHandler(bookingRequestController.confirmOfflinePayment),
+);
 router.get(
   "/payment/vnpay-return",
   asyncHandler(bookingRequestController.handleVnpayReturn),

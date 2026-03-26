@@ -2,7 +2,7 @@
  * @openapi
  * tags:
  *   - name: Payment
- *     description: VNPAY payment and booking confirmation email APIs
+ *     description: Payment APIs — VNPAY online payment and offline payment confirmation (cash / bank transfer)
  */
 
 /**
@@ -152,6 +152,122 @@
  *         Message:
  *           type: string
  *           example: "Invalid checksum"
+ *
+ *     ConfirmOfflinePaymentInput:
+ *       type: object
+ *       properties:
+ *         note:
+ *           type: string
+ *           description: Optional note from manager (e.g. cash receipt number, bank ref)
+ *           example: "Cash received — receipt #VN2026-00123"
+ *
+ *     ConfirmOfflinePaymentResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: "Payment confirmed successfully"
+ *         metadata:
+ *           type: object
+ *           properties:
+ *             booking:
+ *               $ref: "#/components/schemas/BookingItem"
+ *             transaction:
+ *               $ref: "#/components/schemas/TransactionItem"
+ *             amount:
+ *               type: number
+ *               description: Total amount charged (VND)
+ *               example: 100000
+ *             paymentMethod:
+ *               type: string
+ *               enum: [CASH, BANK_TRANSFER]
+ *               example: "CASH"
+ */
+
+/**
+ * @openapi
+ * /v1/api/booking-requests/{id}/confirm-payment:
+ *   patch:
+ *     summary: Confirm offline payment (cash or bank transfer)
+ *     description: |
+ *       Manager confirms that a **CASH** or **BANK_TRANSFER** payment has been received.
+ *
+ *       **Flow:**
+ *       1. User creates booking request with `paymentMethod: CASH` or `BANK_TRANSFER`
+ *       2. Manager approves the request (status → APPROVED)
+ *       3. Manager physically receives payment (cash / bank transfer)
+ *       4. Manager calls this endpoint to confirm — creates Booking + Transaction, sends confirmation email
+ *
+ *       **Validation:**
+ *       - Booking request must exist and be managed by the calling manager
+ *       - Status must be `APPROVED`
+ *       - `paymentMethod` must not be `VNPAY` (use the payment-url flow for VNPAY)
+ *       - No existing Booking for this request (idempotent guard)
+ *     tags: [Payment]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Manager/Admin user ID
+ *       - in: header
+ *         name: authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Access token
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Booking request ID
+ *         example: "65be0de6-225d-4d37-8c9a-21860e931a87"
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: "#/components/schemas/ConfirmOfflinePaymentInput"
+ *     responses:
+ *       200:
+ *         description: Payment confirmed — Booking and Transaction created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ConfirmOfflinePaymentResponse"
+ *       400:
+ *         description: |
+ *           Bad request:
+ *           - Booking request is not APPROVED
+ *           - Payment method is VNPAY (use payment-url instead)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden — manager does not own this room
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
+ *       404:
+ *         description: Booking request not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
+ *       409:
+ *         description: Payment already confirmed for this booking
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
  */
 
 /**

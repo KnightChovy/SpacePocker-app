@@ -7,7 +7,8 @@ import {
 } from '../core/error.response';
 import { IRoomRepository } from '../interface/room.repository.interface';
 import { IBookingRepository } from '../interface/booking.repository.interface';
-import { BookingStatus, Prisma } from '@prisma/client';
+import { ITransactionRepository } from '../interface/transaction.repository.interface';
+import { BookingStatus, PaymentMethod, Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import MailQueueService from './mailQueue.service';
 import VnpayService from './vnpay.service';
@@ -19,6 +20,7 @@ export default class BookingRequestService {
     private bookingRepo: IBookingRepository,
     private mailQueueService: MailQueueService,
     private vnpayService: VnpayService,
+    private transactionRepo: ITransactionRepository,
   ) {}
 
   private async resolveManagerId(userId: string, userEmail?: string) {
@@ -46,6 +48,7 @@ export default class BookingRequestService {
     purpose?: string;
     amenityIds?: string[];
     services?: Array<{ serviceId: string; quantity: number }>;
+    paymentMethod?: PaymentMethod;
   }) {
     const {
       userId,
@@ -55,6 +58,7 @@ export default class BookingRequestService {
       purpose,
       amenityIds,
       services,
+      paymentMethod = 'VNPAY',
     } = data;
     const uniqueAmenityIds = Array.from(new Set(amenityIds ?? []));
 
@@ -207,12 +211,20 @@ export default class BookingRequestService {
       totalCost += serviceCost;
     }
 
+    const allowedMethods: PaymentMethod[] = ['VNPAY', 'CASH', 'BANK_TRANSFER'];
+    if (!allowedMethods.includes(paymentMethod)) {
+      throw new BadRequestError(
+        `Invalid payment method. Allowed: ${allowedMethods.join(', ')}`,
+      );
+    }
+
     const bookingRequest = await this.bookingRequestRepo.create({
       userId,
       roomId,
       startTime,
       endTime,
       purpose,
+      paymentMethod,
     });
 
     const selectedAmenities =
@@ -784,6 +796,7 @@ export default class BookingRequestService {
           select: {
             id: true,
             name: true,
+            pricePerHour: true,
           },
         },
       },
@@ -868,8 +881,30 @@ export default class BookingRequestService {
     const responseCode = rawQuery.vnp_ResponseCode || '';
     const transactionStatus = rawQuery.vnp_TransactionStatus || '';
     const bookingRequestId = this.vnpayService.extractBookingRequestId(txnRef);
+    const vnpAmount = rawQuery.vnp_Amount
+      ? Number(rawQuery.vnp_Amount) / 100
+      : 0;
 
     if (responseCode !== '00' || transactionStatus !== '00') {
+      // Record failed transaction if we can identify the booking request
+      if (bookingRequestId) {
+        const br = await prisma.bookingRequest.findUnique({
+          where: { id: bookingRequestId },
+          select: { userId: true, room: { select: { pricePerHour: true } }, startTime: true, endTime: true },
+        });
+        if (br) {
+          const amount = vnpAmount || this.calculateRoomAmount(br.room.pricePerHour, br.startTime, br.endTime);
+          await this.transactionRepo.create({
+            bookingRequestId,
+            userId: br.userId,
+            amount,
+            paymentMethod: 'VNPAY',
+            status: 'FAILED',
+            txnRef,
+            note: `VNPAY response code: ${responseCode}`,
+          });
+        }
+      }
       return {
         success: false,
         code: responseCode || transactionStatus || '99',
@@ -886,6 +921,25 @@ export default class BookingRequestService {
     );
 
     if (result.created) {
+      const amount =
+        vnpAmount ||
+        this.calculateRoomAmount(
+          result.bookingRequest.room.pricePerHour,
+          result.booking.startTime,
+          result.booking.endTime,
+        );
+
+      await this.transactionRepo.create({
+        bookingId: result.booking.id,
+        bookingRequestId,
+        userId: result.bookingRequest.userId,
+        amount,
+        paymentMethod: 'VNPAY',
+        status: 'SUCCESS',
+        txnRef,
+        paidAt: new Date(),
+      });
+
       await this.mailQueueService.publishBookingConfirmedEmailJob({
         to: result.bookingRequest.user.email,
         customerName: result.bookingRequest.user.name,
@@ -903,6 +957,107 @@ export default class BookingRequestService {
       bookingRequestId,
       bookingId: result.booking.id,
       alreadyProcessed: !result.created,
+    };
+  }
+
+  async confirmOfflinePayment(input: {
+    bookingRequestId: string;
+    managerId: string;
+    managerEmail?: string;
+    note?: string;
+  }) {
+    const { bookingRequestId, managerId, managerEmail, note } = input;
+
+    const resolvedManagerId = await this.resolveManagerId(managerId, managerEmail);
+
+    const bookingRequest = await prisma.bookingRequest.findUnique({
+      where: { id: bookingRequestId },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        room: { select: { id: true, name: true, pricePerHour: true, managerId: true } },
+      },
+    });
+
+    if (!bookingRequest) {
+      throw new NotFoundError('Booking request not found');
+    }
+    if (bookingRequest.room.managerId !== resolvedManagerId) {
+      throw new ForbiddenError('You are not allowed to confirm payment for this booking');
+    }
+    if (bookingRequest.status !== 'APPROVED') {
+      throw new BadRequestError('Booking request must be approved before confirming payment');
+    }
+    if (bookingRequest.paymentMethod === 'VNPAY') {
+      throw new BadRequestError('Cannot manually confirm VNPAY payments');
+    }
+
+    const existingBooking = await prisma.booking.findFirst({
+      where: {
+        userId: bookingRequest.userId,
+        roomId: bookingRequest.roomId,
+        startTime: bookingRequest.startTime,
+        endTime: bookingRequest.endTime,
+      },
+    });
+    if (existingBooking) {
+      throw new ConflictRequestError('Payment has already been confirmed for this booking');
+    }
+
+    const amount = this.calculateRoomAmount(
+      bookingRequest.room.pricePerHour,
+      bookingRequest.startTime,
+      bookingRequest.endTime,
+    );
+
+    const result = await prisma.$transaction(
+      async (tx) => {
+        const booking = await tx.booking.create({
+          data: {
+            userId: bookingRequest.userId,
+            roomId: bookingRequest.roomId,
+            startTime: bookingRequest.startTime,
+            endTime: bookingRequest.endTime,
+            purpose: bookingRequest.purpose,
+            status: 'COMPLETED',
+          },
+        });
+
+        await tx.bookingRequest.update({
+          where: { id: bookingRequestId },
+          data: { status: 'COMPLETED' },
+        });
+
+        return booking;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+
+    const transaction = await this.transactionRepo.create({
+      bookingId: result.id,
+      bookingRequestId,
+      userId: bookingRequest.userId,
+      amount,
+      paymentMethod: bookingRequest.paymentMethod,
+      status: 'SUCCESS',
+      paidAt: new Date(),
+      confirmedBy: resolvedManagerId,
+      note,
+    });
+
+    await this.mailQueueService.publishBookingConfirmedEmailJob({
+      to: bookingRequest.user.email,
+      customerName: bookingRequest.user.name,
+      bookingId: result.id,
+      roomName: bookingRequest.room.name,
+      startTime: result.startTime.toISOString(),
+      endTime: result.endTime.toISOString(),
+    });
+
+    return {
+      booking: result,
+      transaction,
+      amount,
+      paymentMethod: bookingRequest.paymentMethod,
     };
   }
 }
