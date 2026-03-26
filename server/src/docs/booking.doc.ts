@@ -427,4 +427,55 @@
  *               $ref: "#/components/schemas/BookingErrorResponse"
  */
 
+/**
+ * @openapi
+ * /v1/api/bookings/{id}/cancel:
+ *   patch:
+ *     summary: User cancel booking (No Refund)
+ *     description: Allow user to cancel their own PENDING, APPROVED or COMPLETED booking. If APPROVED or COMPLETED, no refund will be issued.
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking ID
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Booking cancelled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Booking cancelled successfully. Notification email sent.
+ *                 metadata:
+ *                   type: object
+ *                   properties:
+ *                     booking:
+ *                       $ref: "#/components/schemas/BookingEntity"
+ *       400:
+ *         description: Bad Request (Invalid status, booking started, etc.)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/BookingErrorResponse"
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Not the owner)
+ *       404:
+ *         description: Booking not found
+ */
+
 export {};

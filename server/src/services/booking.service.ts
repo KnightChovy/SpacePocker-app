@@ -129,7 +129,8 @@ export default class BookingService {
       !isNaN(parsedLimit) && parsedLimit > 0 && parsedLimit <= 100
         ? parsedLimit
         : 10;
-    const safeOffset = !isNaN(parsedOffset) && parsedOffset >= 0 ? parsedOffset : 0;
+    const safeOffset =
+      !isNaN(parsedOffset) && parsedOffset >= 0 ? parsedOffset : 0;
 
     const [total, bookings] = await Promise.all([
       prisma.booking.count({ where }),
@@ -282,6 +283,80 @@ export default class BookingService {
     return { booking: cancelledBooking };
   }
 
+  async userCancelBooking(id: string, userId: string) {
+    if (!id || id.trim() === "") {
+      throw new BadRequestError("Booking ID is required");
+    }
+
+    if (!userId || userId.trim() === "") {
+      throw new BadRequestError("User ID is required");
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: {
+        user: true,
+        room: true,
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundError("Booking not found");
+    }
+
+    if (booking.userId !== userId) {
+      throw new ForbiddenError("You are not allowed to cancel this booking");
+    }
+
+    if (booking.status === "CANCELLED") {
+      throw new BadRequestError("Booking is already cancelled");
+    }
+
+    // Only allow cancelling if status is APPROVED, COMPLETED or PENDING
+    // Based on requirement: "cancel booking đã thanh toán cọc" -> APPROVED and COMPLETED
+    if (
+      booking.status !== "APPROVED" &&
+      booking.status !== "PENDING" &&
+      booking.status !== "COMPLETED"
+    ) {
+      throw new BadRequestError(
+        "Only PENDING, APPROVED or COMPLETED bookings can be cancelled by user",
+      );
+    }
+
+    // Check if booking has already started
+    if (new Date() > booking.startTime) {
+      throw new BadRequestError(
+        "Cannot cancel a booking that has already started",
+      );
+    }
+
+    const cancelledBooking = await prisma.booking.update({
+      where: { id },
+      data: {
+        status: "CANCELLED",
+      },
+      include: {
+        user: true,
+        room: true,
+      },
+    });
+
+    // Send email notification regarding no refund for APPROVED and COMPLETED bookings
+    if (booking.status === "APPROVED" || booking.status === "COMPLETED") {
+      await this.mailQueueService.publishBookingCancelledNoRefundEmailJob({
+        to: booking.user.email,
+        customerName: booking.user.name,
+        bookingId: booking.id,
+        roomName: booking.room.name,
+        startTime: booking.startTime.toISOString(),
+        endTime: booking.endTime.toISOString(),
+      });
+    }
+
+    return { booking: cancelledBooking };
+  }
+
   async managerCancelPaidBookingAndNotifyRefund(
     bookingRequestId: string,
     requestedByUserId: string,
@@ -390,15 +465,16 @@ export default class BookingService {
       });
 
     const isCompletedCancellation = previousBookingStatus === "COMPLETED";
-    const refundAmount = isCompletedCancellation && cancelledBooking
-      ? Math.max(
-          0,
-          cancelledBooking.room.pricePerHour *
-            ((cancelledBooking.endTime.getTime() -
-              cancelledBooking.startTime.getTime()) /
-              (1000 * 60 * 60)),
-        )
-      : 0;
+    const refundAmount =
+      isCompletedCancellation && cancelledBooking
+        ? Math.max(
+            0,
+            cancelledBooking.room.pricePerHour *
+              ((cancelledBooking.endTime.getTime() -
+                cancelledBooking.startTime.getTime()) /
+                (1000 * 60 * 60)),
+          )
+        : 0;
 
     if (isCompletedCancellation && cancelledBooking) {
       await this.mailQueueService.publishBookingRefundSuccessEmailJob({
