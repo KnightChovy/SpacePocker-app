@@ -333,7 +333,30 @@ export default class BookingRequestService {
     if (!bookingRequest) {
       throw new NotFoundError(`Booking request with id not found`);
     }
-    return bookingRequest;
+
+    const { room, user, services, ...rest } = bookingRequest;
+
+    return {
+      ...rest,
+      room: {
+        id: room.id,
+        name: room.name,
+        roomCode: room.roomCode,
+        building: room.building,
+      },
+      user,
+      amenities: room.amenities.map((a: any) => ({
+        id: a.amenity.id,
+        name: a.amenity.name,
+      })),
+      services: services.map((s: any) => ({
+        serviceId: s.serviceId,
+        name: s.service.name,
+        price: s.priceSnapshot,
+        quantity: s.quantity,
+        lineTotal: s.priceSnapshot * s.quantity,
+      })),
+    };
   }
 
   async getMyBookingRequests(userId: string, status?: BookingStatus) {
