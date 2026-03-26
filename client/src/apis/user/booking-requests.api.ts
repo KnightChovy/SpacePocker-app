@@ -56,7 +56,7 @@ const cancelPaidBooking = async (
 ): Promise<CheckOutBookingResponse> => {
   const response = await axiosInstance.patch<
     ApiResponse<CheckOutBookingResponse>
-  >(`/bookings/${bookingId}/cancel`);
+  >(`/bookings/request/${bookingId}/cancel`);
   return response.data.metadata;
 };
 
