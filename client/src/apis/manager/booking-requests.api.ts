@@ -67,11 +67,14 @@ const reject = async (
 };
 
 const refundCancel = async (
-  bookingRequestId: string
+  bookingRequestId: string,
+  reason?: string
 ): Promise<RefundCancelBookingRequestResponse> => {
   const response = await axiosInstance.patch<
     ApiResponse<RefundCancelBookingRequestResponse>
-  >(`/manager/bookings/${bookingRequestId}/refund-cancel`);
+  >(`/manager/bookings/${bookingRequestId}/refund-cancel`, {
+    reason,
+  });
   return response.data.metadata;
 };
 

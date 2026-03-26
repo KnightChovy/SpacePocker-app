@@ -77,6 +77,26 @@ export interface RoomQueryParams {
   offset?: number;
 }
 
+export interface SearchAvailableRoomsParams {
+  startTime: string;
+  endTime: string;
+  search?: string;
+  roomType?: ApiRoomType;
+  minPrice?: number;
+  maxPrice?: number;
+  minCapacity?: number;
+  limit?: number;
+  offset?: number;
+}
+
+export interface SearchAvailableRoomsResponse {
+  rooms: ApiRoom[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export interface RoomPagination {
   total: number;
   limit: number;

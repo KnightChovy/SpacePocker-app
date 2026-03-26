@@ -3,29 +3,64 @@ import SpaceCard from './SpaceCard';
 import { ChevronDown, Shuffle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useGetRooms } from '@/hooks/user/rooms/use-get-rooms';
-import type { ApiRoom } from '@/types/user/room-api';
+import { useSearchAvailableRooms } from '@/hooks/user/rooms/use-search-available-rooms';
 import type { Space } from '@/types/user/types';
 
 interface FeatureSpaceSectionProps {
   searchQuery?: string;
+  startTime?: string;
+  endTime?: string;
   sectionId?: string;
 }
 
 const FeatureSpaceSection = ({
   searchQuery = '',
+  startTime = '',
+  endTime = '',
   sectionId,
 }: FeatureSpaceSectionProps) => {
-  const roomsQuery = useGetRooms({
-    status: 'AVAILABLE',
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-    limit: 8,
-    offset: 0,
+  const shouldSearchByTime = Boolean(startTime && endTime);
+  const hasValidTimeRange =
+    !shouldSearchByTime ||
+    new Date(startTime).getTime() < new Date(endTime).getTime();
+
+  const availableRoomsParams =
+    shouldSearchByTime && hasValidTimeRange
+      ? {
+          startTime: new Date(startTime).toISOString(),
+          endTime: new Date(endTime).toISOString(),
+          search: searchQuery.trim() || undefined,
+          limit: 8,
+          offset: 0,
+        }
+      : undefined;
+
+  const roomsQuery = useGetRooms(
+    {
+      status: 'AVAILABLE',
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+      limit: 8,
+      offset: 0,
+    },
+    {
+      enabled: !shouldSearchByTime || !hasValidTimeRange,
+    }
+  );
+
+  const availableRoomsQuery = useSearchAvailableRooms(availableRoomsParams, {
+    enabled: shouldSearchByTime && hasValidTimeRange,
   });
 
-  const spaces = useMemo<Space[]>(() => {
-    const rooms: ApiRoom[] = roomsQuery.data?.rooms ?? [];
+  const activeQuery =
+    shouldSearchByTime && hasValidTimeRange ? availableRoomsQuery : roomsQuery;
 
+  const rooms =
+    shouldSearchByTime && hasValidTimeRange
+      ? (availableRoomsQuery.data?.rooms ?? [])
+      : (roomsQuery.data?.rooms ?? []);
+
+  const spaces = useMemo<Space[]>(() => {
     return rooms.map(room => ({
       id: room.id,
       name: room.name,
@@ -37,7 +72,7 @@ const FeatureSpaceSection = ({
       images: room.images ?? [],
       location: room.building?.address ?? room.building?.campus,
     }));
-  }, [roomsQuery.data?.rooms]);
+  }, [rooms]);
 
   const filteredSpaces = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -77,11 +112,15 @@ const FeatureSpaceSection = ({
           </div>
         </div>
 
-        {roomsQuery.isLoading ? (
+        {!hasValidTimeRange ? (
+          <div className="py-16 text-center text-amber-600">
+            End time must be later than start time.
+          </div>
+        ) : activeQuery.isLoading ? (
           <div className="py-16 text-center text-slate-500">
             Loading spaces...
           </div>
-        ) : roomsQuery.isError ? (
+        ) : activeQuery.isError ? (
           <div className="py-16 text-center text-red-600">
             Failed to load spaces. Please try again.
           </div>

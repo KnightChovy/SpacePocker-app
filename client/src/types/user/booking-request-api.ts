@@ -125,6 +125,12 @@ export interface MyBookingRequest {
   startTime: string;
   endTime: string;
   purpose?: string | null;
+  reason?: string | null;
+  cancelReason?: string | null;
+  rejectionReason?: string | null;
+  refund?: {
+    reason?: string | null;
+  } | null;
   status: BookingRequestStatus;
   createdAt: string;
   room: MyBookingRequestRoomLite;

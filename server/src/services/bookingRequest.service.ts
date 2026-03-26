@@ -184,10 +184,10 @@ export default class BookingRequestService {
       );
     }
 
-    // Calculate total cost
+    // Calculate total amount
     const hoursDiff =
       (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-    let totalCost = room.pricePerHour * hoursDiff;
+    let totalAmount = room.pricePerHour * hoursDiff;
     let servicesData: Array<{ id: string; name: string; price: number }> = [];
 
     // Add service costs
@@ -208,7 +208,7 @@ export default class BookingRequestService {
         return sum + (service ? service.price * selectedService.quantity : 0);
       }, 0);
 
-      totalCost += serviceCost;
+      totalAmount += serviceCost;
     }
 
     const allowedMethods: PaymentMethod[] = ["VNPAY", "CASH", "BANK_TRANSFER"];
@@ -218,13 +218,28 @@ export default class BookingRequestService {
       );
     }
 
-    const bookingRequest = await this.bookingRequestRepo.create({
-      userId,
-      roomId,
-      startTime,
-      endTime,
-      purpose,
-      paymentMethod,
+    const bookingRequest = await prisma.bookingRequest.create({
+      data: {
+        userId,
+        roomId,
+        startTime,
+        endTime,
+        purpose,
+        paymentMethod,
+        totalAmount,
+        ...(servicesData.length > 0 && {
+          services: {
+            create: services!.map((sel) => {
+              const svc = servicesData.find((s) => s.id === sel.serviceId)!;
+              return {
+                serviceId: svc.id,
+                quantity: sel.quantity,
+                priceSnapshot: svc.price,
+              };
+            }),
+          },
+        }),
+      },
     });
 
     const selectedAmenities =
@@ -236,22 +251,17 @@ export default class BookingRequestService {
         : [];
 
     const selectedServices =
-      services && services.length > 0
-        ? services
-            .map((selectedService) => {
-              const service = servicesData.find(
-                (item) => item.id === selectedService.serviceId,
-              );
-              if (!service) {
-                return null;
-              }
-
+      servicesData.length > 0
+        ? services!
+            .map((sel) => {
+              const svc = servicesData.find((s) => s.id === sel.serviceId);
+              if (!svc) return null;
               return {
-                serviceId: service.id,
-                name: service.name,
-                price: service.price,
-                quantity: selectedService.quantity,
-                lineTotal: service.price * selectedService.quantity,
+                serviceId: svc.id,
+                name: svc.name,
+                price: svc.price,
+                quantity: sel.quantity,
+                lineTotal: svc.price * sel.quantity,
               };
             })
             .filter((item): item is NonNullable<typeof item> => item !== null)
@@ -261,7 +271,7 @@ export default class BookingRequestService {
       ...bookingRequest,
       amenities: selectedAmenities,
       services: selectedServices,
-      totalCost,
+      totalCost: totalAmount,
     };
   }
 
@@ -755,11 +765,13 @@ export default class BookingRequestService {
       throw new ConflictRequestError("Booking request has already been paid");
     }
 
-    const amount = this.calculateRoomAmount(
-      bookingRequest.room.pricePerHour,
-      bookingRequest.startTime,
-      bookingRequest.endTime,
-    );
+    const amount =
+      bookingRequest.totalAmount ??
+      this.calculateRoomAmount(
+        bookingRequest.room.pricePerHour,
+        bookingRequest.startTime,
+        bookingRequest.endTime,
+      );
 
     const { paymentUrl, txnRef } = this.vnpayService.createPaymentUrl({
       bookingRequestId: bookingRequest.id,
@@ -784,7 +796,15 @@ export default class BookingRequestService {
   ) {
     const bookingRequest = await tx.bookingRequest.findUnique({
       where: { id: bookingRequestId },
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        roomId: true,
+        startTime: true,
+        endTime: true,
+        purpose: true,
+        status: true,
+        totalAmount: true,
         user: {
           select: {
             id: true,
@@ -892,6 +912,7 @@ export default class BookingRequestService {
           where: { id: bookingRequestId },
           select: {
             userId: true,
+            totalAmount: true,
             room: { select: { pricePerHour: true } },
             startTime: true,
             endTime: true,
@@ -900,6 +921,7 @@ export default class BookingRequestService {
         if (br) {
           const amount =
             vnpAmount ||
+            br.totalAmount ||
             this.calculateRoomAmount(
               br.room.pricePerHour,
               br.startTime,
@@ -935,6 +957,7 @@ export default class BookingRequestService {
             userId: string;
             user: { email: string; name: string };
             room: { name: string; pricePerHour: number };
+            totalAmount: number | null;
           };
           created: boolean;
         }
@@ -959,6 +982,7 @@ export default class BookingRequestService {
     if (result.created) {
       const amount =
         vnpAmount ||
+        result.bookingRequest.totalAmount ||
         this.calculateRoomAmount(
           result.bookingRequest.room.pricePerHour,
           result.booking.startTime,
@@ -1050,11 +1074,13 @@ export default class BookingRequestService {
       );
     }
 
-    const amount = this.calculateRoomAmount(
-      bookingRequest.room.pricePerHour,
-      bookingRequest.startTime,
-      bookingRequest.endTime,
-    );
+    const amount =
+      bookingRequest.totalAmount ??
+      this.calculateRoomAmount(
+        bookingRequest.room.pricePerHour,
+        bookingRequest.startTime,
+        bookingRequest.endTime,
+      );
 
     const result = await prisma.$transaction(
       async (tx) => {

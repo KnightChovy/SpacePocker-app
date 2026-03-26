@@ -3,10 +3,17 @@ import type {
   ApiRoom,
   GetAllRoomsResponse,
   RoomQueryParams,
+  SearchAvailableRoomsParams,
+  SearchAvailableRoomsResponse,
 } from '@/types/user/room-api';
 
 export type ListRoomsRequest = { params?: RoomQueryParams };
 export type ListRoomsResponse = GetAllRoomsResponse;
+
+export type SearchAvailableRoomsRequest = {
+  params: SearchAvailableRoomsParams;
+};
+export type SearchAvailableRoomsApiResponse = SearchAvailableRoomsResponse;
 
 export type GetRoomByIdRequest = { roomId: string };
 export type GetRoomByIdResponse = { room: ApiRoom };
