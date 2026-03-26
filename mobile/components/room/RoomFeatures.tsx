@@ -10,7 +10,7 @@ import {
   Wifi,
   Wind,
 } from 'lucide-react-native';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 type Props = { room: RoomDetail };
 
@@ -83,29 +83,45 @@ export default function RoomFeatures({ room }: Props) {
           <Text className="text-base font-bold text-gray-900 mb-3">
             Available Services
           </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 10 }}
-          >
-            {categories.map(({ category }) => {
-              const Icon = getCategoryIcon(category.name);
-              return (
-                <View
-                  key={category.id}
-                  className="bg-white border border-gray-100 rounded-2xl px-4 py-3 items-center gap-2"
-                  style={{ minWidth: 100 }}
-                >
-                  <View className="w-10 h-10 rounded-xl bg-amber-50 items-center justify-center">
-                    <Icon size={18} color="#D97706" strokeWidth={1.8} />
+          {categories.map(({ category }) => {
+            const Icon = getCategoryIcon(category.name);
+            return (
+              <View key={category.id} className="mb-4">
+                {/* Category header */}
+                <View className="flex-row items-center gap-2 mb-2">
+                  <View className="w-7 h-7 rounded-lg bg-amber-50 items-center justify-center">
+                    <Icon size={14} color="#D97706" strokeWidth={1.8} />
                   </View>
-                  <Text className="text-xs text-gray-600 font-semibold text-center">
+                  <Text className="text-sm font-bold text-gray-700">
                     {category.name}
                   </Text>
                 </View>
-              );
-            })}
-          </ScrollView>
+                {/* Services list */}
+                <View className="flex-row flex-wrap gap-2">
+                  {category.services.map(service => (
+                    <View
+                      key={service.id}
+                      className="bg-white border border-gray-100 rounded-xl px-3 py-2"
+                      style={{
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: 0.04,
+                        shadowRadius: 3,
+                        elevation: 1,
+                      }}
+                    >
+                      <Text className="text-xs font-semibold text-gray-700">
+                        {service.name}
+                      </Text>
+                      <Text className="text-[10px] text-[#5B4FE9] font-medium mt-0.5">
+                        {service.price.toLocaleString('vi-VN')}đ
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            );
+          })}
         </View>
       )}
     </View>

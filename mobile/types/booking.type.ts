@@ -80,3 +80,16 @@ export type BookingFilterState = {
   startDate: string | null;
   endDate: string | null;
 };
+
+export type BookingPagination = {
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+};
+
+export type MyBookingsMetadata = {
+  bookings: Booking[];
+  pagination: BookingPagination;
+  filters: Record<string, string>;
+};
