@@ -478,4 +478,45 @@
  *         description: Booking not found
  */
 
+/**
+ * @openapi
+ * /v1/api/bookings/request/{bookingRequestId}/cancel:
+ *   patch:
+ *     summary: User cancel booking by Booking Request ID (No Refund)
+ *     description: Allow user to cancel their own PENDING, APPROVED or COMPLETED booking by providing the associated Booking Request ID instead of Booking ID. If APPROVED or COMPLETED, no refund will be issued.
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookingRequestId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking Request ID
+ *       - in: header
+ *         name: x-client-id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Booking cancelled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 metadata:
+ *                   $ref: "#/components/schemas/BookingEntity"
+ *       400:
+ *         description: Invalid input or user ID mismatch
+ *       404:
+ *         description: Booking associated with this request not found
+ *       409:
+ *         description: Booking is already cancelled or checkout
+ */
+
 export {};
