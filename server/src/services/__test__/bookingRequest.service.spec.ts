@@ -469,9 +469,8 @@ describe("BookingRequestService", () => {
             purpose: validData.purpose,
             paymentMethod: "VNPAY",
             totalAmount: 100000,
-          }
+          },
         });
-
       });
 
       it("should create booking request with amenities/services and calculate totalCost", async () => {
@@ -548,7 +547,6 @@ describe("BookingRequestService", () => {
             totalAmount: 100000,
           },
         });
-
       });
     });
   });
@@ -682,12 +680,40 @@ describe("BookingRequestService", () => {
 
   describe("getBookingRequestById()", () => {
     it("should return booking request if found", async () => {
-      mockBookingRequestRepo.findById.mockResolvedValue(mockBookingRequest);
+      const mockFullBookingRequest = {
+        ...mockBookingRequest,
+        room: {
+          id: "r-001",
+          name: "Test Room",
+          roomCode: "TEST-01",
+          building: { id: "b-001", buildingName: "HQ" },
+          amenities: [{ amenity: { id: "am-01", name: "WiFi" } }],
+        },
+        user: {
+          id: "u-001",
+          name: "Test User",
+          email: "test@example.com",
+        },
+        services: [
+          {
+            serviceId: "sv-01",
+            service: { name: "Coffee" },
+            priceSnapshot: 50,
+            quantity: 2,
+          },
+        ],
+      };
+
+      mockBookingRequestRepo.findById.mockResolvedValue(mockFullBookingRequest);
 
       const result =
         await bookingRequestService.getBookingRequestById("br-001");
 
-      expect(result).toEqual(mockBookingRequest);
+      expect(result.id).toEqual(mockBookingRequest.id);
+      expect(result.room.name).toEqual("Test Room");
+      expect(result.amenities[0].name).toEqual("WiFi");
+      expect(result.services[0].lineTotal).toEqual(100);
+
       expect(mockBookingRequestRepo.findById).toHaveBeenCalledWith("br-001");
     });
 
