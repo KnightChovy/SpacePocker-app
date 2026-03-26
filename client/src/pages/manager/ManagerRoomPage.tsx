@@ -22,8 +22,9 @@ import RoomDetailModal from '@/components/features/manager/roomManager/RoomDetai
 import EditRoomModal from '@/components/features/manager/roomManager/EditRoomModal';
 import DeleteRoomConfirmModal from '@/components/features/manager/roomManager/DeleteRoomConfirmModal';
 import { useAuthStore } from '@/stores/auth.store';
-import { formatVND, getAvatarUrl } from '@/lib/utils';
+import { formatVND, getApiErrorMessage, getAvatarUrl } from '@/lib/utils';
 import { parseRoomNumbers } from '@/validations/manager/room.validation';
+import { toast } from 'react-toastify';
 
 const StatusBadge = ({ status }: { status: ApiRoomStatus }) => {
   const config: Record<string, { bg: string; text: string; label: string }> = {
@@ -262,6 +263,7 @@ const ManagerRoomPage = () => {
       setIsAddModalOpen(false);
     } catch (error) {
       console.error('Failed to create room:', error);
+      toast.error(getApiErrorMessage(error, 'Failed to create room'));
     }
   };
 
@@ -444,6 +446,7 @@ const ManagerRoomPage = () => {
               setDeleteRoomId(null);
             } catch (error) {
               console.error('Failed to delete room:', error);
+              toast.error(getApiErrorMessage(error, 'Failed to delete room'));
             }
           }}
         />

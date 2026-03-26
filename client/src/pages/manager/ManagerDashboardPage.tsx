@@ -17,7 +17,8 @@ import { RevenueOverview } from '@/components/features/manager/dashboardManager/
 import { RoomTypeDistribution } from '@/components/features/manager/dashboardManager/RoomTypeDistribution';
 import { QuickActions } from '@/components/features/manager/dashboardManager/QuickActions';
 import { useAuthStore } from '@/stores/auth.store';
-import { getAvatarUrl } from '@/lib/utils';
+import { getApiErrorMessage, getAvatarUrl } from '@/lib/utils';
+import { toast } from 'react-toastify';
 
 const PAID_RANGE_LABEL: Record<PaidRange, string> = {
   '3m': 'Last 3 Months',
@@ -66,6 +67,7 @@ const ManagerDashboardPage = () => {
         setBookingReport(bookingReportRes);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
+        toast.error(getApiErrorMessage(error, 'Failed to load dashboard data'));
         setRevenueData([]);
         setRevenueTotal(0);
         setBookingReport(null);
@@ -154,7 +156,7 @@ const ManagerDashboardPage = () => {
                 paidRange={paidRange}
                 totalRevenue={revenueTotal}
               />
-              <RoomTypeDistribution data={roomTypeDistribution} />
+              {/* <RoomTypeDistribution data={roomTypeDistribution} /> */}
             </div>
 
             <div className="flex flex-col gap-6">

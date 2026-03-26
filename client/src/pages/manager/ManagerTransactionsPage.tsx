@@ -9,6 +9,8 @@ import {
   type TransactionStatus,
   type TransactionPaymentMethod,
 } from '@/services/transactionService';
+import { toast } from 'react-toastify';
+import { getApiErrorMessage } from '@/lib/utils';
 
 const statusOptions: Array<{ label: string; value?: TransactionStatus }> = [
   { label: 'All Statuses', value: undefined },
@@ -69,6 +71,7 @@ const ManagerTransactionsPage: React.FC = () => {
       } catch (error) {
         setIsError(true);
         console.error('Failed to fetch transactions:', error);
+        toast.error(getApiErrorMessage(error, 'Failed to load transactions'));
       } finally {
         setIsLoading(false);
       }
