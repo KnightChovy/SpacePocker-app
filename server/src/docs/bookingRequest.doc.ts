@@ -69,6 +69,10 @@
  *             - **CASH**: Pay in cash — manager confirms manually after approval
  *             - **BANK_TRANSFER**: Bank transfer — manager confirms manually after approval
  *           example: "CASH"
+ *         totalAmount:
+ *           type: number
+ *           description: Optional total amount pre-calculated by FE
+ *           example: 500000
  *
  *     BookingRequestRoom:
  *       type: object
