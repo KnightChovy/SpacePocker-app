@@ -221,6 +221,22 @@ class BookingRequestController {
     return res.redirect(redirectUrl);
   };
 
+  confirmOfflinePayment = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    new OK({
+      message: 'Payment confirmed successfully',
+      metadata: await this.bookingRequestService.confirmOfflinePayment({
+        bookingRequestId: String(req.params.id),
+        managerId: String(req.user?.userId),
+        managerEmail: String(req.user?.email || ''),
+        note: req.body?.note,
+      }),
+    }).send(res);
+  };
+
   handleVnpayIpn = async (req: Request, res: Response, next: NextFunction) => {
     const normalizedQuery: Record<string, string> = {};
     Object.entries(req.query).forEach(([key, value]) => {

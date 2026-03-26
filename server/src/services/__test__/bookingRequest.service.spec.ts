@@ -92,6 +92,7 @@ describe('BookingRequestService', () => {
     endTime: new Date('2026-02-10T11:00:00Z'),
     purpose: 'Team meeting',
     status: 'PENDING' as const,
+    paymentMethod: 'VNPAY' as const,
     approvedBy: null,
     createdAt: new Date(),
   };
@@ -131,12 +132,22 @@ describe('BookingRequestService', () => {
       verifyQuery: jest.fn(),
       extractBookingRequestId: jest.fn(),
     } as unknown as jest.Mocked<VnpayService>;
+    const mockTransactionRepo: any = {
+      create: jest.fn(),
+      findById: jest.fn(),
+      findByBookingId: jest.fn(),
+      findMany: jest.fn(),
+      updateStatus: jest.fn(),
+      getRevenueSummary: jest.fn(),
+      getTotalRevenue: jest.fn(),
+    };
     bookingRequestService = new BookingRequestService(
       mockBookingRequestRepo,
       mockRoomRepo,
       mockBookingRepo,
       mockMailQueueService,
       mockVnpayService,
+      mockTransactionRepo,
     );
     prismaMock.roomAmenity.findMany.mockResolvedValue([]);
     prismaMock.roomServiceCategory.findMany.mockResolvedValue([]);
@@ -399,6 +410,7 @@ describe('BookingRequestService', () => {
               endTime: new Date('2026-02-10T11:00:00Z'),
               purpose: 'Existing request',
               status: 'PENDING' as const,
+              paymentMethod: 'VNPAY' as const,
               approvedBy: null,
               createdAt: new Date(),
             },
@@ -450,6 +462,7 @@ describe('BookingRequestService', () => {
           startTime: expect.any(Date),
           endTime: expect.any(Date),
           purpose: validData.purpose,
+          paymentMethod: 'VNPAY',
         });
       });
 
@@ -522,6 +535,7 @@ describe('BookingRequestService', () => {
           startTime: expect.any(Date),
           endTime: expect.any(Date),
           purpose: undefined,
+          paymentMethod: 'VNPAY',
         });
       });
     });

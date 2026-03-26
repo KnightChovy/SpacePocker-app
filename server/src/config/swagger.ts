@@ -22,7 +22,8 @@ export const swaggerSpec = swaggerJSDoc({
       },
       {
         name: "Payment",
-        description: "Payment processing for booking requests",
+        description:
+          "Payment APIs — VNPAY online payment and offline payment confirmation (cash / bank transfer)",
       },
       { name: "User", description: "User management APIs" },
       { name: "Room", description: "Room management APIs" },
@@ -37,6 +38,10 @@ export const swaggerSpec = swaggerJSDoc({
       { name: "Check-in", description: "Room check-in / check-out APIs" },
       { name: "Feedback", description: "Feedback APIs" },
       { name: "Admin", description: "Admin management APIs" },
+      {
+        name: "Transactions",
+        description: "Transaction history and financial reporting APIs",
+      },
     ],
     components: {
       securitySchemes: {

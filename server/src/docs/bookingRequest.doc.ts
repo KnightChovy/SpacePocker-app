@@ -59,6 +59,16 @@
  *                 type: integer
  *                 minimum: 1
  *                 example: 2
+ *         paymentMethod:
+ *           type: string
+ *           enum: [VNPAY, CASH, BANK_TRANSFER]
+ *           default: VNPAY
+ *           description: |
+ *             Payment method for this booking.
+ *             - **VNPAY**: Online payment via VNPAY gateway (default)
+ *             - **CASH**: Pay in cash — manager confirms manually after approval
+ *             - **BANK_TRANSFER**: Bank transfer — manager confirms manually after approval
+ *           example: "CASH"
  *
  *     BookingRequestRoom:
  *       type: object
