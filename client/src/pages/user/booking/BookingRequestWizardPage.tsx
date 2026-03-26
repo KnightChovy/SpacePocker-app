@@ -593,6 +593,9 @@ const BookingRequestWizardPage = () => {
       startTime: startIso,
       endTime: endIso,
       purpose: purpose.trim() ? purpose.trim() : undefined,
+      // amenityIds: selectedAmenityIdList,
+      // services: servicesPayload,
+      totalAmount: pricing.total,
     };
 
     const makeLocalId = () => {

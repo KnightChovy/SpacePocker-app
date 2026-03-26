@@ -9,22 +9,14 @@ import {
   YAxis,
 } from 'recharts';
 import { Card } from '@/components/common/Card';
-import { useGetBookingRequestsForManager } from '@/hooks/manager/booking-requests/use-get-booking-requests';
-import { useGetRooms } from '@/hooks/manager/rooms/use-get-rooms';
-import type { BookingRequestForManager } from '@/types/user/booking-request-api';
 import { formatVND } from '@/lib/utils';
+import type { ChartDataItem } from '@/types/user/types';
 
 interface RevenueOverviewProps {
-  // Kept for backward compatibility with existing page usage.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any[];
+  data: ChartDataItem[];
   paidRange?: '3m' | '30d' | '7d';
+  totalRevenue?: number;
 }
-
-type TotalPaidChartPoint = {
-  name: string;
-  value: number;
-};
 
 const PAID_RANGE_LABEL: Record<
   NonNullable<RevenueOverviewProps['paidRange']>,
@@ -35,140 +27,19 @@ const PAID_RANGE_LABEL: Record<
   '7d': 'Last 7 Days',
 };
 
-const monthKey = (date: Date) => {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  return `${year}-${String(month).padStart(2, '0')}`;
-};
-
-const addMonths = (date: Date, deltaMonths: number) => {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + deltaMonths);
-  return d;
-};
-
-const dayKey = (date: Date) => {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-};
-
-const startOfDay = (date: Date) =>
-  new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-const addDays = (date: Date, deltaDays: number) => {
-  const d = new Date(date);
-  d.setDate(d.getDate() + deltaDays);
-  return d;
-};
-
-const toDayLabel = (key: string) => {
-  const [y, m, d] = key.split('-').map(Number);
-  const date = new Date(y, (m ?? 1) - 1, d ?? 1);
-  return new Intl.DateTimeFormat('en', {
-    month: 'short',
-    day: 'numeric',
-  }).format(date);
-};
-
-const toMonthLabel = (key: string) => {
-  const [y, m] = key.split('-').map(Number);
-  const d = new Date(y, (m ?? 1) - 1, 1);
-  return new Intl.DateTimeFormat('en', { month: 'short' }).format(d);
-};
-
-const calcRequestAmount = (
-  req: BookingRequestForManager,
-  priceByRoomId: Map<string, number>
-) => {
-  const start = new Date(req.startTime);
-  const end = new Date(req.endTime);
-  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()))
-    return 0;
-
-  const hours = Math.max(0, (end.getTime() - start.getTime()) / 3_600_000);
-  const pricePerHour = priceByRoomId.get(req.roomId) ?? 0;
-  return hours * pricePerHour;
-};
-
 export const RevenueOverview: React.FC<RevenueOverviewProps> = ({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  data: _data,
+  data,
   paidRange = '30d',
+  totalRevenue,
 }) => {
-  const roomsQuery = useGetRooms({ limit: 1000, offset: 0 });
-  const completedRequestsQuery = useGetBookingRequestsForManager('COMPLETED');
+  const chartData = useMemo(() => data ?? [], [data]);
 
-  const chartData: TotalPaidChartPoint[] = useMemo(() => {
-    const completed = completedRequestsQuery.data ?? [];
-
-    const priceByRoomId = new Map<string, number>();
-    for (const room of roomsQuery.data?.rooms ?? []) {
-      priceByRoomId.set(room.id, room.pricePerHour ?? 0);
-    }
-
-    const now = new Date();
-
-    if (paidRange === '3m') {
-      // Monthly totals for last 3 months (including current month).
-      const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const months: string[] = [];
-      for (let i = 2; i >= 0; i -= 1) {
-        months.push(monthKey(addMonths(startMonth, -i)));
-      }
-
-      const totalsByMonth = new Map<string, number>(months.map(k => [k, 0]));
-      for (const req of completed) {
-        const end = new Date(req.endTime);
-        if (!Number.isFinite(end.getTime())) continue;
-        const key = monthKey(new Date(end.getFullYear(), end.getMonth(), 1));
-        if (!totalsByMonth.has(key)) continue;
-        totalsByMonth.set(
-          key,
-          (totalsByMonth.get(key) ?? 0) + calcRequestAmount(req, priceByRoomId)
-        );
-      }
-
-      return months.map(k => ({
-        name: toMonthLabel(k),
-        value: totalsByMonth.get(k) ?? 0,
-      }));
-    }
-
-    // Daily totals for last 30/7 days (including today).
-    const daysCount = paidRange === '7d' ? 7 : 30;
-    const endDay = startOfDay(now);
-    const startDay = addDays(endDay, -(daysCount - 1));
-
-    const days: string[] = [];
-    for (let i = 0; i < daysCount; i += 1) {
-      days.push(dayKey(addDays(startDay, i)));
-    }
-
-    const totalsByDay = new Map<string, number>(days.map(k => [k, 0]));
-    for (const req of completed) {
-      const end = new Date(req.endTime);
-      if (!Number.isFinite(end.getTime())) continue;
-      const endDayKey = dayKey(startOfDay(end));
-      if (!totalsByDay.has(endDayKey)) continue;
-      totalsByDay.set(
-        endDayKey,
-        (totalsByDay.get(endDayKey) ?? 0) +
-          calcRequestAmount(req, priceByRoomId)
-      );
-    }
-
-    return days.map(k => ({
-      name: toDayLabel(k),
-      value: totalsByDay.get(k) ?? 0,
-    }));
-  }, [completedRequestsQuery.data, roomsQuery.data?.rooms, paidRange]);
-
-  const isLoading = roomsQuery.isLoading || completedRequestsQuery.isLoading;
   const totalForRange = useMemo(
-    () => chartData.reduce((sum, p) => sum + p.value, 0),
-    [chartData]
+    () =>
+      typeof totalRevenue === 'number'
+        ? totalRevenue
+        : chartData.reduce((sum, p) => sum + p.value, 0),
+    [chartData, totalRevenue]
   );
   const hasAnyValue = totalForRange > 0;
 
@@ -187,11 +58,7 @@ export const RevenueOverview: React.FC<RevenueOverviewProps> = ({
       }
     >
       <div className="h-64 w-full">
-        {isLoading ? (
-          <div className="h-full flex items-center justify-center text-sm text-slate-500">
-            Loading chart...
-          </div>
-        ) : !hasAnyValue ? (
+        {!hasAnyValue ? (
           <div className="h-full flex items-center justify-center text-sm text-slate-500">
             No payment data available.
           </div>

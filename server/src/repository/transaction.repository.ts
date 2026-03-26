@@ -1,11 +1,11 @@
-import { PaymentMethod, Prisma, TransactionStatus } from '@prisma/client';
-import { prisma } from '../lib/prisma';
+import { PaymentMethod, Prisma, TransactionStatus } from "@prisma/client";
+import { prisma } from "../lib/prisma";
 import {
   CreateTransactionInput,
   ITransactionRepository,
   RevenueReportInput,
   TransactionFilterInput,
-} from '../interface/transaction.repository.interface';
+} from "../interface/transaction.repository.interface";
 
 export class TransactionRepository implements ITransactionRepository {
   async create(data: CreateTransactionInput) {
@@ -72,7 +72,7 @@ export class TransactionRepository implements ITransactionRepository {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -98,13 +98,13 @@ export class TransactionRepository implements ITransactionRepository {
 
     // Filter only SUCCESS transactions
     const baseWhere: Prisma.TransactionWhereInput = {
-      status: 'SUCCESS',
+      status: "SUCCESS",
       paidAt: { gte: startDate, lte: endDate },
     };
 
-    if (groupBy === 'paymentMethod') {
+    if (groupBy === "paymentMethod") {
       const rows = await prisma.transaction.groupBy({
-        by: ['paymentMethod'],
+        by: ["paymentMethod"],
         where: baseWhere,
         _sum: { amount: true },
         _count: { id: true },
@@ -116,7 +116,7 @@ export class TransactionRepository implements ITransactionRepository {
       }));
     }
 
-    if (groupBy === 'room' || groupBy === 'building') {
+    if (groupBy === "room" || groupBy === "building") {
       const transactions = await prisma.transaction.findMany({
         where: baseWhere,
         select: {
@@ -147,10 +147,9 @@ export class TransactionRepository implements ITransactionRepository {
         if (!room) continue;
         if (managerId && room.managerId !== managerId) continue;
 
-        const key =
-          groupBy === 'room' ? room.id : room.building.id;
+        const key = groupBy === "room" ? room.id : room.building.id;
         const label =
-          groupBy === 'room' ? room.name : room.building.buildingName;
+          groupBy === "room" ? room.name : room.building.buildingName;
 
         const existing = map.get(key) ?? { label, totalAmount: 0, count: 0 };
         map.set(key, {
@@ -163,9 +162,9 @@ export class TransactionRepository implements ITransactionRepository {
     }
 
     // day or month grouping via raw SQL
-    const format = groupBy === 'day' ? 'YYYY-MM-DD' : 'YYYY-MM';
+    const format = groupBy === "day" ? "YYYY-MM-DD" : "YYYY-MM";
     const managerFilter = managerId
-      ? Prisma.sql`AND b.room_id IN (SELECT id FROM "Room" WHERE "managerId" = ${managerId})`
+      ? Prisma.sql`AND b."roomId" IN (SELECT id FROM "Room" WHERE "managerId" = ${managerId})`
       : Prisma.sql``;
 
     const rows = await prisma.$queryRaw<
@@ -196,7 +195,7 @@ export class TransactionRepository implements ITransactionRepository {
     if (managerId) {
       const transactions = await prisma.transaction.findMany({
         where: {
-          status: 'SUCCESS',
+          status: "SUCCESS",
           paidAt: { gte: startDate, lte: endDate },
         },
         select: {
@@ -213,7 +212,7 @@ export class TransactionRepository implements ITransactionRepository {
 
     const result = await prisma.transaction.aggregate({
       where: {
-        status: 'SUCCESS',
+        status: "SUCCESS",
         paidAt: { gte: startDate, lte: endDate },
       },
       _sum: { amount: true },
@@ -227,9 +226,9 @@ export class TransactionRepository implements ITransactionRepository {
     managerId?: string,
   ) {
     const rows = await prisma.transaction.groupBy({
-      by: ['paymentMethod'],
+      by: ["paymentMethod"],
       where: {
-        status: 'SUCCESS',
+        status: "SUCCESS",
         paidAt: { gte: startDate, lte: endDate },
       },
       _sum: { amount: true },

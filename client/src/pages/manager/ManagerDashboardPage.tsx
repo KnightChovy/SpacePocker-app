@@ -6,7 +6,11 @@ import type {
   ChartDataItem,
   BookingDistribution,
 } from '@/types/user/types';
-import { dashboardService } from '@/services/dashboardService';
+import {
+  dashboardService,
+  type PaidRange,
+  type BookingReportMetadata,
+} from '@/services/dashboardService';
 import AppHeader from '@/components/layouts/AppHeader';
 import { StatsGrid } from '@/components/features/manager/dashboardManager/StartsGrid';
 import { RevenueOverview } from '@/components/features/manager/dashboardManager/RevenueOverview';
@@ -14,8 +18,6 @@ import { RoomTypeDistribution } from '@/components/features/manager/dashboardMan
 import { QuickActions } from '@/components/features/manager/dashboardManager/QuickActions';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
-
-type PaidRange = '3m' | '30d' | '7d';
 
 const PAID_RANGE_LABEL: Record<PaidRange, string> = {
   '3m': 'Last 3 Months',
@@ -33,6 +35,9 @@ const ManagerDashboardPage = () => {
   const [roomTypeDistribution, setRoomTypeDistribution] = useState<
     BookingDistribution[]
   >([]);
+  const [bookingReport, setBookingReport] =
+    useState<BookingReportMetadata | null>(null);
+  const [revenueTotal, setRevenueTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [paidRange, setPaidRange] = useState<PaidRange>('30d');
 
@@ -40,24 +45,37 @@ const ManagerDashboardPage = () => {
     const fetchDashboardData = async () => {
       try {
         setIsLoading(true);
-        const [statsData, revenueRes, distributionRes] = await Promise.all([
-          dashboardService.getStats(),
-          dashboardService.getRevenueData(),
-          dashboardService.getRoomTypeDistribution(),
-        ]);
+        const [statsData, revenueRes, distributionRes, bookingReportRes] =
+          await Promise.all([
+            dashboardService.getStats(),
+            dashboardService.getRevenueReportData({
+              paidRange,
+              managerId: user?.id,
+            }),
+            dashboardService.getRoomTypeDistribution(),
+            dashboardService.getBookingReportData({
+              paidRange,
+              managerId: user?.id,
+            }),
+          ]);
 
         setStats(statsData);
-        setRevenueData(revenueRes);
+        setRevenueData(revenueRes.chartData);
+        setRevenueTotal(revenueRes.totalRevenue);
         setRoomTypeDistribution(distributionRes);
+        setBookingReport(bookingReportRes);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
+        setRevenueData([]);
+        setRevenueTotal(0);
+        setBookingReport(null);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchDashboardData();
-  }, []);
+  }, [paidRange, user?.id]);
 
   if (isLoading) {
     return (
@@ -68,9 +86,9 @@ const ManagerDashboardPage = () => {
           showSearch={true}
           searchPlaceholder="Search bookings..."
           profile={{
-            name: 'Alex Morgan',
-            subtitle: 'Manager',
-            avatarUrl: 'https://picsum.photos/id/64/100/100',
+            name: user?.name || 'Manager',
+            subtitle: user?.role || 'MANAGER',
+            avatarUrl: getAvatarUrl(user?.name, 'Manager'),
             showDropdown: true,
           }}
         />
@@ -122,11 +140,20 @@ const ManagerDashboardPage = () => {
             </div>
           </div>
 
-          <StatsGrid stats={stats} paidRange={paidRange} />
+          <StatsGrid
+            stats={stats}
+            paidRange={paidRange}
+            revenueTotal={revenueTotal}
+            bookingReport={bookingReport}
+          />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 flex flex-col gap-6">
-              <RevenueOverview data={revenueData} paidRange={paidRange} />
+              <RevenueOverview
+                data={revenueData}
+                paidRange={paidRange}
+                totalRevenue={revenueTotal}
+              />
               <RoomTypeDistribution data={roomTypeDistribution} />
             </div>
 

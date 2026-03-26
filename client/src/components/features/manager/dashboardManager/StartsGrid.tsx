@@ -11,6 +11,7 @@ import { useGetRooms } from '@/hooks/manager/rooms/use-get-rooms';
 import { useGetBookingRequestsForManager } from '@/hooks/manager/booking-requests/use-get-booking-requests';
 import type { BookingRequestForManager } from '@/types/user/booking-request-api';
 import { formatVND } from '@/lib/utils';
+import type { BookingReportMetadata } from '@/services/dashboardService';
 
 interface StatsGridProps {
   // Kept for backward compatibility with existing page usage.
@@ -18,6 +19,8 @@ interface StatsGridProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   stats?: any[];
   paidRange?: '3m' | '30d' | '7d';
+  revenueTotal?: number;
+  bookingReport?: BookingReportMetadata | null;
 }
 
 interface IconConfig {
@@ -133,7 +136,12 @@ const getPaidRangeCutoff = (now: Date, paidRange: '3m' | '30d' | '7d') => {
   return cutoff;
 };
 
-export const StatsGrid = ({ stats, paidRange = '30d' }: StatsGridProps) => {
+export const StatsGrid = ({
+  stats,
+  paidRange = '30d',
+  revenueTotal,
+  bookingReport,
+}: StatsGridProps) => {
   const buildingsQuery = useGetBuildings({ limit: 1, offset: 0 });
   // Use a higher limit so we can compute totals that depend on room pricing.
   // Pagination.total still drives the room count card.
@@ -155,10 +163,12 @@ export const StatsGrid = ({ stats, paidRange = '30d' }: StatsGridProps) => {
 
     const now = new Date();
     const activeBookings = approved.filter(b => isActiveBooking(b, now)).length;
+    const totalBookingRequests = bookingReport?.totalRequests ?? activeBookings;
+    const pendingRequests = bookingReport?.byStatus?.PENDING ?? 0;
 
     const paidCutoff = getPaidRangeCutoff(now, paidRange);
 
-    const totalPaid = completed.reduce((sum, req) => {
+    const totalPaidFromBookings = completed.reduce((sum, req) => {
       const start = new Date(req.startTime);
       const end = new Date(req.endTime);
       if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()))
@@ -170,6 +180,9 @@ export const StatsGrid = ({ stats, paidRange = '30d' }: StatsGridProps) => {
       const pricePerHour = priceByRoomId.get(req.roomId) ?? 0;
       return sum + hours * pricePerHour;
     }, 0);
+
+    const totalPaid =
+      typeof revenueTotal === 'number' ? revenueTotal : totalPaidFromBookings;
 
     const safeBuildingsTotal =
       typeof buildingsTotal === 'number' ? buildingsTotal : 0;
@@ -195,9 +208,12 @@ export const StatsGrid = ({ stats, paidRange = '30d' }: StatsGridProps) => {
       },
       {
         type: 'bookings',
-        label: 'Active Bookings',
-        value: activeBookings,
-        subtext: 'Currently ongoing',
+        label: 'Booking Requests',
+        value: totalBookingRequests,
+        subtext:
+          pendingRequests > 0
+            ? `${pendingRequests} pending approval`
+            : 'In selected date range',
       },
     ];
 
@@ -222,9 +238,11 @@ export const StatsGrid = ({ stats, paidRange = '30d' }: StatsGridProps) => {
     approvedRequestsQuery.data,
     completedRequestsQuery.data,
     paidRange,
+    bookingReport,
     buildingsQuery.isLoading,
     roomsQuery.isLoading,
     stats,
+    revenueTotal,
   ]);
 
   return (

@@ -10,6 +10,7 @@ import {
   UserCircle,
   Tags,
   LogOut,
+  ReceiptText,
 } from 'lucide-react';
 import { useLogout } from '@/hooks/auth/use-logout';
 import { useAuthStore } from '@/stores/auth.store';
@@ -46,6 +47,12 @@ export default function ManagerLayout() {
           label: 'Bookings',
           path: '/manager/bookings',
           icon: <BarChart3 className="h-5 w-5" />,
+        },
+        {
+          id: 'transactions',
+          label: 'Transactions',
+          path: '/manager/transactions',
+          icon: <ReceiptText className="h-5 w-5" />,
         },
         {
           id: 'buildings',

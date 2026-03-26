@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Bell, MessageSquare } from 'lucide-react';
 import type {
   BuildingDetail,
   CreateBuildingPayload,
@@ -17,39 +16,16 @@ import { useGetBuildings } from '@/hooks/manager/buildings/use-get-buildings';
 import { useCreateBuilding } from '@/hooks/manager/buildings/use-create-building';
 import { useDeleteBuilding } from '@/hooks/manager/buildings/use-delete-building';
 import { useUpdateBuilding } from '@/hooks/manager/buildings/use-update-building';
+import { useAuthStore } from '@/stores/auth.store';
+import { getAvatarUrl } from '@/lib/utils';
 
 const LIMIT = 10;
-const MANAGER_NOTIFICATIONS_READ_KEY = 'spacepocker-manager-notifications-read';
 
 const ManagerBuildingPage = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
-
-  const [hasReadNotifications, setHasReadNotifications] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return (
-      window.localStorage.getItem(MANAGER_NOTIFICATIONS_READ_KEY) === 'true'
-    );
-  });
-
-  const handleNotificationsClick = () => {
-    setHasReadNotifications(true);
-
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(MANAGER_NOTIFICATIONS_READ_KEY, 'true');
-    }
-  };
-
-  const headerActions = [
-    {
-      id: 'notifications',
-      icon: <Bell className="h-5 w-5" />,
-      badge: !hasReadNotifications,
-      onClick: handleNotificationsClick,
-    },
-    { id: 'messages', icon: <MessageSquare className="h-5 w-5" /> },
-  ];
+  const user = useAuthStore(state => state.user);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCampus, setSelectedCampus] = useState('all');
@@ -124,11 +100,10 @@ const ManagerBuildingPage = () => {
         title="Building Management"
         subtitle="Manage all buildings, campuses, and facilities."
         onMenuClick={() => setSidebarOpen(true)}
-        actions={headerActions}
         profile={{
-          name: 'Alex Morgan',
-          subtitle: 'Manager',
-          avatarUrl: 'https://picsum.photos/id/64/100/100',
+          name: user?.name || 'Manager',
+          subtitle: user?.role || 'MANAGER',
+          avatarUrl: getAvatarUrl(user?.name, 'Manager'),
           showDropdown: true,
         }}
       />

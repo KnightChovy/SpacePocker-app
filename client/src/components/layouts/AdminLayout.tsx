@@ -14,6 +14,7 @@ export default function AdminLayout() {
   const getActiveItemFromPath = () => {
     const path = location.pathname;
     if (path.includes('/dashboard')) return 'dashboard';
+    if (path.includes('/transactions')) return 'transactions';
     if (path.includes('/users')) return 'users';
     if (path.includes('/spaces')) return 'spaces';
     if (path.includes('/amenities')) return 'amenities';
@@ -40,6 +41,12 @@ export default function AdminLayout() {
           label: 'Users',
           path: '/admin/users',
           icon: 'group',
+        },
+        {
+          id: 'transactions',
+          label: 'Transactions',
+          path: '/admin/transactions',
+          icon: 'receipt_long',
         },
         {
           id: 'spaces',
