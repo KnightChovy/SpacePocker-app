@@ -9,6 +9,7 @@ import type {
   ApiRoomType,
   UpdateRoomPayload,
 } from '@/types/user/room-api';
+import { parseRoomNumbers } from '@/validations/manager/room.validation';
 
 interface EditRoomModalProps {
   isOpen: boolean;
@@ -127,16 +128,27 @@ const EditRoomModal = ({
     e.preventDefault();
     if (!roomId) return;
 
+    const roomNumbers = parseRoomNumbers({
+      capacity: formData.capacity,
+      area: formData.area,
+      pricePerHour: formData.pricePerHour,
+      securityDeposit: formData.securityDeposit,
+    });
+
+    if (!roomNumbers.ok) {
+      console.error(roomNumbers.message);
+      return;
+    }
+
+    const { capacity, area, pricePerHour, securityDeposit } = roomNumbers.value;
+
     const body: UpdateRoomPayload = {
       name: formData.name.trim(),
       description: formData.description?.trim() || undefined,
-      capacity: parseInt(formData.capacity, 10),
-      area: formData.area.trim() === '' ? undefined : parseFloat(formData.area),
-      pricePerHour: parseFloat(formData.pricePerHour),
-      securityDeposit:
-        formData.securityDeposit.trim() === ''
-          ? undefined
-          : parseFloat(formData.securityDeposit),
+      capacity,
+      area,
+      pricePerHour,
+      securityDeposit,
       roomType: formData.roomType,
       status: formData.status,
       images: formData.imageUrlsText

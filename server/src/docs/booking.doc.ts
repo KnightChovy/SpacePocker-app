@@ -35,7 +35,7 @@
  *           example: Team weekly sync
  *         status:
  *           type: string
- *           enum: [PENDING, APPROVED, REJECTED, CANCELLED, COMPLETED]
+ *           enum: [PENDING, APPROVED, REJECTED, CANCELLED, COMPLETED, CHECKED_IN]
  *           example: APPROVED
  *         createdAt:
  *           type: string

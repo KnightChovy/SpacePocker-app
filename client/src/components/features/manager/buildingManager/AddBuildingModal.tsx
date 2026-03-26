@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import type { CreateBuildingPayload } from '@/types/user/types';
+import { parseBuildingCoordinates } from '@/validations/manager/building.validation';
 
 interface AddBuildingModalProps {
   isOpen: boolean;
@@ -63,11 +64,19 @@ const AddBuildingModal = ({
     e.preventDefault();
     setError(null);
     try {
+      const coordinates = parseBuildingCoordinates({
+        latitude: form.latitude,
+        longitude: form.longitude,
+      });
+
+      if (!coordinates.ok) {
+        setError(coordinates.message);
+        return;
+      }
+
+      const { latitude, longitude } = coordinates.value;
+
       setIsSubmitting(true);
-      const latitude =
-        form.latitude.trim() === '' ? undefined : Number(form.latitude);
-      const longitude =
-        form.longitude.trim() === '' ? undefined : Number(form.longitude);
       await onAdd({
         buildingName: form.buildingName,
         address: form.address,

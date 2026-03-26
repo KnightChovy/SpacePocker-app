@@ -274,7 +274,7 @@
  *   post:
  *     summary: Create a new building
  *     description: |
- *       Create a new building. Requires authentication.
+ *       Create a new building. Requires authentication with **MANAGER** or **ADMIN** role.
  *
  *       **Validation rules:**
  *       - Building name, address, campus, and managerId are required
@@ -317,6 +317,12 @@
  *               $ref: "#/components/schemas/ErrorResponse"
  *       401:
  *         description: Unauthorized - Invalid or expired token
+ *       403:
+ *         description: Forbidden - Requires MANAGER or ADMIN role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
  *       500:
  *         description: Internal server error
  */
@@ -327,7 +333,7 @@
  *   patch:
  *     summary: Update building information
  *     description: |
- *       Update an existing building's information. Requires authentication.
+ *       Update an existing building's information. Requires authentication with **MANAGER** or **ADMIN** role.
  *
  *       **Validation rules:**
  *       - Building must exist
@@ -380,6 +386,12 @@
  *               $ref: "#/components/schemas/ErrorResponse"
  *       401:
  *         description: Unauthorized - Invalid or expired token
+ *       403:
+ *         description: Forbidden - Requires MANAGER or ADMIN role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
  *       404:
  *         description: Building not found
  *         content:
@@ -396,7 +408,7 @@
  *   delete:
  *     summary: Delete a building
  *     description: |
- *       Delete an existing building. Requires authentication.
+ *       Delete an existing building. Requires authentication with **MANAGER** or **ADMIN** role.
  *
  *       **Note:** This will cascade delete related records (rooms, amenities, bookings).
  *     tags: [Building]
@@ -437,6 +449,12 @@
  *               $ref: "#/components/schemas/ErrorResponse"
  *       401:
  *         description: Unauthorized - Invalid or expired token
+ *       403:
+ *         description: Forbidden - Requires MANAGER or ADMIN role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
  *       404:
  *         description: Building not found
  *         content:
