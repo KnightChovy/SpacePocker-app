@@ -67,6 +67,10 @@
  *           enum: [vn, en]
  *           default: vn
  *           description: VNPAY payment page locale
+ *         totalAmount:
+ *           type: number
+ *           description: Optional total amount pre-calculated by FE
+ *           example: 500000
  *
  *     CreatePaymentUrlResponse:
  *       type: object
