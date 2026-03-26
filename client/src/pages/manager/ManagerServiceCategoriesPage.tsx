@@ -131,20 +131,6 @@ const ManagerServiceCategoriesPage = () => {
     deleteMutation.mutate(category.id);
   };
 
-  const headerActions = [
-    {
-      id: 'add-category',
-      icon: (
-        <span className="material-symbols-outlined text-[20px]">
-          add_circle
-        </span>
-      ),
-      label: 'Add Category',
-      variant: 'primary' as const,
-      onClick: openCreate,
-    },
-  ];
-
   return (
     <>
       <AppHeader
@@ -155,7 +141,6 @@ const ManagerServiceCategoriesPage = () => {
         searchPlaceholder="Search categories..."
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
-        actions={headerActions}
         profile={{
           name: user?.name || 'Manager',
           subtitle: user?.role || 'MANAGER',
