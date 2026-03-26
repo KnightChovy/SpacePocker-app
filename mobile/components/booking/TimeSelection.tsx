@@ -24,17 +24,22 @@ type Props = {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-// 07:00 – 21:00  →  15 slots
-const TIME_SLOTS = Array.from({ length: 15 }, (_, i) => {
+const TIME_SLOTS = Array.from({ length: 18 }, (_, i) => {
   const h = i + 7;
   return `${h.toString().padStart(2, '0')}:00`;
 });
 
 const DURATIONS = [1, 2, 3, 4];
-const COLS = 5;
+const COLS = 6;
 
 const todayStr = (() => {
   const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+})();
+
+const maxDateStr = (() => {
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 })();
 
@@ -170,6 +175,7 @@ export default function TimeSelection({ value, onChange, onNext }: Props) {
         {/* ── Calendar ── */}
         <Calendar
           minDate={todayStr}
+          maxDate={maxDateStr}
           onDayPress={handleDayPress}
           markedDates={markedDates}
           theme={{
