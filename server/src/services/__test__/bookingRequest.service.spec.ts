@@ -32,6 +32,7 @@ jest.mock("../../lib/prisma", () => ({
       findUnique: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
+      create: jest.fn(),
     },
     manager: {
       findFirst: jest.fn(),
@@ -53,6 +54,7 @@ const prismaMock = prisma as unknown as {
     findUnique: jest.Mock;
     update: jest.Mock;
     updateMany: jest.Mock;
+    create: jest.Mock;
   };
   manager: { findFirst: jest.Mock };
   $transaction: jest.Mock;
@@ -447,7 +449,7 @@ describe("BookingRequestService", () => {
         mockBookingRequestRepo.findOverlappingPendingRequests.mockResolvedValue(
           [],
         );
-        mockBookingRequestRepo.create.mockResolvedValue(mockBookingRequest);
+        prismaMock.bookingRequest.create.mockResolvedValue(mockBookingRequest);
 
         const result =
           await bookingRequestService.createBookingRequest(validData);
@@ -458,14 +460,18 @@ describe("BookingRequestService", () => {
           services: [],
           totalCost: 100000,
         });
-        expect(mockBookingRequestRepo.create).toHaveBeenCalledWith({
-          userId: validData.userId,
-          roomId: validData.roomId,
-          startTime: expect.any(Date),
-          endTime: expect.any(Date),
-          purpose: validData.purpose,
-          paymentMethod: "VNPAY",
+        expect(prismaMock.bookingRequest.create).toHaveBeenCalledWith({
+          data: {
+            userId: validData.userId,
+            roomId: validData.roomId,
+            startTime: expect.any(Date),
+            endTime: expect.any(Date),
+            purpose: validData.purpose,
+            paymentMethod: "VNPAY",
+            totalAmount: 100000,
+          }
         });
+
       });
 
       it("should create booking request with amenities/services and calculate totalCost", async () => {
@@ -474,7 +480,7 @@ describe("BookingRequestService", () => {
         mockBookingRequestRepo.findOverlappingPendingRequests.mockResolvedValue(
           [],
         );
-        mockBookingRequestRepo.create.mockResolvedValue(mockBookingRequest);
+        prismaMock.bookingRequest.create.mockResolvedValue(mockBookingRequest);
         prismaMock.roomAmenity.findMany.mockResolvedValue([
           { roomId: "r-001", amenityId: "amenity-1" },
         ]);
@@ -521,7 +527,7 @@ describe("BookingRequestService", () => {
         mockBookingRequestRepo.findOverlappingPendingRequests.mockResolvedValue(
           [],
         );
-        mockBookingRequestRepo.create.mockResolvedValue({
+        prismaMock.bookingRequest.create.mockResolvedValue({
           ...mockBookingRequest,
           purpose: null,
         });
@@ -531,14 +537,18 @@ describe("BookingRequestService", () => {
 
         expect(result.purpose).toBeNull();
         expect(result.totalCost).toBe(100000);
-        expect(mockBookingRequestRepo.create).toHaveBeenCalledWith({
-          userId: dataWithoutPurpose.userId,
-          roomId: dataWithoutPurpose.roomId,
-          startTime: expect.any(Date),
-          endTime: expect.any(Date),
-          purpose: undefined,
-          paymentMethod: "VNPAY",
+        expect(prismaMock.bookingRequest.create).toHaveBeenCalledWith({
+          data: {
+            userId: validData.userId,
+            roomId: validData.roomId,
+            startTime: expect.any(Date),
+            endTime: expect.any(Date),
+            purpose: undefined,
+            paymentMethod: "VNPAY",
+            totalAmount: 100000,
+          },
         });
+
       });
     });
   });

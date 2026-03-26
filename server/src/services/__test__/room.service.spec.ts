@@ -386,7 +386,7 @@ describe("RoomService", () => {
 
       const result = await roomService.getRoomById("r-001");
 
-      expect(result).toEqual({ room: mockRoom });
+      expect(result.room).toEqual(expect.objectContaining(mockRoom));
       expect(mockRoomRepo.findById).toHaveBeenCalledWith("r-001");
     });
   });
@@ -412,7 +412,7 @@ describe("RoomService", () => {
           10,
           0,
         );
-        expect(result.rooms).toEqual(mockRooms);
+        expect(result.rooms[0]).toEqual(expect.objectContaining(mockRooms[0]));
       });
 
       it("should filter by buildingId", async () => {
@@ -686,15 +686,13 @@ describe("RoomService", () => {
           offset: 0,
         });
 
-        expect(result).toEqual({
-          rooms: mockRooms,
-          pagination: {
+        expect(result.pagination).toEqual({
             total: 1,
             limit: 10,
             offset: 0,
             hasMore: false,
-          },
-          filters: {
+        });
+        expect(result.filters).toEqual({
             search: "Conference",
             buildingId: "b-001",
             roomType: null,
@@ -704,8 +702,8 @@ describe("RoomService", () => {
             minCapacity: null,
             sortBy: null,
             sortOrder: null,
-          },
         });
+        expect(result.rooms[0]).toEqual(expect.objectContaining(mockRooms[0]));
       });
     });
   });

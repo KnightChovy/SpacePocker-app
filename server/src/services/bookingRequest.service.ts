@@ -49,6 +49,7 @@ export default class BookingRequestService {
     amenityIds?: string[];
     services?: Array<{ serviceId: string; quantity: number }>;
     paymentMethod?: PaymentMethod;
+    totalAmount?: number;
   }) {
     const {
       userId,
@@ -59,6 +60,7 @@ export default class BookingRequestService {
       amenityIds,
       services,
       paymentMethod = "VNPAY",
+      totalAmount: feTotalAmount,
     } = data;
     const uniqueAmenityIds = Array.from(new Set(amenityIds ?? []));
 
@@ -226,7 +228,7 @@ export default class BookingRequestService {
         endTime,
         purpose,
         paymentMethod,
-        totalAmount,
+        totalAmount: feTotalAmount !== undefined ? feTotalAmount : totalAmount,
         ...(servicesData.length > 0 && {
           services: {
             create: services!.map((sel) => {
@@ -283,6 +285,7 @@ export default class BookingRequestService {
     purpose?: string;
     amenityIds?: string[];
     services?: Array<{ serviceId: string; quantity: number }>;
+    totalAmount?: number;
     ipAddr: string;
     locale?: "vn" | "en";
   }) {
@@ -294,6 +297,7 @@ export default class BookingRequestService {
       purpose: data.purpose,
       amenityIds: data.amenityIds,
       services: data.services,
+      totalAmount: data.totalAmount,
     });
 
     const room = await this.roomRepo.findById(data.roomId);
