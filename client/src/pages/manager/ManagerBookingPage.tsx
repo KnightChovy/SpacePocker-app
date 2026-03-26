@@ -53,6 +53,11 @@ const ManagerBookingPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] =
     useState<BookingRequestStatus>('PENDING');
+  const [cancelModalRequest, setCancelModalRequest] =
+    useState<BookingRequestForManager | null>(null);
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelReasonError, setCancelReasonError] = useState('');
 
   const bookingRequestsQuery = useGetBookingRequestsForManager(selectedStatus);
   const approveMutation = useApproveBookingRequest();
@@ -92,28 +97,47 @@ const ManagerBookingPage: React.FC = () => {
   };
 
   const handleCancel = async (request: BookingRequestForManager) => {
-    const reason = window.prompt(
-      'Please provide a reason for cancelling this booking:',
-      ''
-    );
+    setCancelModalRequest(request);
+    setIsCancelConfirmOpen(false);
+    setCancelReason('');
+    setCancelReasonError('');
+  };
 
-    if (reason !== null) {
-      if (!reason.trim()) {
-        alert('Cancellation reason is required');
-        return;
-      }
+  const closeCancelModal = () => {
+    if (cancelMutation.isPending) return;
+    setCancelModalRequest(null);
+    setIsCancelConfirmOpen(false);
+    setCancelReason('');
+    setCancelReasonError('');
+  };
 
-      if (
-        window.confirm(
-          `Cancel this completed booking with reason: "${reason}"?`
-        )
-      ) {
-        await cancelMutation.mutateAsync({
-          bookingRequestId: request.id,
-          reason: reason.trim(),
-        });
-      }
+  const openCancelConfirm = () => {
+    if (!cancelModalRequest) return;
+
+    const trimmedReason = cancelReason.trim();
+    if (!trimmedReason) {
+      setCancelReasonError('Cancellation reason is required');
+      return;
     }
+
+    setIsCancelConfirmOpen(true);
+  };
+
+  const submitCancel = async () => {
+    if (!cancelModalRequest) return;
+
+    const trimmedReason = cancelReason.trim();
+    if (!trimmedReason) {
+      setCancelReasonError('Cancellation reason is required');
+      return;
+    }
+
+    await cancelMutation.mutateAsync({
+      bookingRequestId: cancelModalRequest.id,
+      reason: trimmedReason,
+    });
+
+    closeCancelModal();
   };
 
   return (
@@ -185,6 +209,99 @@ const ManagerBookingPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {cancelModalRequest && !isCancelConfirmOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Cancel Booking
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Please provide a reason for cancelling this booking request.
+            </p>
+
+            <div className="mt-4">
+              <textarea
+                value={cancelReason}
+                onChange={e => {
+                  setCancelReason(e.target.value);
+                  if (cancelReasonError) {
+                    setCancelReasonError('');
+                  }
+                }}
+                placeholder="Enter cancellation reason"
+                rows={4}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              />
+              {cancelReasonError ? (
+                <p className="mt-2 text-xs text-red-600">{cancelReasonError}</p>
+              ) : null}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeCancelModal}
+                disabled={cancelMutation.isPending}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={openCancelConfirm}
+                disabled={cancelMutation.isPending}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {cancelModalRequest && isCancelConfirmOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Confirm Cancellation
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Are you sure you want to cancel this booking request?
+            </p>
+
+            <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Reason
+              </p>
+              <p className="mt-1 text-sm text-gray-800 whitespace-pre-wrap">
+                {cancelReason.trim()}
+              </p>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsCancelConfirmOpen(false)}
+                disabled={cancelMutation.isPending}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={submitCancel}
+                disabled={cancelMutation.isPending}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {cancelMutation.isPending
+                  ? 'Cancelling...'
+                  : 'Yes, Cancel Booking'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 };
