@@ -270,7 +270,9 @@ export default class BookingService {
     }
 
     if (booking.status === "CHECKED_IN") {
-      throw new BadRequestError("Cannot cancel a booking that is currently checked in");
+      throw new BadRequestError(
+        "Cannot cancel a booking that is currently checked in",
+      );
     }
 
     const cancelledBooking = await prisma.booking.update({
@@ -361,6 +363,31 @@ export default class BookingService {
     return { booking: cancelledBooking };
   }
 
+  async userCancelBookingByRequestId(bookingRequestId: string, userId: string) {
+    if (!bookingRequestId || bookingRequestId.trim() === "") {
+      throw new BadRequestError("Booking Request ID is required");
+    }
+
+    if (!userId || userId.trim() === "") {
+      throw new BadRequestError("User ID is required");
+    }
+
+    const booking = await prisma.booking.findFirst({
+      where: {
+        transaction: {
+          bookingRequestId: bookingRequestId,
+        },
+        userId,
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundError("Booking associated with this request not found");
+    }
+
+    return this.userCancelBooking(booking.id, userId);
+  }
+
   async managerCancelPaidBookingAndNotifyRefund(
     bookingRequestId: string,
     requestedByUserId: string,
@@ -395,15 +422,19 @@ export default class BookingService {
     }
 
     if (bookingRequest.status === "CHECKED_IN") {
-      throw new BadRequestError("Cannot cancel a booking that is currently checked in");
+      throw new BadRequestError(
+        "Cannot cancel a booking that is currently checked in",
+      );
     }
 
     const checkInRecord = await prisma.checkInRecord.findUnique({
-      where: { bookingRequestId }
+      where: { bookingRequestId },
     });
 
     if (bookingRequest.status === "COMPLETED" && checkInRecord?.checkedOutAt) {
-      throw new BadRequestError("Cannot cancel a booking that has already checked out");
+      throw new BadRequestError(
+        "Cannot cancel a booking that has already checked out",
+      );
     }
 
     const isManagerOrAdmin =
