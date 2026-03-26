@@ -92,8 +92,27 @@ const ManagerBookingPage: React.FC = () => {
   };
 
   const handleCancel = async (request: BookingRequestForManager) => {
-    if (window.confirm('Cancel this completed booking?')) {
-      await cancelMutation.mutateAsync(request.id);
+    const reason = window.prompt(
+      'Please provide a reason for cancelling this booking:',
+      ''
+    );
+
+    if (reason !== null) {
+      if (!reason.trim()) {
+        alert('Cancellation reason is required');
+        return;
+      }
+
+      if (
+        window.confirm(
+          `Cancel this completed booking with reason: "${reason}"?`
+        )
+      ) {
+        await cancelMutation.mutateAsync({
+          bookingRequestId: request.id,
+          reason: reason.trim(),
+        });
+      }
     }
   };
 

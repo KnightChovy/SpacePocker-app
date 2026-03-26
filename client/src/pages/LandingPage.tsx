@@ -7,8 +7,22 @@ import Footer from '@/components/Footer';
 import FeatureSpaceSection from '@/components/landingDashboard/FeatureSpaceSection';
 import CTASection from '@/components/landingDashboard/CTASection';
 
+const toIsoFromDateAndHour = (date: string, hour: string) => {
+  if (!date || !hour) return '';
+  const composed = `${date}T${hour}:00`;
+  const localDateTime = new Date(composed);
+  if (Number.isNaN(localDateTime.getTime())) return '';
+  return localDateTime.toISOString();
+};
+
 const LandingPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchDate, setSearchDate] = useState('');
+  const [startHour, setStartHour] = useState('09:00');
+  const [endHour, setEndHour] = useState('11:00');
+
+  const searchStartTimeIso = toIsoFromDateAndHour(searchDate, startHour);
+  const searchEndTimeIso = toIsoFromDateAndHour(searchDate, endHour);
 
   const handleSearchSubmit = () => {
     const section = document.getElementById('popular-near-you');
@@ -23,6 +37,12 @@ const LandingPage = () => {
         <Hero
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
+          searchDate={searchDate}
+          startHour={startHour}
+          endHour={endHour}
+          onSearchDateChange={setSearchDate}
+          onStartHourChange={setStartHour}
+          onEndHourChange={setEndHour}
           onSearchSubmit={handleSearchSubmit}
         />
 
@@ -37,6 +57,8 @@ const LandingPage = () => {
         </section>
         <FeatureSpaceSection
           searchQuery={searchQuery}
+          startTime={searchStartTimeIso}
+          endTime={searchEndTimeIso}
           sectionId="popular-near-you"
         />
 

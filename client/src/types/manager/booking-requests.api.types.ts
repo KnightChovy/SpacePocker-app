@@ -16,5 +16,8 @@ export type ApproveBookingRequestResponse = ApproveBookingRequestResult;
 export type RejectBookingRequestRequest = { bookingRequestId: string };
 export type RejectBookingRequestResponse = BookingRequestForManager;
 
-export type RefundCancelBookingRequestRequest = { bookingRequestId: string };
+export type RefundCancelBookingRequestRequest = {
+  bookingRequestId: string;
+  reason?: string;
+};
 export type RefundCancelBookingRequestResponse = BookingRequestForManager;

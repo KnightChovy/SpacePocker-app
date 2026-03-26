@@ -5,8 +5,14 @@ export const useCancelBookingRequest = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (bookingRequestId: string) => {
-      return managerBookingRequestsApi.refundCancel(bookingRequestId);
+    mutationFn: async ({
+      bookingRequestId,
+      reason,
+    }: {
+      bookingRequestId: string;
+      reason?: string;
+    }) => {
+      return managerBookingRequestsApi.refundCancel(bookingRequestId, reason);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({

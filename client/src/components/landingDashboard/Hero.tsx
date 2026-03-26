@@ -3,9 +3,20 @@ import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
+const pad2 = (value: number) => value.toString().padStart(2, '0');
+const toDateString = (date: Date) => {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+};
+
 interface HeroProps {
   searchQuery: string;
+  searchDate: string;
+  startHour: string;
+  endHour: string;
   onSearchQueryChange: (value: string) => void;
+  onSearchDateChange: (value: string) => void;
+  onStartHourChange: (value: string) => void;
+  onEndHourChange: (value: string) => void;
   onSearchSubmit?: () => void;
 }
 
@@ -17,10 +28,37 @@ const BACKGROUND_IMAGES = [
 
 const Hero = ({
   searchQuery,
+  searchDate,
+  startHour,
+  endHour,
   onSearchQueryChange,
+  onSearchDateChange,
+  onStartHourChange,
+  onEndHourChange,
   onSearchSubmit,
 }: HeroProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [now, setNow] = useState<Date>(() => new Date());
+
+  const timeSlots = Array.from({ length: 17 }, (_, index) => {
+    const hour = index + 7;
+    return `${hour.toString().padStart(2, '0')}:00`;
+  });
+
+  const todayDate = toDateString(now);
+  const isTodaySelected = searchDate === todayDate;
+  const availableStartSlots = isTodaySelected
+    ? timeSlots.filter(slot => {
+        const slotDateTime = new Date(`${searchDate}T${slot}:00`);
+        return slotDateTime.getTime() >= now.getTime();
+      })
+    : timeSlots;
+
+  const effectiveStartHour = availableStartSlots.includes(startHour)
+    ? startHour
+    : (availableStartSlots[0] ?? '');
+
+  const availableEndSlots = timeSlots.filter(slot => slot > effectiveStartHour);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -31,6 +69,34 @@ const Hero = ({
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 60_000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (searchDate && searchDate < todayDate) {
+      onSearchDateChange(todayDate);
+    }
+  }, [onSearchDateChange, searchDate, todayDate]);
+
+  useEffect(() => {
+    if (availableStartSlots.length === 0) return;
+    if (!availableStartSlots.includes(startHour)) {
+      onStartHourChange(availableStartSlots[0]);
+    }
+  }, [availableStartSlots, onStartHourChange, startHour]);
+
+  useEffect(() => {
+    if (availableEndSlots.length === 0) return;
+    if (!availableEndSlots.includes(endHour)) {
+      onEndHourChange(availableEndSlots[0]);
+    }
+  }, [availableEndSlots, endHour, onEndHourChange]);
 
   return (
     <div className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
@@ -76,7 +142,7 @@ const Hero = ({
           No contracts, just pure creativity.
         </p>
 
-        <div className="mx-auto max-w-3xl items-center bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-2 flex flex-col md:flex-row gap-2 border border-white/20">
+        <div className="mx-auto max-w-5xl items-center bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-2 flex flex-col md:flex-row gap-2 border border-white/20">
           <div className="flex-1 flex items-center px-4 py-3 border-b md:border-b-0 md:border-r border-slate-200">
             <Search className="text-slate-400 mr-3 h-5 w-5" />
             <Input
@@ -86,6 +152,45 @@ const Hero = ({
               onChange={event => onSearchQueryChange(event.target.value)}
             />
           </div>
+
+          <Input
+            type="date"
+            value={searchDate}
+            onChange={event => onSearchDateChange(event.target.value)}
+            min={todayDate}
+            className="w-full md:w-44 bg-transparent border-0 md:border-r border-slate-200 rounded-none text-sm"
+          />
+
+          <select
+            value={effectiveStartHour}
+            onChange={event => onStartHourChange(event.target.value)}
+            className="w-full md:w-36 bg-transparent border-0 md:border-r border-slate-200 rounded-none text-sm px-3 py-2"
+            disabled={availableStartSlots.length === 0}
+          >
+            {availableStartSlots.map(slot => (
+              <option key={slot} value={slot}>
+                {slot}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={
+              availableEndSlots.includes(endHour)
+                ? endHour
+                : (availableEndSlots[0] ?? '')
+            }
+            onChange={event => onEndHourChange(event.target.value)}
+            className="w-full md:w-36 bg-transparent border-0 md:border-r border-slate-200 rounded-none text-sm px-3 py-2"
+            disabled={availableEndSlots.length === 0}
+          >
+            {availableEndSlots.map(slot => (
+              <option key={slot} value={slot}>
+                {slot}
+              </option>
+            ))}
+          </select>
+
           <Button
             className="bg-primary text-white px-10 py-6 rounded-xl font-bold text-base shadow-lg shadow-primary/30 hover:bg-indigo-700 transition-all active:scale-95 w-full md:w-auto"
             type="button"
