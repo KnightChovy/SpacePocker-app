@@ -1,10 +1,12 @@
 import { BuildingService } from '../building.service';
 import { IBuildingRepository } from '../../interface/building.repository.interface';
+import { IManagerRepository } from '../../interface/manager.repository.interface';
 import { BadRequestError, NotFoundError } from '../../core/error.response';
 
 describe('BuildingService', () => {
   let buildingService: BuildingService;
   let mockRepo: jest.Mocked<IBuildingRepository>;
+  let mockManagerRepo: jest.Mocked<IManagerRepository>;
 
   const mockBuilding = {
     id: 'b-001',
@@ -18,7 +20,18 @@ describe('BuildingService', () => {
     updatedAt: new Date(),
   };
 
+  const mockManager = {
+    id: 'mgr-001',
+    name: 'Manager A',
+    email: 'manager@example.com',
+    phoneNumber: null,
+    role: 'MANAGER' as const,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
   beforeEach(() => {
+    jest.clearAllMocks();
     mockRepo = {
       create: jest.fn(),
       findById: jest.fn(),
@@ -27,8 +40,12 @@ describe('BuildingService', () => {
       update: jest.fn(),
       delete: jest.fn(),
     };
-    buildingService = new BuildingService(mockRepo);
-    jest.clearAllMocks();
+    mockManagerRepo = {
+      findById: jest.fn().mockResolvedValue(mockManager),
+      findByUserIdentity: jest.fn(),
+      createFromUser: jest.fn(),
+    };
+    buildingService = new BuildingService(mockRepo, mockManagerRepo);
   });
 
   describe('createBuilding()', () => {
@@ -152,6 +169,18 @@ describe('BuildingService', () => {
             managerId: '',
           }),
         ).rejects.toThrow('Manager ID is required');
+      });
+
+      it('should throw NotFoundError if manager does not exist', async () => {
+        mockManagerRepo.findById.mockResolvedValue(null);
+
+        await expect(buildingService.createBuilding(validData)).rejects.toThrow(
+          NotFoundError,
+        );
+
+        await expect(buildingService.createBuilding(validData)).rejects.toThrow(
+          'Manager not found',
+        );
       });
     });
 
