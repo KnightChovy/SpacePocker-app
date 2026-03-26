@@ -86,9 +86,9 @@ const ManagerDashboardPage = () => {
           showSearch={true}
           searchPlaceholder="Search bookings..."
           profile={{
-            name: 'Alex Morgan',
-            subtitle: 'Manager',
-            avatarUrl: 'https://picsum.photos/id/64/100/100',
+            name: user?.name || 'Manager',
+            subtitle: user?.role || 'MANAGER',
+            avatarUrl: getAvatarUrl(user?.name, 'Manager'),
             showDropdown: true,
           }}
         />
