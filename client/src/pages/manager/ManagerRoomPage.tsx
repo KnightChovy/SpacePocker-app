@@ -10,8 +10,6 @@ import {
   Edit,
   Trash2,
   Eye,
-  Bell,
-  MessageSquare,
 } from 'lucide-react';
 import type { ApiRoom, ApiRoomStatus } from '@/types/user/room-api';
 import { useGetRooms } from '@/hooks/manager/rooms/use-get-rooms';
@@ -26,8 +24,6 @@ import DeleteRoomConfirmModal from '@/components/features/manager/roomManager/De
 import { useAuthStore } from '@/stores/auth.store';
 import { formatVND, getAvatarUrl } from '@/lib/utils';
 import { parseRoomNumbers } from '@/validations/manager/room.validation';
-
-const MANAGER_NOTIFICATIONS_READ_KEY = 'spacepocker-manager-notifications-read';
 
 const StatusBadge = ({ status }: { status: ApiRoomStatus }) => {
   const config: Record<string, { bg: string; text: string; label: string }> = {
@@ -168,34 +164,6 @@ const ManagerRoomPage = () => {
   }>();
   const user = useAuthStore(state => state.user);
 
-  const [hasReadNotifications, setHasReadNotifications] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return (
-      window.localStorage.getItem(MANAGER_NOTIFICATIONS_READ_KEY) === 'true'
-    );
-  });
-
-  const handleNotificationsClick = () => {
-    setHasReadNotifications(true);
-
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(MANAGER_NOTIFICATIONS_READ_KEY, 'true');
-    }
-  };
-
-  const headerActions = [
-    {
-      id: 'notifications',
-      icon: <Bell className="h-5 w-5" />,
-      badge: !hasReadNotifications,
-      onClick: handleNotificationsClick,
-    },
-    {
-      id: 'messages',
-      icon: <MessageSquare className="h-5 w-5" />,
-    },
-  ];
-
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<ApiRoomStatus | 'all'>(
@@ -315,7 +283,6 @@ const ManagerRoomPage = () => {
         title="Room Management"
         subtitle="Manage inventory, pricing, and availability across all buildings."
         onMenuClick={() => setSidebarOpen(true)}
-        actions={headerActions}
         profile={{
           name: user?.name || 'Manager',
           subtitle: user?.role || 'MANAGER',

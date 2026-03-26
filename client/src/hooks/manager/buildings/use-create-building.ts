@@ -8,7 +8,6 @@ export const useCreateBuilding = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (body: CreateBuildingPayload) => {
-      // Tự động lấy managerId từ user đã đăng nhập
       const currentUser = useAuthStore.getState().user;
       const payload = {
         ...body,
