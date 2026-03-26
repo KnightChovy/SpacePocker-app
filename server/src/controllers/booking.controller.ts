@@ -44,6 +44,20 @@ class BookingController {
     }).send(res);
   };
 
+  userCancelBooking = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    new OK({
+      message: "Booking cancelled successfully. Notification email sent.",
+      metadata: await this.bookingService.userCancelBooking(
+        String(req.params.id),
+        String(req.user?.userId),
+      ),
+    }).send(res);
+  };
+
   managerCancelPaidBookingAndNotifyRefund = async (
     req: Request,
     res: Response,

@@ -31,6 +31,13 @@ router.patch(
   asyncHandler(bookingController.cancelBooking),
 );
 
+// New API for user to cancel paid booking (no refund)
+router.patch(
+  "/bookings/:id/cancel",
+  authentication,
+  asyncHandler(bookingController.userCancelBooking),
+);
+
 router.patch(
   "/manager/bookings/:id/refund-cancel",
   authentication,

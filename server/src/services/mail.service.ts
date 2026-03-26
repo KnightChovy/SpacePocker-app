@@ -47,7 +47,7 @@ export default class MailService {
     await this.transporter.sendMail({
       from: this.getFromAddress(),
       to: input.to,
-      subject: "Booking thanh cong - SpacePocker",
+      subject: "Confirmation of booking - SpacePocker",
       text: [
         `Xin chao ${input.customerName},`,
         "",
@@ -62,6 +62,49 @@ export default class MailService {
       html: `
         <p>Xin chao <strong>${input.customerName}</strong>,</p>
         <p>Booking cua ban da duoc thanh toan thanh cong.</p>
+        <ul>
+          <li><strong>Ma booking:</strong> ${input.bookingId}</li>
+          <li><strong>Phong:</strong> ${input.roomName}</li>
+          <li><strong>Bat dau:</strong> ${start}</li>
+          <li><strong>Ket thuc:</strong> ${end}</li>
+        </ul>
+        <p>Cam on ban da su dung SpacePocker.</p>
+      `,
+    });
+  }
+
+  async sendBookingCancelledNoRefundEmail(input: {
+    to: string;
+    customerName: string;
+    bookingId: string;
+    roomName: string;
+    startTime: Date;
+    endTime: Date;
+  }) {
+    const start = input.startTime.toLocaleString("vi-VN");
+    const end = input.endTime.toLocaleString("vi-VN");
+
+    await this.transporter.sendMail({
+      from: this.getFromAddress(),
+      to: input.to,
+      subject: "Thong bao huy booking thanh cong - SpacePocker",
+      text: [
+        `Xin chao ${input.customerName},`,
+        "",
+        "Booking cua ban da duoc huy thanh cong theo yeu cau.",
+        "Luu y: Booking nay da duoc thanh toan va se khong duoc hoan tien theo chinh sach cua chung toi.",
+        "",
+        `Ma booking: ${input.bookingId}`,
+        `Phong: ${input.roomName}`,
+        `Bat dau: ${start}`,
+        `Ket thuc: ${end}`,
+        "",
+        "Cam on ban da su dung SpacePocker.",
+      ].join("\n"),
+      html: `
+        <p>Xin chao <strong>${input.customerName}</strong>,</p>
+        <p>Booking cua ban da duoc huy thanh cong theo yeu cau.</p>
+        <p style="color: red; font-weight: bold;">Luu y: Booking nay da duoc thanh toan va se khong duoc hoan tien theo chinh sach cua chung toi.</p>
         <ul>
           <li><strong>Ma booking:</strong> ${input.bookingId}</li>
           <li><strong>Phong:</strong> ${input.roomName}</li>
