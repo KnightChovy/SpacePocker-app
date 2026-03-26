@@ -345,8 +345,16 @@ export default class BookingService {
       include: {
         user: true,
         room: true,
+        transaction: true,
       },
     });
+
+    if (cancelledBooking.transaction?.bookingRequestId) {
+      await prisma.bookingRequest.updateMany({
+        where: { id: cancelledBooking.transaction.bookingRequestId },
+        data: { status: "CANCELLED" },
+      });
+    }
 
     // Send email notification regarding no refund for APPROVED and COMPLETED bookings
     if (booking.status === "APPROVED" || booking.status === "COMPLETED") {
@@ -385,7 +393,15 @@ export default class BookingService {
       throw new NotFoundError("Booking associated with this request not found");
     }
 
-    return this.userCancelBooking(booking.id, userId);
+    const result = await this.userCancelBooking(booking.id, userId);
+
+    // Ensure the booking request itself is also explicitly cancelled
+    await prisma.bookingRequest.updateMany({
+      where: { id: bookingRequestId },
+      data: { status: "CANCELLED" },
+    });
+
+    return result;
   }
 
   async managerCancelPaidBookingAndNotifyRefund(
