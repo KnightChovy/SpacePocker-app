@@ -199,25 +199,35 @@ async function ensureAmenities(): Promise<Record<string, string>> {
 async function ensureBuilding(managerId: string) {
   const buildingName = "Main Building";
   const campus = "HQ";
-  const address = "1 Example Street";
+  const address =
+    "Vinhomes Central Park, 720A P. Điện Biên Phủ, Phường 22, Bình Thạnh, Hồ Chí Minh";
+  const latitude = 10.794611;
+  const longitude = 106.722287;
 
   const existing = await prisma.building.findFirst({
     where: {
       buildingName,
       campus,
-      address,
       managerId,
     },
     select: { id: true },
   });
 
-  if (existing) return existing.id;
+  if (existing) {
+    await prisma.building.update({
+      where: { id: existing.id },
+      data: { address, latitude, longitude },
+    });
+    return existing.id;
+  }
 
   const building = await prisma.building.create({
     data: {
       buildingName,
       campus,
       address,
+      latitude,
+      longitude,
       managerId,
     },
     select: { id: true },
@@ -263,9 +273,7 @@ async function ensureRooms(managerId: string, buildingId: string) {
       capacity: 12,
       roomType: RoomType.MEETING,
       status: RoomStatus.AVAILABLE,
-      images: [
-        "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1200&q=80",
-      ],
+      images: ["https://alo360.com/media/images/123(2).jpg"],
     },
     {
       roomCode: "MEET-103",
