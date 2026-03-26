@@ -292,12 +292,16 @@ const BookingList = ({
     const latestCheckIn = new Date(startTime.getTime() + 30 * 60 * 1000);
 
     if (now < earliestCheckIn) {
-      toast.error('You can only check in 15 minutes before booking time starts');
+      toast.error(
+        'You can only check in 15 minutes before booking time starts'
+      );
       return;
     }
 
     if (now > latestCheckIn) {
-      toast.error('Check-in time has expired (more than 30 minutes after start)');
+      toast.error(
+        'Check-in time has expired (more than 30 minutes after start)'
+      );
       return;
     }
 
@@ -376,11 +380,17 @@ const BookingList = ({
         const startTime = req?.startTime ? new Date(req.startTime) : null;
         const endTime = req?.endTime ? new Date(req.endTime) : null;
         // Check-in allowed 15 minutes before start
-        const earliestCheckIn = startTime ? new Date(startTime.getTime() - 15 * 60 * 1000) : null;
+        const earliestCheckIn = startTime
+          ? new Date(startTime.getTime() - 15 * 60 * 1000)
+          : null;
         const isBeforeStart = startTime ? now < startTime : false;
-        const hasReachedBookingTime = earliestCheckIn ? now >= earliestCheckIn : false;
-        
-        const latestCheckIn = startTime ? new Date(startTime.getTime() + 30 * 60 * 1000) : null;
+        const hasReachedBookingTime = earliestCheckIn
+          ? now >= earliestCheckIn
+          : false;
+
+        const latestCheckIn = startTime
+          ? new Date(startTime.getTime() + 30 * 60 * 1000)
+          : null;
         const checkInExpired = latestCheckIn ? now > latestCheckIn : false;
 
         const reviewed =
@@ -388,8 +398,9 @@ const BookingList = ({
 
         const isRequestCancelled =
           req?.status === 'CANCELLED' || req?.status === 'REJECTED';
-        const isPaid = req?.status === 'COMPLETED' || req?.status === 'CHECKED_IN';
-        
+        const isPaid =
+          req?.status === 'COMPLETED' || req?.status === 'CHECKED_IN';
+
         const hasCheckedIn = !!req?.checkInRecord;
         const hasCheckedOut = !!req?.checkInRecord?.checkedOutAt;
 
@@ -400,11 +411,9 @@ const BookingList = ({
           !isRequestCancelled &&
           hasReachedBookingTime &&
           !checkInExpired;
-          
+
         const canCheckOut =
-          !!req &&
-          req.status === 'CHECKED_IN' &&
-          !hasCheckedOut;
+          !!req && req.status === 'CHECKED_IN' && !hasCheckedOut;
 
         const checkInBlockedReasons: string[] = [];
         if (!canCheckIn) {
@@ -421,16 +430,17 @@ const BookingList = ({
               );
             }
 
-            if (req.status === 'CHECKED_IN' || (hasCheckedIn && !hasCheckedOut)) {
+            if (
+              req.status === 'CHECKED_IN' ||
+              (hasCheckedIn && !hasCheckedOut)
+            ) {
               checkInBlockedReasons.push(
                 'Booking is already checked in. Please check out instead.'
               );
             }
-            
+
             if (hasCheckedOut) {
-               checkInBlockedReasons.push(
-                'Booking is already checked out.'
-              );
+              checkInBlockedReasons.push('Booking is already checked out.');
             }
 
             if (!hasReachedBookingTime) {
@@ -438,9 +448,11 @@ const BookingList = ({
                 'Check-in is only available 15 minutes before booking time starts.'
               );
             }
-            
+
             if (checkInExpired) {
-              checkInBlockedReasons.push('Check-in time has expired (more than 30 minutes after start).');
+              checkInBlockedReasons.push(
+                'Check-in time has expired (more than 30 minutes after start).'
+              );
             }
           }
         }
@@ -452,9 +464,7 @@ const BookingList = ({
           req?.status === 'COMPLETED' && (isBookingCheckedOut || isPastEndTime);
 
         const canWriteFeedback =
-          isBookingCompleted &&
-          !!req?.roomId &&
-          !reviewed;
+          isBookingCompleted && !!req?.roomId && !reviewed;
         const isFeedbackSubmitted = !!req?.roomId && reviewed;
 
         const canPay = req?.status === 'APPROVED' && isBeforeStart;

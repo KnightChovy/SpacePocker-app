@@ -155,7 +155,9 @@ const BookingTable = ({
                       </>
                     )}
 
-                    {(request.status === 'APPROVED' || (request.status === 'COMPLETED' && !request.checkInRecord)) && (
+                    {(request.status === 'APPROVED' ||
+                      (request.status === 'COMPLETED' &&
+                        !request.checkInRecord)) && (
                       <button
                         onClick={() => onCancel?.(request)}
                         className="px-2.5 py-1 text-xs font-medium text-red-500 border border-red-200 rounded hover:bg-red-50 transition-colors disabled:opacity-50"

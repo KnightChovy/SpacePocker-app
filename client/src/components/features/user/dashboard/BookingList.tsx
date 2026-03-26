@@ -158,7 +158,11 @@ const BookingList = ({
               </div>
               <div className="sm:border-l border-border-light dark:border-border-dark sm:pl-4 flex sm:flex-col gap-2">
                 <button className="p-2 rounded-lg text-text-sub-light hover:bg-background-light hover:text-primary transition-colors">
-                  {booking.status !== 'COMPLETED' && !booking.canWriteReview ? <Pencil /> : <History />}
+                  {booking.status !== 'COMPLETED' && !booking.canWriteReview ? (
+                    <Pencil />
+                  ) : (
+                    <History />
+                  )}
                 </button>
                 {booking.status === 'COMPLETED' && booking.canWriteReview && (
                   <button className="p-2 rounded-lg text-text-sub-light hover:bg-background-light hover:text-primary transition-colors">

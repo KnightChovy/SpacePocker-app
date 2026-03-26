@@ -110,7 +110,6 @@ const SpacesPage: React.FC = () => {
       CANCELLED,
       COMPLETED,
       CHECKED_IN,
-
     };
   }, [
     pendingQuery.data?.length,
@@ -119,7 +118,6 @@ const SpacesPage: React.FC = () => {
     cancelledQuery.data?.length,
     completedQuery.data?.length,
     checkedInQuery.data?.length,
-
   ]);
 
   const bookingRequests = useMemo(() => {
