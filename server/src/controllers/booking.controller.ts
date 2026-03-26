@@ -5,11 +5,7 @@ import BookingService from "../services/booking.service";
 class BookingController {
   constructor(private bookingService: BookingService) {}
 
-  getAllBookings = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
+  getAllBookings = async (req: Request, res: Response, next: NextFunction) => {
     new OK({
       message: "Get all bookings successfully",
       metadata: await this.bookingService.getAllBookings(req.query),
@@ -19,7 +15,9 @@ class BookingController {
   getMyBookings = async (req: Request, res: Response, next: NextFunction) => {
     new OK({
       message: "Get my bookings successfully",
-      metadata: await this.bookingService.getMyBookings(String(req.user?.userId)),
+      metadata: await this.bookingService.getMyBookings(
+        String(req.user?.userId),
+      ),
     }).send(res);
   };
 
@@ -66,16 +64,18 @@ class BookingController {
     const bookingRequestId = String(req.params.id);
     const managerId = String(req.user?.userId);
     const role = String(req.user?.role);
-    const reason = typeof req.body?.reason === "string" ? req.body.reason : undefined;
-        
+    const reason =
+      typeof req.body?.reason === "string" ? req.body.reason : undefined;
+
     new OK({
       message: "Booking cancelled and refund email queued successfully",
-      metadata: await this.bookingService.managerCancelPaidBookingAndNotifyRefund(
-        bookingRequestId,
-        managerId,
-        role,
-        reason,
-      ),
+      metadata:
+        await this.bookingService.managerCancelPaidBookingAndNotifyRefund(
+          bookingRequestId,
+          managerId,
+          role,
+          reason,
+        ),
     }).send(res);
   };
 }

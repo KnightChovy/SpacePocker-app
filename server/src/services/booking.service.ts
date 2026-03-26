@@ -129,7 +129,8 @@ export default class BookingService {
       !isNaN(parsedLimit) && parsedLimit > 0 && parsedLimit <= 100
         ? parsedLimit
         : 10;
-    const safeOffset = !isNaN(parsedOffset) && parsedOffset >= 0 ? parsedOffset : 0;
+    const safeOffset =
+      !isNaN(parsedOffset) && parsedOffset >= 0 ? parsedOffset : 0;
 
     const [total, bookings] = await Promise.all([
       prisma.booking.count({ where }),
@@ -325,7 +326,9 @@ export default class BookingService {
 
     // Check if booking has already started
     if (new Date() > booking.startTime) {
-      throw new BadRequestError("Cannot cancel a booking that has already started");
+      throw new BadRequestError(
+        "Cannot cancel a booking that has already started",
+      );
     }
 
     const cancelledBooking = await prisma.booking.update({
@@ -462,15 +465,16 @@ export default class BookingService {
       });
 
     const isCompletedCancellation = previousBookingStatus === "COMPLETED";
-    const refundAmount = isCompletedCancellation && cancelledBooking
-      ? Math.max(
-          0,
-          cancelledBooking.room.pricePerHour *
-            ((cancelledBooking.endTime.getTime() -
-              cancelledBooking.startTime.getTime()) /
-              (1000 * 60 * 60)),
-        )
-      : 0;
+    const refundAmount =
+      isCompletedCancellation && cancelledBooking
+        ? Math.max(
+            0,
+            cancelledBooking.room.pricePerHour *
+              ((cancelledBooking.endTime.getTime() -
+                cancelledBooking.startTime.getTime()) /
+                (1000 * 60 * 60)),
+          )
+        : 0;
 
     if (isCompletedCancellation && cancelledBooking) {
       await this.mailQueueService.publishBookingRefundSuccessEmailJob({

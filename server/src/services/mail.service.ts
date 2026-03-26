@@ -148,7 +148,9 @@ export default class MailService {
     });
   }
 
-  async sendBookingRefundSuccessEmail(input: SendBookingRefundSuccessEmailInput) {
+  async sendBookingRefundSuccessEmail(
+    input: SendBookingRefundSuccessEmailInput,
+  ) {
     const amount = `${Math.round(input.refundAmount).toLocaleString("vi-VN")} VND`;
     const reason = input.refundReason?.trim();
 
