@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { adminDashboardApi } from '@/apis/admin/dashboard.api';
+import { dashboardService } from '@/services/dashboardService';
 import { getAvatarUrl } from '@/lib/utils';
 import type { BookingRequestForManager } from '@/types/user/booking-request-api';
 import type { LogEntry, Transaction } from '@/types/admin/admin-types';
@@ -67,6 +68,19 @@ const toMonthLabels = () => [
   'Dec',
 ];
 
+const toMonthIndex = (period?: string) => {
+  if (!period) return -1;
+
+  const normalized = /^\d{4}-\d{2}$/.test(period) ? `${period}-01` : period;
+  const date = new Date(normalized);
+
+  if (!Number.isFinite(date.getTime())) {
+    return -1;
+  }
+
+  return date.getMonth();
+};
+
 const getEstimatedAmount = (
   request: BookingRequestForManager,
   roomPriceById: Map<string, number>
@@ -124,37 +138,58 @@ export const useAdminDashboard = () => {
   return useQuery({
     queryKey: ['admin', 'dashboard', 'overview'],
     queryFn: async (): Promise<AdminDashboardData> => {
-      const { usersAll, managerUsers, adminUsers, rooms, bookingRequests } =
-        await adminDashboardApi.getSources();
+      const nowDate = new Date();
+      const currentEndDate = nowDate;
+      const currentStartDate = new Date(nowDate);
+      currentStartDate.setDate(currentStartDate.getDate() - 29);
+
+      const previousEndDate = new Date(currentStartDate);
+      previousEndDate.setMilliseconds(previousEndDate.getMilliseconds() - 1);
+
+      const previousStartDate = new Date(currentStartDate);
+      previousStartDate.setDate(previousStartDate.getDate() - 30);
+
+      const yearStartDate = new Date(nowDate.getFullYear(), 0, 1);
+
+      const [
+        { usersAll, managerUsers, adminUsers, rooms, bookingRequests },
+        bookingReport,
+        currentRevenueReport,
+        previousRevenueReport,
+        yearlyRevenueReport,
+      ] = await Promise.all([
+        adminDashboardApi.getSources(),
+        dashboardService.getBookingReportData({ paidRange: '30d' }),
+        dashboardService.getRevenueReport({
+          startDate: currentStartDate.toISOString(),
+          endDate: currentEndDate.toISOString(),
+          groupBy: 'day',
+        }),
+        dashboardService.getRevenueReport({
+          startDate: previousStartDate.toISOString(),
+          endDate: previousEndDate.toISOString(),
+          groupBy: 'day',
+        }),
+        dashboardService.getRevenueReport({
+          startDate: yearStartDate.toISOString(),
+          endDate: currentEndDate.toISOString(),
+          groupBy: 'month',
+        }),
+      ]);
 
       const roomPriceById = new Map(
         (rooms.rooms ?? []).map(room => [room.id, room.pricePerHour])
       );
 
-      const now = Date.now();
+      const now = nowDate.getTime();
 
       const successfulRequests = bookingRequests.filter(
         request =>
           request.status === 'APPROVED' || request.status === 'COMPLETED'
       );
 
-      const currentRevenue = successfulRequests
-        .filter(request =>
-          isCurrentWindow(new Date(request.createdAt).getTime(), now)
-        )
-        .reduce(
-          (sum, request) => sum + getEstimatedAmount(request, roomPriceById),
-          0
-        );
-
-      const previousRevenue = successfulRequests
-        .filter(request =>
-          isPreviousWindow(new Date(request.createdAt).getTime(), now)
-        )
-        .reduce(
-          (sum, request) => sum + getEstimatedAmount(request, roomPriceById),
-          0
-        );
+      const currentRevenue = Number(currentRevenueReport.totalRevenue ?? 0);
+      const previousRevenue = Number(previousRevenueReport.totalRevenue ?? 0);
 
       const currentActiveSpaces = new Set(
         successfulRequests
@@ -228,7 +263,7 @@ export const useAdminDashboard = () => {
         {
           label: 'Booking Requests',
           value: new Intl.NumberFormat(VIETNAM_LOCALE).format(
-            bookingRequests.length
+            bookingReport.totalRequests
           ),
           trend: bookingRequestsTrend.text,
           trendType: bookingRequestsTrend.trendType,
@@ -236,25 +271,41 @@ export const useAdminDashboard = () => {
         },
       ];
 
-      const transactions = [...bookingRequests]
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
-        .slice(0, 8)
-        .map(request => ({
-          id: `#${request.id.slice(0, 8).toUpperCase()}`,
-          userName: request.user?.name ?? 'Unknown user',
-          userAvatar: getAvatarUrl(request.user?.name, 'User'),
-          spaceName: request.room?.name ?? 'Unknown room',
-          date: new Date(request.createdAt).toLocaleDateString('en-US', {
-            month: 'short',
-            day: '2-digit',
-            year: 'numeric',
-          }),
-          amount: getEstimatedAmount(request, roomPriceById),
-          status: toTransactionStatus(request.status),
-        }));
+      const transactions =
+        bookingReport.recentCompletedBookings.length > 0
+          ? bookingReport.recentCompletedBookings.slice(0, 8).map(booking => ({
+              id: `#${booking.id.slice(0, 8).toUpperCase()}`,
+              userName: booking.user?.name ?? 'Unknown user',
+              userAvatar: getAvatarUrl(booking.user?.name, 'User'),
+              spaceName: booking.room?.name ?? 'Unknown room',
+              date: new Date(booking.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: '2-digit',
+                year: 'numeric',
+              }),
+              amount: Number(booking.transaction?.amount ?? 0),
+              status: 'Completed' as const,
+            }))
+          : [...bookingRequests]
+              .sort(
+                (a, b) =>
+                  new Date(b.createdAt).getTime() -
+                  new Date(a.createdAt).getTime()
+              )
+              .slice(0, 8)
+              .map(request => ({
+                id: `#${request.id.slice(0, 8).toUpperCase()}`,
+                userName: request.user?.name ?? 'Unknown user',
+                userAvatar: getAvatarUrl(request.user?.name, 'User'),
+                spaceName: request.room?.name ?? 'Unknown room',
+                date: new Date(request.createdAt).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: '2-digit',
+                  year: 'numeric',
+                }),
+                amount: getEstimatedAmount(request, roomPriceById),
+                status: toTransactionStatus(request.status),
+              }));
 
       const logs = [...bookingRequests]
         .sort(
@@ -271,20 +322,15 @@ export const useAdminDashboard = () => {
         }));
 
       const months = toMonthLabels();
-      const thisYear = new Date(now).getFullYear();
       const revenueByMonth = new Array(12).fill(0);
 
-      successfulRequests.forEach(request => {
-        const createdAt = new Date(request.createdAt);
-        if (createdAt.getFullYear() !== thisYear) {
+      yearlyRevenueReport.data.forEach(point => {
+        const monthIndex = toMonthIndex(point.period);
+        if (monthIndex < 0 || monthIndex > 11) {
           return;
         }
 
-        const monthIndex = createdAt.getMonth();
-        revenueByMonth[monthIndex] += getEstimatedAmount(
-          request,
-          roomPriceById
-        );
+        revenueByMonth[monthIndex] = Number(point.totalAmount ?? 0);
       });
 
       const transactionChart = months.map((name, idx) => ({

@@ -8,7 +8,16 @@ CREATE TYPE "RoomType" AS ENUM ('MEETING', 'CLASSROOM', 'EVENT', 'OTHER');
 CREATE TYPE "RoomStatus" AS ENUM ('AVAILABLE', 'UNAVAILABLE', 'PROCESS', 'MAINTAIN');
 
 -- CreateEnum
-CREATE TYPE "BookingStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED', 'COMPLETED');
+CREATE TYPE "BookingStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED', 'COMPLETED', 'CHECKED_IN');
+
+-- CreateEnum
+CREATE TYPE "CheckInMethod" AS ENUM ('QR_CODE', 'MANUAL', 'PIN_CODE');
+
+-- CreateEnum
+CREATE TYPE "PaymentMethod" AS ENUM ('VNPAY', 'CASH', 'BANK_TRANSFER');
+
+-- CreateEnum
+CREATE TYPE "TransactionStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -101,6 +110,8 @@ CREATE TABLE "BookingRequest" (
     "endTime" TIMESTAMP(3) NOT NULL,
     "purpose" TEXT,
     "status" "BookingStatus" NOT NULL DEFAULT 'PENDING',
+    "paymentMethod" "PaymentMethod" NOT NULL DEFAULT 'VNPAY',
+    "totalAmount" DOUBLE PRECISION,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "approvedBy" TEXT,
 
@@ -119,6 +130,42 @@ CREATE TABLE "Booking" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Booking_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Transaction" (
+    "id" TEXT NOT NULL,
+    "bookingId" TEXT,
+    "bookingRequestId" TEXT,
+    "userId" TEXT NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "paymentMethod" "PaymentMethod" NOT NULL,
+    "status" "TransactionStatus" NOT NULL DEFAULT 'PENDING',
+    "txnRef" TEXT,
+    "note" TEXT,
+    "paidAt" TIMESTAMP(3),
+    "confirmedBy" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Transaction_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CheckInRecord" (
+    "id" TEXT NOT NULL,
+    "bookingId" TEXT NOT NULL,
+    "checkedInAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "checkedOutAt" TIMESTAMP(3),
+    "checkedInBy" TEXT NOT NULL,
+    "method" "CheckInMethod" NOT NULL DEFAULT 'MANUAL',
+    "note" TEXT,
+    "overstayMinutes" INTEGER,
+    "overstayFee" DOUBLE PRECISION,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "CheckInRecord_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -173,6 +220,17 @@ CREATE TABLE "Service" (
 );
 
 -- CreateTable
+CREATE TABLE "BookingRequestService" (
+    "id" TEXT NOT NULL,
+    "bookingRequestId" TEXT NOT NULL,
+    "serviceId" TEXT NOT NULL,
+    "quantity" INTEGER NOT NULL,
+    "priceSnapshot" DOUBLE PRECISION NOT NULL,
+
+    CONSTRAINT "BookingRequestService_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "RoomServiceCategory" (
     "roomId" TEXT NOT NULL,
     "categoryId" TEXT NOT NULL,
@@ -221,6 +279,36 @@ CREATE INDEX "Booking_userId_idx" ON "Booking"("userId");
 CREATE INDEX "Booking_roomId_idx" ON "Booking"("roomId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Transaction_bookingId_key" ON "Transaction"("bookingId");
+
+-- CreateIndex
+CREATE INDEX "Transaction_userId_idx" ON "Transaction"("userId");
+
+-- CreateIndex
+CREATE INDEX "Transaction_bookingId_idx" ON "Transaction"("bookingId");
+
+-- CreateIndex
+CREATE INDEX "Transaction_bookingRequestId_idx" ON "Transaction"("bookingRequestId");
+
+-- CreateIndex
+CREATE INDEX "Transaction_paymentMethod_idx" ON "Transaction"("paymentMethod");
+
+-- CreateIndex
+CREATE INDEX "Transaction_status_idx" ON "Transaction"("status");
+
+-- CreateIndex
+CREATE INDEX "Transaction_createdAt_idx" ON "Transaction"("createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "CheckInRecord_bookingId_key" ON "CheckInRecord"("bookingId");
+
+-- CreateIndex
+CREATE INDEX "CheckInRecord_bookingId_idx" ON "CheckInRecord"("bookingId");
+
+-- CreateIndex
+CREATE INDEX "CheckInRecord_checkedInBy_idx" ON "CheckInRecord"("checkedInBy");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Keys_userId_key" ON "Keys"("userId");
 
 -- CreateIndex
@@ -240,6 +328,12 @@ CREATE INDEX "ServiceCategory_managerId_idx" ON "ServiceCategory"("managerId");
 
 -- CreateIndex
 CREATE INDEX "Service_categoryId_idx" ON "Service"("categoryId");
+
+-- CreateIndex
+CREATE INDEX "BookingRequestService_bookingRequestId_idx" ON "BookingRequestService"("bookingRequestId");
+
+-- CreateIndex
+CREATE INDEX "BookingRequestService_serviceId_idx" ON "BookingRequestService"("serviceId");
 
 -- CreateIndex
 CREATE INDEX "RoomServiceCategory_categoryId_idx" ON "RoomServiceCategory"("categoryId");
@@ -275,6 +369,18 @@ ALTER TABLE "Booking" ADD CONSTRAINT "Booking_userId_fkey" FOREIGN KEY ("userId"
 ALTER TABLE "Booking" ADD CONSTRAINT "Booking_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "Booking"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CheckInRecord" ADD CONSTRAINT "CheckInRecord_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "Booking"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CheckInRecord" ADD CONSTRAINT "CheckInRecord_checkedInBy_fkey" FOREIGN KEY ("checkedInBy") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Keys" ADD CONSTRAINT "Keys_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -288,6 +394,12 @@ ALTER TABLE "ServiceCategory" ADD CONSTRAINT "ServiceCategory_managerId_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "Service" ADD CONSTRAINT "Service_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "ServiceCategory"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BookingRequestService" ADD CONSTRAINT "BookingRequestService_bookingRequestId_fkey" FOREIGN KEY ("bookingRequestId") REFERENCES "BookingRequest"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BookingRequestService" ADD CONSTRAINT "BookingRequestService_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "Service"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "RoomServiceCategory" ADD CONSTRAINT "RoomServiceCategory_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room"("id") ON DELETE CASCADE ON UPDATE CASCADE;
