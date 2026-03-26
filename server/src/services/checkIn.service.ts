@@ -11,37 +11,40 @@ const CHECKIN_EARLY_MINUTES = 15;
 
 export default class CheckInService {
   async checkIn(
-    bookingId: string,
+    bookingRequestId: string,
     userId: string,
     userRole: string,
     method: CheckInMethod = "MANUAL",
     note?: string,
   ) {
-    if (!bookingId || bookingId.trim() === "") {
-      throw new BadRequestError("Booking id is required");
+    if (!bookingRequestId || bookingRequestId.trim() === "") {
+      throw new BadRequestError("Booking request id is required");
     }
 
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
+    const bookingRequest = await prisma.bookingRequest.findUnique({
+      where: { id: bookingRequestId },
       include: { room: true, user: true },
     });
 
-    if (!booking) throw new NotFoundError("Booking not found");
+    if (!bookingRequest) throw new NotFoundError("Booking request not found");
 
     const isElevated = userRole === "ADMIN" || userRole === "MANAGER";
-    if (!isElevated && booking.userId !== userId) {
-      throw new ForbiddenError("You are not allowed to check in this booking");
+    if (!isElevated && bookingRequest.userId !== userId) {
+      throw new ForbiddenError("You are not allowed to check in this booking/request");
     }
 
-    if (booking.status !== "COMPLETED") {
+    if (bookingRequest.status !== "COMPLETED") {
       throw new BadRequestError(
-        `Cannot check in: booking status is ${booking.status}`,
+        `Cannot check in: booking request status is ${bookingRequest.status}`,
       );
     }
 
     const now = new Date();
     const earliestCheckIn = new Date(
-      booking.startTime.getTime() - CHECKIN_EARLY_MINUTES * 60 * 1000,
+      bookingRequest.startTime.getTime() - CHECKIN_EARLY_MINUTES * 60 * 1000,
+    );
+    const latestCheckIn = new Date(
+      bookingRequest.startTime.getTime() + 30 * 60 * 1000,
     );
 
     if (now < earliestCheckIn) {
@@ -50,94 +53,96 @@ export default class CheckInService {
       );
     }
 
-    if (now > booking.endTime) {
+    if (!isElevated && now > latestCheckIn) {
       throw new BadRequestError(
-        "Cannot check in: booking period has already ended",
+        "Cannot check in: check-in time has expired (more than 30 minutes after start time)",
       );
     }
 
     const existing = await prisma.checkInRecord.findUnique({
-      where: { bookingId },
+      where: { bookingRequestId },
     });
     if (existing) {
-      throw new ConflictRequestError("Already checked in for this booking");
+      throw new ConflictRequestError("Already checked in for this booking request");
     }
 
-    const [checkInRecord, updatedBooking] = await prisma.$transaction([
+    const [checkInRecord, updatedBookingRequest] = await prisma.$transaction([
       prisma.checkInRecord.create({
         data: {
-          bookingId,
+          bookingRequestId,
           checkedInBy: userId,
           method,
           note,
         },
       }),
-      prisma.booking.update({
-        where: { id: bookingId },
+      prisma.bookingRequest.update({
+        where: { id: bookingRequestId },
         data: { status: "CHECKED_IN" },
         include: { room: true, user: true },
       }),
       prisma.room.update({
-        where: { id: booking.roomId },
+        where: { id: bookingRequest.roomId },
         data: { status: "PROCESS" },
       }),
     ]);
 
-    return { checkInRecord, booking: updatedBooking };
+    return { checkInRecord, bookingRequest: updatedBookingRequest };
   }
 
   async checkOut(
-    bookingId: string,
+    bookingRequestId: string,
     userId: string,
     userRole: string,
     note?: string,
   ) {
-    if (!bookingId || bookingId.trim() === "") {
-      throw new BadRequestError("Booking id is required");
+    if (!bookingRequestId || bookingRequestId.trim() === "") {
+      throw new BadRequestError("Booking request id is required");
     }
 
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
+    const bookingRequest = await prisma.bookingRequest.findUnique({
+      where: { id: bookingRequestId },
       include: { room: true, user: true },
     });
 
-    if (!booking) throw new NotFoundError("Booking not found");
+    if (!bookingRequest) throw new NotFoundError("Booking request not found");
 
     const isElevated = userRole === "ADMIN" || userRole === "MANAGER";
-    if (!isElevated && booking.userId !== userId) {
-      throw new ForbiddenError("You are not allowed to check out this booking");
+    if (!isElevated && bookingRequest.userId !== userId) {
+      throw new ForbiddenError("You are not allowed to check out this booking request");
     }
 
-    if (booking.status !== "CHECKED_IN") {
+    if (bookingRequest.status !== "CHECKED_IN") {
       throw new BadRequestError(
-        `Cannot check out: booking status is ${booking.status}`,
+        `Cannot check out: booking request status is ${bookingRequest.status}`,
       );
     }
 
     const checkInRecord = await prisma.checkInRecord.findUnique({
-      where: { bookingId },
+      where: { bookingRequestId },
     });
     if (!checkInRecord) {
       throw new NotFoundError("Check-in record not found");
     }
     if (checkInRecord.checkedOutAt) {
-      throw new ConflictRequestError("Already checked out for this booking");
+      throw new ConflictRequestError("Already checked out for this booking request");
     }
 
     const now = new Date();
     let overstayMinutes = 0;
     let overstayFee = 0;
 
-    if (now > booking.endTime) {
+    if (now > bookingRequest.endTime) {
       overstayMinutes = Math.ceil(
-        (now.getTime() - booking.endTime.getTime()) / (1000 * 60),
+        (now.getTime() - bookingRequest.endTime.getTime()) / (1000 * 60),
       );
-      overstayFee = (overstayMinutes / 60) * booking.room.pricePerHour;
+      if (bookingRequest.room.pricePerHour) {
+        overstayFee = (overstayMinutes / 60) * bookingRequest.room.pricePerHour;
+      }
     }
 
-    const [updatedRecord, updatedBooking] = await prisma.$transaction([
+    const [updatedRecord, updatedBookingRequest] = await prisma.$transaction([
       prisma.checkInRecord.update({
-        where: { bookingId },
+        where: { bookingRequestId },
         data: {
           checkedOutAt: now,
           note: note ?? checkInRecord.note,
@@ -145,20 +150,20 @@ export default class CheckInService {
           overstayFee: overstayFee > 0 ? overstayFee : undefined,
         },
       }),
-      prisma.booking.update({
-        where: { id: bookingId },
+      prisma.bookingRequest.update({
+        where: { id: bookingRequestId },
         data: { status: "COMPLETED" },
         include: { room: true, user: true },
       }),
       prisma.room.update({
-        where: { id: booking.roomId },
+        where: { id: bookingRequest.roomId },
         data: { status: "AVAILABLE" },
       }),
     ]);
 
     return {
       checkInRecord: updatedRecord,
-      booking: updatedBooking,
+      bookingRequest: updatedBookingRequest,
       overstay:
         overstayMinutes > 0
           ? { minutes: overstayMinutes, fee: overstayFee }
@@ -166,37 +171,37 @@ export default class CheckInService {
     };
   }
 
-  async getCheckInStatus(bookingId: string, userId: string, userRole: string) {
-    if (!bookingId || bookingId.trim() === "") {
-      throw new BadRequestError("Booking id is required");
+  async getCheckInStatus(bookingRequestId: string, userId: string, userRole: string) {
+    if (!bookingRequestId || bookingRequestId.trim() === "") {
+      throw new BadRequestError("Booking request id is required");
     }
 
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
+    const bookingRequest = await prisma.bookingRequest.findUnique({
+      where: { id: bookingRequestId },
       include: {
         room: { select: { id: true, name: true } },
         checkInRecord: true,
       },
     });
 
-    if (!booking) throw new NotFoundError("Booking not found");
+    if (!bookingRequest) throw new NotFoundError("Booking request not found");
 
     const isElevated = userRole === "ADMIN" || userRole === "MANAGER";
-    if (!isElevated && booking.userId !== userId) {
+    if (!isElevated && bookingRequest.userId !== userId) {
       throw new ForbiddenError(
         "You are not allowed to view this check-in status",
       );
     }
 
     return {
-      booking: {
-        id: booking.id,
-        status: booking.status,
-        startTime: booking.startTime,
-        endTime: booking.endTime,
-        room: booking.room,
+      bookingRequest: {
+        id: bookingRequest.id,
+        status: bookingRequest.status,
+        startTime: bookingRequest.startTime,
+        endTime: bookingRequest.endTime,
+        room: bookingRequest.room,
       },
-      checkInRecord: booking.checkInRecord ?? null,
+      checkInRecord: bookingRequest.checkInRecord ?? null,
     };
   }
 }

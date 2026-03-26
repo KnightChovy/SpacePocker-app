@@ -380,6 +380,7 @@ export default class BookingRequestService {
             building: true,
           },
         },
+        checkInRecord: true,
       },
     });
 
@@ -434,6 +435,7 @@ export default class BookingRequestService {
       include: {
         user: true,
         room: true,
+        checkInRecord: true,
       },
     });
   }
@@ -449,6 +451,7 @@ export default class BookingRequestService {
       },
       include: {
         user: true,
+        checkInRecord: true,
         room: {
           include: {
             building: true,

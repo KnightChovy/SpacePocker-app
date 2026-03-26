@@ -14,11 +14,18 @@ export interface DashboardBookingItem {
   id: string;
   spaceName: string;
   location: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
+  status:
+    | 'PENDING'
+    | 'APPROVED'
+    | 'REJECTED'
+    | 'CANCELLED'
+    | 'COMPLETED'
+    | 'CHECKED_IN';
   date: string;
   startTime: string;
   endTime: string;
   image: string;
+  canWriteReview?: boolean;
 }
 
 interface BookingListProps {
@@ -33,6 +40,7 @@ const bookingStatusLabel: Record<DashboardBookingItem['status'], string> = {
   REJECTED: 'Rejected',
   CANCELLED: 'Cancelled',
   COMPLETED: 'Completed',
+  CHECKED_IN: 'Checked In',
 };
 
 const bookingStatusClass: Record<DashboardBookingItem['status'], string> = {
@@ -42,6 +50,8 @@ const bookingStatusClass: Record<DashboardBookingItem['status'], string> = {
     'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800',
   COMPLETED:
     'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800',
+  CHECKED_IN:
+    'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800',
   REJECTED:
     'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border border-rose-200 dark:border-rose-800',
   CANCELLED:
@@ -128,27 +138,29 @@ const BookingList = ({
                     <Calendar className="h-3 w-3" />{' '}
                     {booking.date.split(',')[0]}
                   </span>
-                  {booking.status !== 'COMPLETED' ? (
+                  {booking.status === 'COMPLETED' && booking.canWriteReview ? (
+                    isBookingReviewed(booking.id) ? (
+                      <span className="flex items-center gap-1 text-emerald-600">
+                        Review Submitted
+                      </span>
+                    ) : (
+                      <button className="flex items-center gap-1 text-primary hover:underline">
+                        Write Review
+                      </button>
+                    )
+                  ) : (
                     <span className="flex items-center gap-1 bg-background-light dark:bg-background-dark px-2 py-1 rounded-md">
                       <Timer className="h-3 w-3" /> {booking.startTime} -{' '}
                       {booking.endTime}
                     </span>
-                  ) : isBookingReviewed(booking.id) ? (
-                    <span className="flex items-center gap-1 text-emerald-600">
-                      Review Submitted
-                    </span>
-                  ) : (
-                    <button className="flex items-center gap-1 text-primary hover:underline">
-                      Write Review
-                    </button>
                   )}
                 </div>
               </div>
               <div className="sm:border-l border-border-light dark:border-border-dark sm:pl-4 flex sm:flex-col gap-2">
                 <button className="p-2 rounded-lg text-text-sub-light hover:bg-background-light hover:text-primary transition-colors">
-                  {booking.status !== 'COMPLETED' ? <Pencil /> : <History />}
+                  {booking.status !== 'COMPLETED' && !booking.canWriteReview ? <Pencil /> : <History />}
                 </button>
-                {booking.status !== 'COMPLETED' && (
+                {booking.status === 'COMPLETED' && booking.canWriteReview && (
                   <button className="p-2 rounded-lg text-text-sub-light hover:bg-background-light hover:text-primary transition-colors">
                     <MessageSquareText />
                   </button>

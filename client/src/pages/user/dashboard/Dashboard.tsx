@@ -68,6 +68,11 @@ const Dashboard = () => {
       .map(request => {
         const start = new Date(request.startTime);
         const end = new Date(request.endTime);
+        const now = new Date();
+
+        const isBookingCheckedOut = !!request.checkInRecord?.checkedOutAt;
+        const isPastEndTime = !!(end && now > end);
+        const isBookingCompleted = request.status === 'COMPLETED' && (isBookingCheckedOut || isPastEndTime);
 
         return {
           id: request.id,
@@ -94,6 +99,7 @@ const Dashboard = () => {
                 minute: '2-digit',
               }),
           image: request.room?.images?.[0] ?? '',
+          canWriteReview: isBookingCompleted,
         };
       });
   }, [bookingRequestsQuery.data]);

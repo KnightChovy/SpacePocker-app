@@ -21,6 +21,7 @@ const StatusBadge = ({ status }: { status: BookingRequestStatus }) => {
     COMPLETED: { bg: 'bg-blue-50', text: 'text-blue-600' },
     CANCELLED: { bg: 'bg-red-50', text: 'text-red-400' },
     REJECTED: { bg: 'bg-red-50', text: 'text-red-600' },
+    CHECKED_IN: { bg: 'bg-indigo-50', text: 'text-indigo-600' },
   };
 
   const { bg, text } = config[status];
@@ -154,7 +155,7 @@ const BookingTable = ({
                       </>
                     )}
 
-                    {request.status === 'COMPLETED' && (
+                    {(request.status === 'APPROVED' || (request.status === 'COMPLETED' && !request.checkInRecord)) && (
                       <button
                         onClick={() => onCancel?.(request)}
                         className="px-2.5 py-1 text-xs font-medium text-red-500 border border-red-200 rounded hover:bg-red-50 transition-colors disabled:opacity-50"

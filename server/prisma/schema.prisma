@@ -181,6 +181,7 @@ model BookingRequest {
   user     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   room     Room                   @relation(fields: [roomId], references: [id], onDelete: Cascade)
   services BookingRequestService[]
+  checkInRecord CheckInRecord?
 
   @@index([userId])
   @@index([roomId])
@@ -201,7 +202,6 @@ model Booking {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
-  checkInRecord CheckInRecord?
   transaction   Transaction?
 
   @@index([userId])
@@ -236,23 +236,23 @@ model Transaction {
 }
 
 model CheckInRecord {
-  id              String        @id @default(uuid())
-  bookingId       String        @unique
-  checkedInAt     DateTime      @default(now())
-  checkedOutAt    DateTime?
-  checkedInBy     String
-  method          CheckInMethod @default(MANUAL)
-  note            String?
-  overstayMinutes Int?
-  overstayFee     Float?
+  id               String        @id @default(uuid())
+  bookingRequestId String        @unique
+  checkedInAt      DateTime      @default(now())
+  checkedOutAt     DateTime?
+  checkedInBy      String
+  method           CheckInMethod @default(MANUAL)
+  note             String?
+  overstayMinutes  Int?
+  overstayFee      Float?
 
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  user    User    @relation("CheckInRecords", fields: [checkedInBy], references: [id])
+  bookingRequest BookingRequest @relation(fields: [bookingRequestId], references: [id], onDelete: Cascade)
+  user           User           @relation("CheckInRecords", fields: [checkedInBy], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([bookingId])
+  @@index([bookingRequestId])
   @@index([checkedInBy])
 }
 

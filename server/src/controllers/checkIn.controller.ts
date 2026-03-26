@@ -7,10 +7,10 @@ class CheckInController {
   constructor(private checkInService: CheckInService) {}
 
   checkIn = async (req: Request, res: Response, next: NextFunction) => {
-    const bookingId = String(req.params.id);
+    const bookingRequestId = String(req.params.id);
     const userId = String(req.user?.userId);
     const userRole = String(req.user?.role);
-    const { method, note } = req.body;
+    const { method, note } = req.body || {};
 
     const validMethods: CheckInMethod[] = ["QR_CODE", "MANUAL", "PIN_CODE"];
     const parsedMethod: CheckInMethod =
@@ -21,7 +21,7 @@ class CheckInController {
     new OK({
       message: "Check-in successful",
       metadata: await this.checkInService.checkIn(
-        bookingId,
+        bookingRequestId,
         userId,
         userRole,
         parsedMethod,
@@ -31,15 +31,15 @@ class CheckInController {
   };
 
   checkOut = async (req: Request, res: Response, next: NextFunction) => {
-    const bookingId = String(req.params.id);
+    const bookingRequestId = String(req.params.id);
     const userId = String(req.user?.userId);
     const userRole = String(req.user?.role);
-    const { note } = req.body;
+    const { note } = req.body || {};
 
     new OK({
       message: "Check-out successful",
       metadata: await this.checkInService.checkOut(
-        bookingId,
+        bookingRequestId,
         userId,
         userRole,
         typeof note === "string" ? note : undefined,

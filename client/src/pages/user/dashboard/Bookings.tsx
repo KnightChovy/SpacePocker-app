@@ -74,6 +74,8 @@ const mapStatusToUserLabel = (status: BookingRequestStatus) => {
       return 'Awaiting Payment' as const;
     case 'COMPLETED':
       return 'Completed' as const;
+    case 'CHECKED_IN':
+      return 'Checked In' as const;
     case 'CANCELLED':
       return 'Cancelled' as const;
     case 'REJECTED':

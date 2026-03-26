@@ -20,7 +20,6 @@ import { Button } from '@/components/ui/button';
 import { useCreateFeedback } from '@/hooks/user/feedback/use-create-feedback';
 import { useGetAmenities } from '@/hooks/user/amenities/use-get-amenities';
 import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
-import { useGetMyBookings } from '@/hooks/user/booking-requests/use-get-my-bookings';
 import { useCheckInBooking } from '@/hooks/user/booking-requests/use-check-in-booking';
 import { useCheckOutBooking } from '@/hooks/user/booking-requests/use-check-out-booking';
 import { useCancelPaidBooking } from '@/hooks/user/booking-requests/use-cancel-paid-booking';
@@ -29,28 +28,12 @@ import type { LocalBookingRecord } from '@/stores/bookingDraft.store';
 import { useBookingDraftStore } from '@/stores/bookingDraft.store';
 import { useBookingReviewStore } from '@/stores/bookingReview.store';
 import { formatVND } from '@/lib/utils';
-import type { MyBooking } from '@/types/user/booking-requests.api.types';
 
 type BookingListProps = {
   bookings: BookingUser[];
   requests: MyBookingRequest[];
   onCancelRequest?: (requestId: string) => Promise<void> | void;
   isCancelling?: boolean;
-};
-
-const getBookingMatchKey = (
-  roomId: string,
-  startTime: string,
-  endTime: string
-) => {
-  const startTs = new Date(startTime).getTime();
-  const endTs = new Date(endTime).getTime();
-
-  if (Number.isNaN(startTs) || Number.isNaN(endTs)) {
-    return `${roomId}:${startTime}:${endTime}`;
-  }
-
-  return `${roomId}:${startTs}:${endTs}`;
 };
 
 const getErrorMessage = (error: unknown, fallback: string) => {
@@ -73,7 +56,6 @@ const BookingList = ({
 }: BookingListProps) => {
   const amenitiesQuery = useGetAmenities();
   const serviceCategoriesQuery = useGetServiceCategories();
-  const myBookingsQuery = useGetMyBookings();
   const checkInBookingMutation = useCheckInBooking();
   const checkOutBookingMutation = useCheckOutBooking();
   const cancelPaidBookingMutation = useCancelPaidBooking();
@@ -113,32 +95,6 @@ const BookingList = ({
       null
     );
   }, [selectedRequest]);
-
-  const bookingByRequestId = useMemo(() => {
-    const linked = new Map<string, MyBooking>();
-    const bookingsByKey = new Map<string, MyBooking[]>();
-
-    for (const booking of myBookingsQuery.data ?? []) {
-      const key = getBookingMatchKey(
-        booking.roomId,
-        booking.startTime,
-        booking.endTime
-      );
-      const current = bookingsByKey.get(key) ?? [];
-      current.push(booking);
-      bookingsByKey.set(key, current);
-    }
-
-    for (const req of requests) {
-      const key = getBookingMatchKey(req.roomId, req.startTime, req.endTime);
-      const booking = bookingsByKey.get(key)?.[0];
-      if (booking) {
-        linked.set(req.id, booking);
-      }
-    }
-
-    return linked;
-  }, [myBookingsQuery.data, requests]);
 
   const [rating, setRating] = useState<number>(5);
   const [comment, setComment] = useState<string>('');
@@ -325,32 +281,29 @@ const BookingList = ({
   };
 
   const handleCheckIn = async (request: MyBookingRequest) => {
-    const linkedBooking = bookingByRequestId.get(request.id);
-    if (!linkedBooking?.id) {
-      toast.error('Cannot find paid booking to check in');
-      return;
-    }
-
     if (request.status !== 'COMPLETED') {
       toast.error('Check-in requires a paid booking');
       return;
     }
 
-    if (request.status === 'CANCELLED' || request.status === 'REJECTED') {
-      toast.error('Cancelled bookings cannot be checked in');
+    const now = new Date();
+    const startTime = new Date(request.startTime);
+    const earliestCheckIn = new Date(startTime.getTime() - 15 * 60 * 1000);
+    const latestCheckIn = new Date(startTime.getTime() + 30 * 60 * 1000);
+
+    if (now < earliestCheckIn) {
+      toast.error('You can only check in 15 minutes before booking time starts');
       return;
     }
 
-    const now = new Date();
-    const startTime = new Date(request.startTime);
-    if (now < startTime) {
-      toast.error('You can only check in after booking time starts');
+    if (now > latestCheckIn) {
+      toast.error('Check-in time has expired (more than 30 minutes after start)');
       return;
     }
 
     try {
-      setActiveBookingActionId(linkedBooking.id);
-      await checkInBookingMutation.mutateAsync(linkedBooking.id);
+      setActiveBookingActionId(request.id);
+      await checkInBookingMutation.mutateAsync(request.id);
       toast.success('Check-in successful');
     } catch (error) {
       toast.error(getErrorMessage(error, 'Check-in failed'));
@@ -360,30 +313,14 @@ const BookingList = ({
   };
 
   const handleCheckOut = async (request: MyBookingRequest) => {
-    const linkedBooking = bookingByRequestId.get(request.id);
-    if (!linkedBooking?.id) {
-      toast.error('Cannot find booking for check-out');
-      return;
-    }
-
-    if (request.status !== 'COMPLETED') {
-      toast.error('Check-out requires a paid booking');
-      return;
-    }
-
-    if (request.status === 'CANCELLED' || request.status === 'REJECTED') {
-      toast.error('Cancelled bookings cannot be checked out');
-      return;
-    }
-
-    if (linkedBooking.status !== 'CHECKED_IN') {
+    if (request.status !== 'CHECKED_IN') {
       toast.error('Please check in before check out');
       return;
     }
 
     try {
-      setActiveBookingActionId(linkedBooking.id);
-      await checkOutBookingMutation.mutateAsync(linkedBooking.id);
+      setActiveBookingActionId(request.id);
+      await checkOutBookingMutation.mutateAsync(request.id);
       toast.success('Check-out successful');
     } catch (error) {
       toast.error(getErrorMessage(error, 'Check-out failed'));
@@ -393,23 +330,13 @@ const BookingList = ({
   };
 
   const handleCancelPaidBooking = async (request: MyBookingRequest) => {
-    const linkedBooking = bookingByRequestId.get(request.id);
-    if (!linkedBooking?.id) {
-      toast.error('Cannot find paid booking to cancel');
-      return;
-    }
-
     const startTime = new Date(request.startTime);
     if (new Date() > startTime) {
       toast.error('Cannot cancel a booking that has already started');
       return;
     }
 
-    if (
-      linkedBooking.status !== 'APPROVED' &&
-      linkedBooking.status !== 'PENDING' &&
-      linkedBooking.status !== 'COMPLETED'
-    ) {
+    if (request.status !== 'COMPLETED') {
       toast.error('This booking cannot be cancelled now');
       return;
     }
@@ -423,8 +350,8 @@ const BookingList = ({
     }
 
     try {
-      setActiveBookingActionId(linkedBooking.id);
-      await cancelPaidBookingMutation.mutateAsync(linkedBooking.id);
+      setActiveBookingActionId(request.id);
+      await cancelPaidBookingMutation.mutateAsync(request.id);
       toast.success('Paid booking cancelled');
     } catch (error) {
       toast.error(getErrorMessage(error, 'Cancel paid booking failed'));
@@ -445,37 +372,46 @@ const BookingList = ({
     <div className="flex flex-col gap-5">
       {bookings.map((booking, idx) => {
         const req = requests[idx];
-        const linkedBooking = req ? bookingByRequestId.get(req.id) : undefined;
         const now = new Date();
         const startTime = req?.startTime ? new Date(req.startTime) : null;
+        const endTime = req?.endTime ? new Date(req.endTime) : null;
+        // Check-in allowed 15 minutes before start
+        const earliestCheckIn = startTime ? new Date(startTime.getTime() - 15 * 60 * 1000) : null;
         const isBeforeStart = startTime ? now < startTime : false;
+        const hasReachedBookingTime = earliestCheckIn ? now >= earliestCheckIn : false;
+        
+        const latestCheckIn = startTime ? new Date(startTime.getTime() + 30 * 60 * 1000) : null;
+        const checkInExpired = latestCheckIn ? now > latestCheckIn : false;
+
         const reviewed =
           isBookingReviewed(req?.id) || isRoomReviewed(req?.roomId);
 
         const isRequestCancelled =
           req?.status === 'CANCELLED' || req?.status === 'REJECTED';
-        const isPaid = req?.status === 'COMPLETED';
-        const hasReachedBookingTime = !isBeforeStart;
+        const isPaid = req?.status === 'COMPLETED' || req?.status === 'CHECKED_IN';
+        
+        const hasCheckedIn = !!req?.checkInRecord;
+        const hasCheckedOut = !!req?.checkInRecord?.checkedOutAt;
+
         const canCheckIn =
           !!req &&
-          !!linkedBooking?.id &&
-          isPaid &&
+          req.status === 'COMPLETED' &&
+          !hasCheckedIn &&
           !isRequestCancelled &&
-          linkedBooking.status === 'APPROVED' &&
-          hasReachedBookingTime;
+          hasReachedBookingTime &&
+          !checkInExpired;
+          
         const canCheckOut =
           !!req &&
-          !!linkedBooking?.id &&
-          isPaid &&
-          !isRequestCancelled &&
-          linkedBooking.status === 'CHECKED_IN';
+          req.status === 'CHECKED_IN' &&
+          !hasCheckedOut;
 
         const checkInBlockedReasons: string[] = [];
         if (!canCheckIn) {
           if (!req) {
             checkInBlockedReasons.push('Missing booking request data.');
           } else {
-            if (req.status !== 'COMPLETED') {
+            if (req.status !== 'COMPLETED' && req.status !== 'CHECKED_IN') {
               checkInBlockedReasons.push('Booking has not been paid yet.');
             }
 
@@ -485,37 +421,40 @@ const BookingList = ({
               );
             }
 
-            if (!linkedBooking?.id) {
-              checkInBlockedReasons.push(
-                'No paid booking record was found for this request.'
-              );
-            }
-
-            if (isBeforeStart) {
-              checkInBlockedReasons.push(
-                'Check-in is only available when booking time starts.'
-              );
-            }
-
-            if (linkedBooking?.status === 'CHECKED_IN') {
+            if (req.status === 'CHECKED_IN' || (hasCheckedIn && !hasCheckedOut)) {
               checkInBlockedReasons.push(
                 'Booking is already checked in. Please check out instead.'
               );
             }
-
-            if (linkedBooking?.status === 'COMPLETED') {
-              checkInBlockedReasons.push(
-                'Paid booking is currently marked COMPLETED by backend, so check-in endpoint will reject it.'
+            
+            if (hasCheckedOut) {
+               checkInBlockedReasons.push(
+                'Booking is already checked out.'
               );
+            }
+
+            if (!hasReachedBookingTime) {
+              checkInBlockedReasons.push(
+                'Check-in is only available 15 minutes before booking time starts.'
+              );
+            }
+            
+            if (checkInExpired) {
+              checkInBlockedReasons.push('Check-in time has expired (more than 30 minutes after start).');
             }
           }
         }
 
+        const isBookingCheckedOut = !!req?.checkInRecord?.checkedOutAt;
+        const isPastEndTime = !!(endTime && now > endTime);
+
         const isBookingCompleted =
-          linkedBooking?.status === 'COMPLETED' || (!linkedBooking && isPaid);
+          req?.status === 'COMPLETED' && (isBookingCheckedOut || isPastEndTime);
 
         const canWriteFeedback =
-          isBookingCompleted && !!req?.roomId && !reviewed && !isBeforeStart;
+          isBookingCompleted &&
+          !!req?.roomId &&
+          !reviewed;
         const isFeedbackSubmitted = !!req?.roomId && reviewed;
 
         const canPay = req?.status === 'APPROVED' && isBeforeStart;
@@ -524,17 +463,15 @@ const BookingList = ({
           req.status !== 'COMPLETED' &&
           req.status !== 'CANCELLED' &&
           req.status !== 'REJECTED' &&
+          req.status !== 'CHECKED_IN' &&
           isBeforeStart;
 
         const canCancelPaidBooking =
           !!req &&
-          !!linkedBooking?.id &&
           req.status === 'COMPLETED' &&
           !isRequestCancelled &&
-          isBeforeStart &&
-          (linkedBooking.status === 'APPROVED' ||
-            linkedBooking.status === 'PENDING' ||
-            linkedBooking.status === 'COMPLETED');
+          !hasCheckedIn &&
+          isBeforeStart;
 
         return (
           <div
@@ -556,14 +493,14 @@ const BookingList = ({
                     </span>
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${
-                        linkedBooking?.status === 'CHECKED_IN'
+                        req?.status === 'CHECKED_IN'
                           ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                           : booking.status === 'Completed'
                             ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
                             : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700'
                       }`}
                     >
-                      {linkedBooking?.status === 'CHECKED_IN'
+                      {req?.status === 'CHECKED_IN'
                         ? 'Checked In'
                         : booking.status}
                     </span>
@@ -635,7 +572,7 @@ const BookingList = ({
                     className="px-4 py-2 rounded-xl text-sm font-bold border border-red-200 text-red-600 hover:bg-red-50 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {cancelPaidBookingMutation.isPending &&
-                    activeBookingActionId === linkedBooking?.id
+                    activeBookingActionId === req.id
                       ? 'Cancelling...'
                       : 'Cancel Paid Booking'}
                   </button>
@@ -652,7 +589,7 @@ const BookingList = ({
                     className="px-4 py-2 rounded-xl text-sm font-bold border border-primary text-primary hover:bg-primary/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {checkInBookingMutation.isPending &&
-                    activeBookingActionId === linkedBooking?.id
+                    activeBookingActionId === req.id
                       ? 'Checking in...'
                       : 'Check In'}
                   </button>
@@ -669,7 +606,7 @@ const BookingList = ({
                     className="px-4 py-2 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/90 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {checkOutBookingMutation.isPending &&
-                    activeBookingActionId === linkedBooking?.id
+                    activeBookingActionId === req.id
                       ? 'Checking out...'
                       : 'Check Out'}
                   </button>
