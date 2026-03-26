@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import AppHeader from '@/components/layouts/AppHeader';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
 import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
@@ -40,6 +41,13 @@ const ServicesPage = () => {
   const [descriptionInput, setDescriptionInput] = useState('');
   const [priceInput, setPriceInput] = useState<string>('');
   const [categoryIdInput, setCategoryIdInput] = useState('');
+  const [deleteConfirmState, setDeleteConfirmState] = useState<{
+    isOpen: boolean;
+    service: ApiService | null;
+  }>({
+    isOpen: false,
+    service: null,
+  });
 
   const services = useMemo(
     () => servicesQuery.data ?? [],
@@ -171,8 +179,13 @@ const ServicesPage = () => {
 
   const handleDelete = (service: ApiService) => {
     if (deleteMutation.isPending) return;
-    if (!window.confirm(`Delete service "${service.name}"?`)) return;
-    deleteMutation.mutate(service.id);
+    setDeleteConfirmState({ isOpen: true, service });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteConfirmState.service) return;
+    deleteMutation.mutate(deleteConfirmState.service.id);
+    setDeleteConfirmState({ isOpen: false, service: null });
   };
 
   return (
@@ -449,6 +462,18 @@ const ServicesPage = () => {
           </div>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        isOpen={deleteConfirmState.isOpen}
+        title="Delete Service"
+        message={`Delete service "${deleteConfirmState.service?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous={true}
+        isLoading={deleteMutation.isPending}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirmState({ isOpen: false, service: null })}
+      />
     </>
   );
 };

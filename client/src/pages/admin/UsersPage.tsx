@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import AppHeader from '@/components/layouts/AppHeader';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { RoleBadge, StatusBadge } from '@/components/features/admin/Badge';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
@@ -36,6 +37,13 @@ const UsersPage: React.FC = () => {
     undefined
   );
   const [sortBy, setSortBy] = useState<UserSortOption>('newest');
+  const [promoteConfirmState, setPromoteConfirmState] = useState<{
+    isOpen: boolean;
+    user: ApiUser | null;
+  }>({
+    isOpen: false,
+    user: null,
+  });
 
   const { data, isLoading, isError } = useGetUsers({
     search: searchQuery || undefined,
@@ -45,6 +53,12 @@ const UsersPage: React.FC = () => {
   });
 
   const promoteMutation = usePromoteUserToManager();
+
+  const handleConfirmPromote = async () => {
+    if (!promoteConfirmState.user) return;
+    promoteMutation.mutate(promoteConfirmState.user.id);
+    setPromoteConfirmState({ isOpen: false, user: null });
+  };
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -244,16 +258,12 @@ const UsersPage: React.FC = () => {
                             <button
                               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                               disabled={promoteMutation.isPending}
-                              onClick={() => {
-                                if (
-                                  !window.confirm(
-                                    `Promote ${u.email} to MANAGER?`
-                                  )
-                                ) {
-                                  return;
-                                }
-                                promoteMutation.mutate(u.id);
-                              }}
+                              onClick={() =>
+                                setPromoteConfirmState({
+                                  isOpen: true,
+                                  user: u,
+                                })
+                              }
                             >
                               <span className="material-symbols-outlined text-[18px]">
                                 upgrade
@@ -315,6 +325,18 @@ const UsersPage: React.FC = () => {
           </footer>
         </div>
       </main>
+
+      <ConfirmDialog
+        isOpen={promoteConfirmState.isOpen}
+        title="Promote User to Manager"
+        message={`Promote ${promoteConfirmState.user?.email} to MANAGER? They will have access to manager features.`}
+        confirmText="Promote"
+        cancelText="Cancel"
+        isDangerous={false}
+        isLoading={promoteMutation.isPending}
+        onConfirm={handleConfirmPromote}
+        onCancel={() => setPromoteConfirmState({ isOpen: false, user: null })}
+      />
     </>
   );
 };

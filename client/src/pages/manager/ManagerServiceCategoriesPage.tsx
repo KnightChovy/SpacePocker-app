@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import AppHeader from '@/components/layouts/AppHeader';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
 import { useCreateServiceCategory } from '@/hooks/manager/service-categories/use-create-service-category';
@@ -31,6 +32,13 @@ const ManagerServiceCategoriesPage = () => {
 
   const [nameInput, setNameInput] = useState('');
   const [descriptionInput, setDescriptionInput] = useState('');
+  const [deleteConfirmState, setDeleteConfirmState] = useState<{
+    isOpen: boolean;
+    category: ApiServiceCategory | null;
+  }>({
+    isOpen: false,
+    category: null,
+  });
 
   const categories = useMemo(
     () => categoriesQuery.data ?? [],
@@ -127,8 +135,13 @@ const ManagerServiceCategoriesPage = () => {
 
   const handleDelete = (category: ApiServiceCategory) => {
     if (deleteMutation.isPending) return;
-    if (!window.confirm(`Delete service category "${category.name}"?`)) return;
-    deleteMutation.mutate(category.id);
+    setDeleteConfirmState({ isOpen: true, category });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteConfirmState.category) return;
+    deleteMutation.mutate(deleteConfirmState.category.id);
+    setDeleteConfirmState({ isOpen: false, category: null });
   };
 
   return (
@@ -350,6 +363,20 @@ const ManagerServiceCategoriesPage = () => {
           </div>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        isOpen={deleteConfirmState.isOpen}
+        title="Delete Service Category"
+        message={`Delete service category "${deleteConfirmState.category?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous={true}
+        isLoading={deleteMutation.isPending}
+        onConfirm={handleConfirmDelete}
+        onCancel={() =>
+          setDeleteConfirmState({ isOpen: false, category: null })
+        }
+      />
     </>
   );
 };

@@ -7,6 +7,7 @@ import type {
   BuildingQueryParams,
 } from '@/types/user/types';
 import AppHeader from '@/components/layouts/AppHeader';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import AddBuildingModal from '@/components/features/manager/buildingManager/AddBuildingModal';
 import EditBuildingModal from '@/components/features/manager/buildingManager/EditBuildingModal';
 import ViewBuildingModal from '@/components/features/manager/buildingManager/ViewBuildingModal';
@@ -41,6 +42,13 @@ const ManagerBuildingPage = () => {
   const [viewingBuilding, setViewingBuilding] = useState<BuildingDetail | null>(
     null
   );
+  const [deleteConfirmState, setDeleteConfirmState] = useState<{
+    isOpen: boolean;
+    buildingId: string | null;
+  }>({
+    isOpen: false,
+    buildingId: null,
+  });
 
   const queryParams = useMemo<BuildingQueryParams>(
     () => ({
@@ -81,12 +89,18 @@ const ManagerBuildingPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this building?'))
-      return;
+    setDeleteConfirmState({ isOpen: true, buildingId: id });
+  };
+
+  const handleConfirmDelete = async () => {
+    const { buildingId } = deleteConfirmState;
+    if (!buildingId) return;
     try {
-      await deleteBuildingMutation.mutateAsync(id);
+      await deleteBuildingMutation.mutateAsync(buildingId);
     } catch (err) {
       console.error('Failed to delete building:', err);
+    } finally {
+      setDeleteConfirmState({ isOpen: false, buildingId: null });
     }
   };
 
@@ -157,6 +171,20 @@ const ManagerBuildingPage = () => {
           setViewingBuilding(null);
           setEditingBuilding(building);
         }}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteConfirmState.isOpen}
+        title="Delete Building"
+        message="Are you sure you want to delete this building? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous={true}
+        isLoading={deleteBuildingMutation.isPending}
+        onConfirm={handleConfirmDelete}
+        onCancel={() =>
+          setDeleteConfirmState({ isOpen: false, buildingId: null })
+        }
       />
     </>
   );
