@@ -171,7 +171,7 @@
  *       properties:
  *         message:
  *           type: string
- *           example: Cannot check in: booking status is CANCELLED
+ *           example: "Cannot check in: booking status is CANCELLED"
  *         status:
  *           type: integer
  *           example: 400

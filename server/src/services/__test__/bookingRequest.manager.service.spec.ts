@@ -55,12 +55,22 @@ describe("BookingRequestService Manager Flow", () => {
       extractBookingRequestId: jest.fn(),
     } as unknown as jest.Mocked<VnpayService>;
 
+    const transactionRepo: any = {
+      create: jest.fn(),
+      findById: jest.fn(),
+      findByBookingId: jest.fn(),
+      findMany: jest.fn(),
+      updateStatus: jest.fn(),
+      getRevenueSummary: jest.fn(),
+      getTotalRevenue: jest.fn(),
+    };
     service = new BookingRequestService(
       bookingRequestRepo,
       roomRepo,
       bookingRepo,
       mailQueueService,
       vnpayService,
+      transactionRepo,
     );
     jest.clearAllMocks();
   });
