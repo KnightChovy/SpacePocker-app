@@ -17,6 +17,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { useCreateFeedback } from '@/hooks/user/feedback/use-create-feedback';
 import { useGetAmenities } from '@/hooks/user/amenities/use-get-amenities';
 import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
@@ -73,6 +74,13 @@ const BookingList = ({
   const [activeBookingActionId, setActiveBookingActionId] = useState<
     string | null
   >(null);
+  const [confirmDialogState, setConfirmDialogState] = useState<{
+    isOpen: boolean;
+    requestId: string | null;
+  }>({
+    isOpen: false,
+    requestId: null,
+  });
 
   const selectedRequest = useMemo(() => {
     if (selectedIndex === null) return null;
@@ -345,22 +353,25 @@ const BookingList = ({
       return;
     }
 
-    if (
-      !window.confirm(
-        'Cancel this paid booking? You may lose your deposit and receive an email notification.'
-      )
-    ) {
-      return;
-    }
+    setConfirmDialogState({
+      isOpen: true,
+      requestId: request.id,
+    });
+  };
+
+  const handleConfirmCancelPaidBooking = async () => {
+    const { requestId } = confirmDialogState;
+    if (!requestId) return;
 
     try {
-      setActiveBookingActionId(request.id);
-      await cancelPaidBookingMutation.mutateAsync(request.id);
+      setActiveBookingActionId(requestId);
+      await cancelPaidBookingMutation.mutateAsync(requestId);
       toast.success('Paid booking cancelled');
     } catch (error) {
       toast.error(getErrorMessage(error, 'Cancel paid booking failed'));
     } finally {
       setActiveBookingActionId(null);
+      setConfirmDialogState({ isOpen: false, requestId: null });
     }
   };
 
@@ -1004,6 +1015,20 @@ const BookingList = ({
           )}
         </SheetContent>
       </Sheet>
+
+      <ConfirmDialog
+        isOpen={confirmDialogState.isOpen}
+        title="Cancel Paid Booking"
+        message="Cancel this paid booking? You may lose your deposit and receive an email notification."
+        confirmText="Cancel Booking"
+        cancelText="Keep Booking"
+        isDangerous={true}
+        isLoading={activeBookingActionId === confirmDialogState.requestId}
+        onConfirm={handleConfirmCancelPaidBooking}
+        onCancel={() =>
+          setConfirmDialogState({ isOpen: false, requestId: null })
+        }
+      />
     </div>
   );
 };

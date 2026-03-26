@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { X, Calendar, Clock, User, MapPin, DollarSign } from 'lucide-react';
 import type { Booking, BookingStatus } from '@/types/user/types';
 import { BookingStatusLabel } from '@/types/user/types';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { formatVND } from '@/lib/utils';
 
 interface BookingDetailModalProps {
@@ -36,16 +38,21 @@ const BookingDetailModal = ({
   booking,
   onUpdateStatus,
 }: BookingDetailModalProps) => {
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+
   if (!isOpen || !booking) return null;
 
   const handleConfirm = () => {
     onUpdateStatus?.(booking.id, 'confirmed');
   };
 
+  const handleCancelConfirm = () => {
+    onUpdateStatus?.(booking.id, 'cancelled');
+    setIsCancelConfirmOpen(false);
+  };
+
   const handleCancel = () => {
-    if (window.confirm('Are you sure you want to cancel this booking?')) {
-      onUpdateStatus?.(booking.id, 'cancelled');
-    }
+    setIsCancelConfirmOpen(true);
   };
 
   const handleComplete = () => {
@@ -181,6 +188,17 @@ const BookingDetailModal = ({
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={isCancelConfirmOpen}
+        title="Cancel Booking"
+        message="Are you sure you want to cancel this booking?"
+        confirmText="Cancel Booking"
+        cancelText="Keep Booking"
+        isDangerous={true}
+        onConfirm={handleCancelConfirm}
+        onCancel={() => setIsCancelConfirmOpen(false)}
+      />
     </div>
   );
 };

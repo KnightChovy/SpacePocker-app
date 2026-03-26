@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import AppHeader from '@/components/layouts/AppHeader';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
 import type { ApiAmenity } from '@/types/user/room-api';
@@ -29,6 +30,13 @@ const AmenitiesPage: React.FC = () => {
   const [modalMode, setModalMode] = useState<AmenityModalMode>('create');
   const [editingAmenity, setEditingAmenity] = useState<ApiAmenity | null>(null);
   const [nameInput, setNameInput] = useState('');
+  const [deleteConfirmState, setDeleteConfirmState] = useState<{
+    isOpen: boolean;
+    amenity: ApiAmenity | null;
+  }>({
+    isOpen: false,
+    amenity: null,
+  });
 
   const amenities = useMemo(() => data ?? [], [data]);
 
@@ -100,8 +108,13 @@ const AmenitiesPage: React.FC = () => {
 
   const handleDelete = (amenity: ApiAmenity) => {
     if (deleteMutation.isPending) return;
-    if (!window.confirm(`Delete amenity "${amenity.name}"?`)) return;
-    deleteMutation.mutate(amenity.id);
+    setDeleteConfirmState({ isOpen: true, amenity });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteConfirmState.amenity) return;
+    deleteMutation.mutate(deleteConfirmState.amenity.id);
+    setDeleteConfirmState({ isOpen: false, amenity: null });
   };
 
   return (
@@ -300,6 +313,18 @@ const AmenitiesPage: React.FC = () => {
           </div>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        isOpen={deleteConfirmState.isOpen}
+        title="Delete Amenity"
+        message={`Delete amenity "${deleteConfirmState.amenity?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous={true}
+        isLoading={deleteMutation.isPending}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirmState({ isOpen: false, amenity: null })}
+      />
     </>
   );
 };

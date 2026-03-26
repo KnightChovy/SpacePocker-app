@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Search, ChevronDown, Bell, MessageSquare } from 'lucide-react';
 import AppHeader from '@/components/layouts/AppHeader';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import BookingTable from '../../components/features/manager/bookingManager/BookingTable';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
@@ -28,6 +29,8 @@ const ManagerBookingPage: React.FC = () => {
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelReasonError, setCancelReasonError] = useState('');
+  const [rejectConfirmRequest, setRejectConfirmRequest] =
+    useState<BookingRequestForManager | null>(null);
 
   const bookingRequestsQuery = useGetBookingRequestsForManager(selectedStatus);
   const approveMutation = useApproveBookingRequest();
@@ -65,12 +68,17 @@ const ManagerBookingPage: React.FC = () => {
   };
 
   const handleReject = async (request: BookingRequestForManager) => {
-    if (window.confirm('Reject this booking request?')) {
-      try {
-        await rejectMutation.mutateAsync(request.id);
-      } catch {
-        return;
-      }
+    setRejectConfirmRequest(request);
+  };
+
+  const handleConfirmReject = async () => {
+    if (!rejectConfirmRequest) return;
+    try {
+      await rejectMutation.mutateAsync(rejectConfirmRequest.id);
+    } catch {
+      return;
+    } finally {
+      setRejectConfirmRequest(null);
     }
   };
 
@@ -283,6 +291,18 @@ const ManagerBookingPage: React.FC = () => {
           </div>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        isOpen={!!rejectConfirmRequest}
+        title="Reject Booking Request"
+        message="Are you sure you want to reject this booking request?"
+        confirmText="Reject"
+        cancelText="Keep"
+        isDangerous={true}
+        isLoading={rejectMutation.isPending}
+        onConfirm={handleConfirmReject}
+        onCancel={() => setRejectConfirmRequest(null)}
+      />
     </>
   );
 };
