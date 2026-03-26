@@ -19,7 +19,9 @@ const authService = {
   },
   logout: async (userId?: string, refreshToken?: string): Promise<void> => {
     await axiosClient.post('/auth/logout', userId ? { userId } : null, {
-      headers: refreshToken ? { 'x-refresh-token': refreshToken } : undefined,
+      headers: {
+        ...(refreshToken ? { 'x-refresh-token': refreshToken } : {}),
+      },
     });
   },
 

@@ -21,6 +21,7 @@ import LogoutButton from '@/components/profile/LogoutButton';
 import ProfileAvatar from '@/components/profile/ProfileAvatar';
 import ProfileField from '@/components/profile/ProfileField';
 import SaveBar from '@/components/profile/SaveBar';
+import userService from '@/services/user.service';
 import { useAuthStore } from '@/store/authStore';
 
 function validatePhone(val: string) {
@@ -36,7 +37,7 @@ function validateName(val: string) {
 }
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, updateUser } = useAuthStore();
 
   const [form, setForm] = useState({
     name: user?.name ?? '',
@@ -56,10 +57,18 @@ export default function ProfileScreen() {
 
   const handleSave = async () => {
     setIsSaving(true);
-    // TODO: call update profile API
-    await new Promise(r => setTimeout(r, 1200));
-    setSaved(form);
-    setIsSaving(false);
+    try {
+      const res = await userService.updateProfile({
+        name: form.name,
+        phoneNumber: form.phone,
+      });
+      await updateUser(res.metadata);
+      setSaved(form);
+    } catch {
+      // keep form dirty so user can retry
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleLogout = async () => {

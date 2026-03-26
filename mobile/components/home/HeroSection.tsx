@@ -1,9 +1,11 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bell } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { User } from 'lucide-react-native';
 import React from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 
 export default function HeroSection() {
+  const router = useRouter();
   return (
     <LinearGradient
       colors={['#2D1B69', '#4C35B5', '#6B52D9']}
@@ -28,8 +30,9 @@ export default function HeroSection() {
         <TouchableOpacity
           className="w-9 h-9 rounded-full bg-white/15 items-center justify-center"
           activeOpacity={0.7}
+          onPress={() => router.push('/(tabs)/profile')}
         >
-          <Bell size={18} color="white" strokeWidth={1.8} />
+          <User size={18} color="white" strokeWidth={1.8} />
         </TouchableOpacity>
       </View>
 

@@ -51,18 +51,25 @@ export default function RoomCard({ room }: { room: Room }) {
       </View>
 
       <View className="p-4">
-        <View className="flex-row items-start justify-between mb-1">
+        <View className="flex-row items-center justify-between mb-1">
           <Text
-            className="text-gray-900 font-bold text-base flex-1 mr-2"
+            className="text-gray-900 font-bold text-base flex-1 mr-3"
             numberOfLines={1}
+            style={{ lineHeight: 24 }}
           >
             {room.name}
           </Text>
-          <View className="flex-row items-baseline gap-0.5">
-            <Text className="text-[#5B4FE9] font-extrabold text-lg">
+          <View className="flex-row items-baseline" style={{ flexShrink: 0 }}>
+            <Text
+              className="text-[#5B4FE9] font-extrabold text-lg"
+              style={{ lineHeight: 26 }}
+            >
               {room.pricePerHour.toLocaleString('vi-VN')}đ
             </Text>
-            <Text className="text-gray-400 text-xs">/giờ</Text>
+            <Text className="text-gray-400 text-xs" style={{ lineHeight: 18 }}>
+              {' '}
+              /giờ
+            </Text>
           </View>
         </View>
 
