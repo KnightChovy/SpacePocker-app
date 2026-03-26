@@ -11,6 +11,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn, formatVND } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
+import {
+  VIETNAM_OPERATING_HOURS,
+  validateVietnamOperatingHoursForDateTimes,
+} from '@/validations/common/time.validation';
 
 interface SpaceDetailBookingProps {
   spaceId: string;
@@ -100,7 +104,7 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
 
   const timeSlots = useMemo(() => {
     const slots: string[] = [];
-    for (let hour = 6; hour <= 23; hour++) {
+    for (let hour = 7; hour <= 23; hour++) {
       const timeString = `${hour.toString().padStart(2, '0')}:00`;
       slots.push(timeString);
     }
@@ -140,21 +144,32 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
         hours: number;
       }>;
 
+    if (!dateKey || !effectiveStartTime) return [];
+
     return Array.from({ length: MAX_BOOKING_HOURS }, (_, index) => {
       const duration = index + MIN_BOOKING_HOURS;
       const endDateTime = new Date(
         startDateTime.getTime() + duration * HOUR_IN_MS
       );
 
-      return {
+      const option = {
         value: endDateTime.toISOString(),
         date: getDateKey(endDateTime),
         time: formatHHmm(endDateTime),
         label: formatEndDateTimeDisplay(endDateTime, startDateTime),
         hours: duration,
       };
-    });
-  }, [startDateTime]);
+
+      const operatingHoursError = validateVietnamOperatingHoursForDateTimes(
+        dateKey,
+        effectiveStartTime,
+        option.date,
+        option.time
+      );
+
+      return operatingHoursError ? null : option;
+    }).filter((o): o is NonNullable<typeof o> => o !== null);
+  }, [dateKey, effectiveStartTime, startDateTime]);
 
   const effectiveEndValue = useMemo(() => {
     if (availableEndOptions.length === 0) return '';
@@ -179,20 +194,40 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
     return price * hours;
   }, [hours, price]);
 
+  const bookingTimeValidationMessage = useMemo(() => {
+    if (!date || !dateKey || !effectiveStartTime || !selectedEndOption) {
+      return 'Please select a date and time.';
+    }
+
+    const operatingHoursError = validateVietnamOperatingHoursForDateTimes(
+      dateKey,
+      effectiveStartTime,
+      selectedEndOption.date,
+      selectedEndOption.time
+    );
+    if (operatingHoursError) return operatingHoursError;
+
+    if (hours < MIN_BOOKING_HOURS || hours > MAX_BOOKING_HOURS) {
+      return 'Please select valid time range.';
+    }
+
+    return null;
+  }, [date, dateKey, effectiveStartTime, hours, selectedEndOption]);
+
   const hasValidBookingWindow = Boolean(
-    date && effectiveStartTime && selectedEndOption
+    date &&
+    effectiveStartTime &&
+    selectedEndOption &&
+    !bookingTimeValidationMessage
   );
 
   const handleBooking = async () => {
-    if (!date || !selectedEndOption || !effectiveStartTime) {
-      alert('Please select a date');
+    if (bookingTimeValidationMessage) {
+      alert(bookingTimeValidationMessage);
       return;
     }
 
-    if (hours < MIN_BOOKING_HOURS || hours > MAX_BOOKING_HOURS) {
-      alert('Please select valid time range');
-      return;
-    }
+    if (!date || !selectedEndOption || !effectiveStartTime) return;
 
     setIsLoading(true);
     try {
@@ -328,8 +363,15 @@ const SpaceDetailBooking: React.FC<SpaceDetailBookingProps> = ({
             </p>
           )}
           <p className="mt-1 text-[11px] text-gray-500 text-center">
-            Booking duration is limited from 1 to 8 hours.
+            Bookings are available from {VIETNAM_OPERATING_HOURS.open} to{' '}
+            {VIETNAM_OPERATING_HOURS.close} (Vietnam time). Duration is limited
+            from 1 to 8 hours.
           </p>
+          {bookingTimeValidationMessage && (
+            <p className="mt-2 text-xs text-red-600 text-center">
+              {bookingTimeValidationMessage}
+            </p>
+          )}
         </div>
       </div>
 

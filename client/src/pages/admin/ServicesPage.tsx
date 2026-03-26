@@ -9,6 +9,7 @@ import { useGetServices } from '@/hooks/admin/services/use-get-services';
 import { useUpdateService } from '@/hooks/admin/services/use-update-service';
 import { useDeleteService } from '@/hooks/admin/services/use-delete-service';
 import type { ApiService } from '@/types/user/booking-request-api';
+import { parseAdminServiceForm } from '@/validations/admin/service.validation';
 
 type ServiceModalMode = 'create' | 'edit';
 
@@ -100,17 +101,20 @@ const ServicesPage = () => {
   };
 
   const canSubmit = useMemo(() => {
-    const name = nameInput.trim();
-    const categoryId = categoryIdInput.trim();
-    const price = Number(priceInput);
-    if (!name || !categoryId || priceInput.trim().length === 0) return false;
-    if (Number.isNaN(price) || price < 0) return false;
+    const parsed = parseAdminServiceForm({
+      name: nameInput,
+      description: descriptionInput,
+      price: priceInput,
+      categoryId: categoryIdInput,
+    });
+    if (!parsed.ok) return false;
     if (createMutation.isPending || updateMutation.isPending) return false;
     return true;
   }, [
     nameInput,
     categoryIdInput,
     priceInput,
+    descriptionInput,
     createMutation.isPending,
     updateMutation.isPending,
   ]);
@@ -118,18 +122,21 @@ const ServicesPage = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const name = nameInput.trim();
-    const description = descriptionInput.trim();
-    const price = Number(priceInput);
-    const categoryId = categoryIdInput.trim();
+    const parsed = parseAdminServiceForm({
+      name: nameInput,
+      description: descriptionInput,
+      price: priceInput,
+      categoryId: categoryIdInput,
+    });
+    if (!parsed.ok) return;
 
-    if (!name || !categoryId || Number.isNaN(price) || price < 0) return;
+    const { name, description, price, categoryId } = parsed.value;
 
     if (modalMode === 'create') {
       createMutation.mutate(
         {
           name,
-          description: description || undefined,
+          description,
           price,
           categoryId,
         },
@@ -149,7 +156,7 @@ const ServicesPage = () => {
       {
         id: editingService.id,
         name,
-        description: description || undefined,
+        description,
         price,
         categoryId,
       },

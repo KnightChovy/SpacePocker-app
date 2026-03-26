@@ -23,6 +23,7 @@ import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get
 import { bookingPaymentApi } from '@/apis/booking-payment.api';
 import type { LocalBookingRecord } from '@/stores/bookingDraft.store';
 import { useBookingDraftStore } from '@/stores/bookingDraft.store';
+import { useBookingReviewStore } from '@/stores/bookingReview.store';
 import { formatVND } from '@/lib/utils';
 
 type BookingListProps = {
@@ -64,9 +65,10 @@ const BookingList = ({
 
   const [rating, setRating] = useState<number>(5);
   const [comment, setComment] = useState<string>('');
-  const [submittedRoomIds, setSubmittedRoomIds] = useState<Set<string>>(
-    () => new Set()
-  );
+
+  const isRoomReviewed = useBookingReviewStore(s => s.isRoomReviewed);
+  const isBookingReviewed = useBookingReviewStore(s => s.isBookingReviewed);
+  const markReviewed = useBookingReviewStore(s => s.markReviewed);
 
   const createFeedback = useCreateFeedback();
 
@@ -225,10 +227,9 @@ const BookingList = ({
         comment: comment.trim() ? comment.trim() : undefined,
       });
 
-      setSubmittedRoomIds(prev => {
-        const next = new Set(prev);
-        next.add(selectedRequest.roomId);
-        return next;
+      markReviewed({
+        roomId: selectedRequest.roomId,
+        bookingRequestId: selectedRequest.id,
       });
       setSheetOpen(false);
     } catch (error: unknown) {
@@ -237,10 +238,9 @@ const BookingList = ({
       };
       const message = axiosError?.response?.data?.message as string | undefined;
       if (message?.toLowerCase?.().includes('already left feedback')) {
-        setSubmittedRoomIds(prev => {
-          const next = new Set(prev);
-          next.add(selectedRequest.roomId);
-          return next;
+        markReviewed({
+          roomId: selectedRequest.roomId,
+          bookingRequestId: selectedRequest.id,
         });
         setSheetOpen(false);
       }
@@ -262,16 +262,17 @@ const BookingList = ({
         const now = new Date();
         const startTime = req?.startTime ? new Date(req.startTime) : null;
         const isBeforeStart = startTime ? now < startTime : false;
-        
+        const reviewed =
+          isBookingReviewed(req?.id) || isRoomReviewed(req?.roomId);
+
         const canWriteFeedback =
           req?.status === 'COMPLETED' &&
           !!req?.roomId &&
-          !submittedRoomIds.has(req.roomId) &&
+          !reviewed &&
           !isBeforeStart;
-        const isFeedbackSubmitted =
-          !!req?.roomId && submittedRoomIds.has(req.roomId);
+        const isFeedbackSubmitted = !!req?.roomId && reviewed;
 
-        const canPay = req?.status === 'APPROVED' && isBeforeStart;  
+        const canPay = req?.status === 'APPROVED' && isBeforeStart;
         const isPaid = req?.status === 'COMPLETED';
         const canCancelRequest =
           !!req?.id &&

@@ -23,6 +23,10 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useBookingDraftStore } from '@/stores/bookingDraft.store';
 import { formatVND } from '@/lib/utils';
+import {
+  VIETNAM_OPERATING_HOURS,
+  validateVietnamOperatingHoursForDateTimes,
+} from '@/validations/common/time.validation';
 
 type Step = 1 | 2 | 3;
 const MIN_BOOKING_HOURS = 1;
@@ -172,6 +176,16 @@ const BookingRequestWizardPage = () => {
     searchParams.get('endTime') ?? defaultEndDateTime.time
   );
   const [purpose, setPurpose] = useState<string>('');
+
+  const startTimeMin = useMemo(() => {
+    const open = VIETNAM_OPERATING_HOURS.open;
+    if (startDate === today) {
+      return currentTime > open ? currentTime : open;
+    }
+    return open;
+  }, [currentTime, startDate, today]);
+
+  const startTimeMax = '23:00';
 
   const readExtrasDraft = (draftKey: string | null, draftRoomId: string) => {
     const storeDraft = draftRoomId ? getDraft(draftRoomId) : undefined;
@@ -415,6 +429,11 @@ const BookingRequestWizardPage = () => {
   useEffect(() => {
     if (!minEndLocal || !maxEndLocal) return;
 
+    if (endDate !== startDate && endTime !== '00:00') {
+      setEndTime('00:00');
+      return;
+    }
+
     const end = parseLocalDateTime(endDate, endTime);
     if (!end || end.getTime() < minEndLocal.getTime()) {
       setEndDate(formatDateInput(minEndLocal));
@@ -426,7 +445,7 @@ const BookingRequestWizardPage = () => {
       setEndDate(formatDateInput(maxEndLocal));
       setEndTime(formatTimeInput(maxEndLocal));
     }
-  }, [endDate, endTime, maxEndLocal, minEndLocal]);
+  }, [endDate, endTime, maxEndLocal, minEndLocal, startDate]);
 
   const hours = useMemo(
     () => durationHours(startIso, endIso),
@@ -442,9 +461,13 @@ const BookingRequestWizardPage = () => {
       return 'Start time cannot be in the past.';
     }
 
-    if (endLocal.getTime() <= startLocal.getTime()) {
-      return 'End time must be later than start time.';
-    }
+    const operatingHoursError = validateVietnamOperatingHoursForDateTimes(
+      startDate,
+      startTime,
+      endDate,
+      endTime
+    );
+    if (operatingHoursError) return operatingHoursError;
 
     if (hours < MIN_BOOKING_HOURS) {
       return `Minimum booking duration is ${MIN_BOOKING_HOURS} hour.`;
@@ -455,7 +478,16 @@ const BookingRequestWizardPage = () => {
     }
 
     return null;
-  }, [endLocal, hours, now, startLocal]);
+  }, [
+    endDate,
+    endLocal,
+    endTime,
+    hours,
+    now,
+    startDate,
+    startLocal,
+    startTime,
+  ]);
 
   const pricing = useMemo(() => {
     const rate = effectiveRoom?.pricePerHour ?? 0;
@@ -738,7 +770,8 @@ const BookingRequestWizardPage = () => {
                           type="time"
                           value={startTime}
                           onChange={e => setStartTime(e.target.value)}
-                          min={startDate === today ? currentTime : undefined}
+                          min={startTimeMin}
+                          max={startTimeMax}
                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
                         />
                       </div>
@@ -766,15 +799,15 @@ const BookingRequestWizardPage = () => {
                           type="time"
                           value={endTime}
                           onChange={e => setEndTime(e.target.value)}
-                          min={endTimeMin}
-                          max={endTimeMax}
+                          min={endDate !== startDate ? '00:00' : endTimeMin}
+                          max={endDate !== startDate ? '00:00' : endTimeMax}
                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/30"
                         />
                       </div>
                     </div>
                     <p className="mt-3 text-xs text-slate-500">
-                      Booking duration must be from 1 to 8 hours and can cross
-                      midnight if the selected range is valid.
+                      Bookings are available from 07:00 to 24:00 (Vietnam time),
+                      with duration from 1 to 8 hours.
                     </p>
                     {bookingTimeValidationMessage && (
                       <p className="mt-2 text-xs text-red-600">
