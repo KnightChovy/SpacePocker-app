@@ -937,12 +937,37 @@ export default class BookingRequestService {
       };
     }
 
-    const result = await prisma.$transaction(
-      async (tx) => this.createBookingFromPayment(tx, bookingRequestId),
-      {
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      },
-    );
+    let result:
+      | {
+          booking: {
+            id: string;
+            startTime: Date;
+            endTime: Date;
+          };
+          bookingRequest: {
+            userId: string;
+            user: { email: string; name: string };
+            room: { name: string; pricePerHour: number };
+          };
+          created: boolean;
+        }
+      | undefined;
+
+    try {
+      result = await prisma.$transaction(
+        async (tx) => this.createBookingFromPayment(tx, bookingRequestId),
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        },
+      );
+    } catch (error) {
+      return {
+        success: false,
+        code: "99",
+        message: (error as Error)?.message || "Payment processing failed",
+        bookingRequestId,
+      };
+    }
 
     if (result.created) {
       const amount =
