@@ -118,14 +118,6 @@
  *           type: string
  *           format: date-time
  *           example: "2026-02-01T10:00:00.000Z"
- *         isPeakHour:
- *           type: boolean
- *           description: "True nếu giờ hiện tại >= 18:00 theo giờ Việt Nam (UTC+7). Giá sẽ tăng 20% trong khung giờ này."
- *           example: true
- *         originalPricePerHour:
- *           type: number
- *           description: "Giá gốc trước khi áp dụng phụ phí giờ cao điểm. Bằng pricePerHour nếu không trong giờ cao điểm."
- *           example: 50.00
  *         building:
  *           $ref: "#/components/schemas/RoomBuilding"
  *         manager:
@@ -368,10 +360,6 @@
  *       - Filter by price range and minimum capacity
  *       - Sort by various fields
  *
- *       **Peak Hour Pricing:**
- *       - Từ 18:00 đến 23:59 theo giờ Việt Nam (UTC+7), `pricePerHour` sẽ tự động tăng 20%.
- *       - `originalPricePerHour` luôn trả về giá gốc.
- *       - `isPeakHour: true` khi đang trong khung giờ cao điểm.
  *     tags: [Room]
  *     parameters:
  *       - in: query
@@ -553,10 +541,6 @@
  *     description: |
  *       Retrieve detailed information about a specific room including building, manager, and amenities.
  *
- *       **Peak Hour Pricing:**
- *       - Từ 18:00 đến 23:59 theo giờ Việt Nam (UTC+7), `pricePerHour` sẽ tự động tăng 20%.
- *       - `originalPricePerHour` luôn trả về giá gốc.
- *       - `isPeakHour: true` khi đang trong khung giờ cao điểm.
  *     tags: [Room]
  *     parameters:
  *       - in: path

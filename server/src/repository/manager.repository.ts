@@ -1,8 +1,12 @@
-import { IManagerRepository } from "../interface/manager.repository.interface";
-import { prisma } from "../lib/prisma";
-import { User } from "@prisma/client";
+import { IManagerRepository } from '../interface/manager.repository.interface';
+import { prisma } from '../lib/prisma';
+import { User } from '@prisma/client';
 
 export class ManagerRepository implements IManagerRepository {
+  findById(id: string) {
+    return prisma.manager.findUnique({ where: { id } });
+  }
+
   findByUserIdentity(userId: string, email: string) {
     return prisma.manager.findFirst({
       where: {
@@ -18,7 +22,7 @@ export class ManagerRepository implements IManagerRepository {
         name: user.name,
         email: user.email,
         phoneNumber: user.phoneNumber,
-        role: "MANAGER",
+        role: 'MANAGER',
       },
     });
   }
