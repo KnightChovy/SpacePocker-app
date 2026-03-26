@@ -1,4 +1,4 @@
-import { BookingRequest, Booking, PaymentMethod } from '@prisma/client';
+import { BookingRequest, Booking, PaymentMethod } from "@prisma/client";
 
 export interface CreateBookingRequestInput {
   userId: string;
@@ -19,7 +19,7 @@ export interface CheckUserPendingOverlapInput {
 export interface IBookingRequestRepository {
   create(data: CreateBookingRequestInput): Promise<BookingRequest>;
 
-  findById(id: string): Promise<BookingRequest | null>;
+  findById(id: string): Promise<any | null>;
 
   findOverlappingPendingRequests(
     input: CheckUserPendingOverlapInput,
