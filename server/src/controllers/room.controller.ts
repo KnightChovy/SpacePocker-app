@@ -19,6 +19,17 @@ class RoomController {
     }).send(res);
   };
 
+  searchAvailableRooms = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    new OK({
+      message: "Search available rooms successfully",
+      metadata: await this.roomService.searchAvailableRooms(req.query),
+    }).send(res);
+  };
+
   getAllRooms = async (req: Request, res: Response, next: NextFunction) => {
     new OK({
       message: "Get all rooms successfully",

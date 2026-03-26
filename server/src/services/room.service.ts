@@ -1,12 +1,12 @@
-import { IRoomRepository } from '../interface/room.repository.interface';
-import { IBuildingRepository } from '../interface/building.repository.interface';
+import { IRoomRepository } from "../interface/room.repository.interface";
+import { IBuildingRepository } from "../interface/building.repository.interface";
 import {
   BadRequestError,
   NotFoundError,
   ConflictRequestError,
-} from '../core/error.response';
-import { RoomType, RoomStatus } from '@prisma/client';
-import { prisma } from '../lib/prisma';
+} from "../core/error.response";
+import { RoomType, RoomStatus } from "@prisma/client";
+import { prisma } from "../lib/prisma";
 
 const PEAK_HOUR_START = 18;
 const PEAK_PRICE_MULTIPLIER = 1.2;
@@ -35,6 +35,142 @@ export default class RoomService {
     private roomRepo: IRoomRepository,
     private buildingRepo: IBuildingRepository,
   ) {}
+
+  async searchAvailableRooms(query: any) {
+    const {
+      startTime: startStr,
+      endTime: endStr,
+      search,
+      buildingId,
+      roomType,
+      minPrice,
+      maxPrice,
+      minCapacity,
+      sortBy,
+      sortOrder,
+      limit,
+      offset,
+    } = query;
+
+    if (!startStr || !endStr) {
+      throw new BadRequestError("Start time and End time are required");
+    }
+
+    const startTime = new Date(startStr);
+    const endTime = new Date(endStr);
+
+    if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+      throw new BadRequestError("Invalid date format");
+    }
+
+    if (startTime >= endTime) {
+      throw new BadRequestError("Start time must be before end time");
+    }
+
+    const filter: any = {
+      status: "AVAILABLE", // Only list rooms that are generally available (not under maintenance)
+    };
+
+    // Date overlap check
+    filter.bookings = {
+      none: {
+        startTime: { lt: endTime },
+        endTime: { gt: startTime },
+        status: { in: ["APPROVED", "PENDING"] },
+      },
+    };
+
+    if (search && typeof search === "string") {
+      filter.OR = [
+        {
+          name: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          roomCode: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+      ];
+    }
+
+    if (buildingId && typeof buildingId === "string") {
+      filter.buildingId = buildingId;
+    }
+
+    if (roomType && typeof roomType === "string") {
+      const validRoomTypes = ["MEETING", "CLASSROOM", "EVENT", "OTHER"];
+      if (validRoomTypes.includes(roomType.toUpperCase())) {
+        filter.roomType = roomType.toUpperCase();
+      }
+    }
+
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      filter.pricePerHour = {};
+      if (minPrice !== undefined) {
+        const parsedMinPrice = parseFloat(String(minPrice));
+        if (!isNaN(parsedMinPrice)) {
+          filter.pricePerHour.gte = parsedMinPrice;
+        }
+      }
+      if (maxPrice !== undefined) {
+        const parsedMaxPrice = parseFloat(String(maxPrice));
+        if (!isNaN(parsedMaxPrice)) {
+          filter.pricePerHour.lte = parsedMaxPrice;
+        }
+      }
+    }
+
+    if (minCapacity !== undefined) {
+      const parsedMinCapacity = parseInt(String(minCapacity), 10);
+      if (!isNaN(parsedMinCapacity)) {
+        filter.capacity = { gte: parsedMinCapacity };
+      }
+    }
+
+    let orderBy: any = undefined;
+    if (sortBy) {
+      const validSortFields = [
+        "name",
+        "pricePerHour",
+        "capacity",
+        "roomType",
+        "createdAt",
+      ];
+      const validSortOrders = ["asc", "desc"];
+
+      if (validSortFields.includes(sortBy)) {
+        const order = validSortOrders.includes(sortOrder?.toLowerCase())
+          ? sortOrder.toLowerCase()
+          : "asc";
+        orderBy = { [sortBy]: order };
+      }
+    } else {
+      orderBy = { createdAt: "desc" };
+    }
+
+    const parsedLimit = limit ? parseInt(limit) : 10;
+    const parsedOffset = offset ? parseInt(offset) : 0;
+
+    const rooms = await this.roomRepo.findAll(
+      filter,
+      orderBy,
+      parsedLimit,
+      parsedOffset,
+    );
+    const total = await this.roomRepo.count(filter);
+
+    return {
+      rooms,
+      total,
+      page: Math.floor(parsedOffset / parsedLimit) + 1,
+      limit: parsedLimit,
+      totalPages: Math.ceil(total / parsedLimit),
+    };
+  }
 
   async createRoom(data: {
     buildingId: string;
@@ -68,30 +204,30 @@ export default class RoomService {
     } = data;
 
     if (!buildingId) {
-      throw new BadRequestError('Building ID is required');
+      throw new BadRequestError("Building ID is required");
     }
     if (!managerId) {
-      throw new BadRequestError('Manager ID is required');
+      throw new BadRequestError("Manager ID is required");
     }
-    if (!name || name.trim() === '') {
-      throw new BadRequestError('Room name is required');
+    if (!name || name.trim() === "") {
+      throw new BadRequestError("Room name is required");
     }
     if (!pricePerHour || pricePerHour <= 0) {
-      throw new BadRequestError('Price per hour must be greater than 0');
+      throw new BadRequestError("Price per hour must be greater than 0");
     }
     if (!capacity || capacity <= 0) {
-      throw new BadRequestError('Capacity must be greater than 0');
+      throw new BadRequestError("Capacity must be greater than 0");
     }
     if (!roomType) {
-      throw new BadRequestError('Room type is required');
+      throw new BadRequestError("Room type is required");
     }
-    if (!roomCode || roomCode.trim() === '') {
-      throw new BadRequestError('Room code is required');
+    if (!roomCode || roomCode.trim() === "") {
+      throw new BadRequestError("Room code is required");
     }
 
     const building = await this.buildingRepo.findById(buildingId);
     if (!building) {
-      throw new NotFoundError('Building not found');
+      throw new NotFoundError("Building not found");
     }
 
     const existingRoom = await this.roomRepo.findByRoomCode(roomCode);
@@ -120,12 +256,12 @@ export default class RoomService {
 
   async getRoomById(roomId: string) {
     if (!roomId) {
-      throw new BadRequestError('Room ID is required');
+      throw new BadRequestError("Room ID is required");
     }
 
     const room = await this.roomRepo.findById(roomId);
     if (!room) {
-      throw new NotFoundError('Room not found');
+      throw new NotFoundError("Room not found");
     }
 
     const isPeak = isVietnamPeakHour();
@@ -149,36 +285,36 @@ export default class RoomService {
 
     const filter: any = {};
 
-    if (search && typeof search === 'string') {
+    if (search && typeof search === "string") {
       filter.OR = [
         {
           name: {
             contains: search,
-            mode: 'insensitive',
+            mode: "insensitive",
           },
         },
         {
           roomCode: {
             contains: search,
-            mode: 'insensitive',
+            mode: "insensitive",
           },
         },
       ];
     }
 
-    if (buildingId && typeof buildingId === 'string') {
+    if (buildingId && typeof buildingId === "string") {
       filter.buildingId = buildingId;
     }
 
-    if (roomType && typeof roomType === 'string') {
-      const validRoomTypes = ['MEETING', 'CLASSROOM', 'EVENT', 'OTHER'];
+    if (roomType && typeof roomType === "string") {
+      const validRoomTypes = ["MEETING", "CLASSROOM", "EVENT", "OTHER"];
       if (validRoomTypes.includes(roomType.toUpperCase())) {
         filter.roomType = roomType.toUpperCase();
       }
     }
 
-    if (status && typeof status === 'string') {
-      const validStatuses = ['AVAILABLE', 'UNAVAILABLE', 'PROCESS', 'MAINTAIN'];
+    if (status && typeof status === "string") {
+      const validStatuses = ["AVAILABLE", "UNAVAILABLE", "PROCESS", "MAINTAIN"];
       if (validStatuses.includes(status.toUpperCase())) {
         filter.status = status.toUpperCase();
       }
@@ -210,18 +346,18 @@ export default class RoomService {
     let orderBy: any = undefined;
     if (sortBy) {
       const validSortFields = [
-        'name',
-        'pricePerHour',
-        'capacity',
-        'roomType',
-        'createdAt',
+        "name",
+        "pricePerHour",
+        "capacity",
+        "roomType",
+        "createdAt",
       ];
-      const validSortOrders = ['asc', 'desc'];
+      const validSortOrders = ["asc", "desc"];
 
       if (validSortFields.includes(sortBy)) {
         const order = validSortOrders.includes(sortOrder?.toLowerCase())
           ? sortOrder.toLowerCase()
-          : 'asc';
+          : "asc";
 
         orderBy = { [sortBy]: order };
       }
@@ -290,22 +426,22 @@ export default class RoomService {
     },
   ) {
     if (!roomId) {
-      throw new BadRequestError('Room ID is required');
+      throw new BadRequestError("Room ID is required");
     }
 
     const existingRoom = await this.roomRepo.findById(roomId);
     if (!existingRoom) {
-      throw new NotFoundError('Room not found');
+      throw new NotFoundError("Room not found");
     }
 
-    if (data.name !== undefined && data.name.trim() === '') {
-      throw new BadRequestError('Room name cannot be empty');
+    if (data.name !== undefined && data.name.trim() === "") {
+      throw new BadRequestError("Room name cannot be empty");
     }
     if (data.pricePerHour !== undefined && data.pricePerHour <= 0) {
-      throw new BadRequestError('Price per hour must be greater than 0');
+      throw new BadRequestError("Price per hour must be greater than 0");
     }
     if (data.capacity !== undefined && data.capacity <= 0) {
-      throw new BadRequestError('Capacity must be greater than 0');
+      throw new BadRequestError("Capacity must be greater than 0");
     }
 
     const room = await this.roomRepo.update(roomId, data);
@@ -315,12 +451,12 @@ export default class RoomService {
 
   async deleteRoom(roomId: string) {
     if (!roomId) {
-      throw new BadRequestError('Room ID is required');
+      throw new BadRequestError("Room ID is required");
     }
 
     const existingRoom = await this.roomRepo.findById(roomId);
     if (!existingRoom) {
-      throw new NotFoundError('Room not found');
+      throw new NotFoundError("Room not found");
     }
 
     const room = await this.roomRepo.delete(roomId);
@@ -330,7 +466,7 @@ export default class RoomService {
 
   async getRoomAmenitiesAndServices(roomId: string) {
     if (!roomId) {
-      throw new BadRequestError('Room ID is required');
+      throw new BadRequestError("Room ID is required");
     }
 
     const room = await prisma.room.findUnique({
@@ -354,7 +490,7 @@ export default class RoomService {
     });
 
     if (!room) {
-      throw new NotFoundError('Room not found');
+      throw new NotFoundError("Room not found");
     }
 
     return {
