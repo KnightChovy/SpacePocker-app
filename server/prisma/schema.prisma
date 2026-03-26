@@ -32,6 +32,13 @@ enum BookingStatus {
   REJECTED
   CANCELLED
   COMPLETED
+  CHECKED_IN
+}
+
+enum CheckInMethod {
+  QR_CODE
+  MANUAL
+  PIN_CODE
 }
 
 model User {
@@ -46,6 +53,7 @@ model User {
   bookings        Booking[]
   keys            Key[]
   feedbacks       Feedback[]
+  checkInRecords  CheckInRecord[] @relation("CheckInRecords")
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -176,8 +184,31 @@ model Booking {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
+  checkInRecord CheckInRecord?
+
   @@index([userId])
   @@index([roomId])
+}
+
+model CheckInRecord {
+  id              String        @id @default(uuid())
+  bookingId       String        @unique
+  checkedInAt     DateTime      @default(now())
+  checkedOutAt    DateTime?
+  checkedInBy     String
+  method          CheckInMethod @default(MANUAL)
+  note            String?
+  overstayMinutes Int?
+  overstayFee     Float?
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user    User    @relation("CheckInRecords", fields: [checkedInBy], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([bookingId])
+  @@index([checkedInBy])
 }
 
 model Key {
