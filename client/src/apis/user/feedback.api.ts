@@ -4,11 +4,15 @@ import type { ApiResponse } from '@/apis/api.types';
 import type {
   CreateFeedbackRequest,
   CreateFeedbackResponse,
+  GetFeedbacksRequest,
+  GetFeedbacksResult,
 } from '@/types/user/feedback.api.types';
 
 export type {
   CreateFeedbackRequest,
   CreateFeedbackResponse,
+  GetFeedbacksRequest,
+  GetFeedbacksResult,
 } from '@/types/user/feedback.api.types';
 
 const create = async (
@@ -21,6 +25,20 @@ const create = async (
   return response.data.metadata;
 };
 
+const getFeedbacks = async (
+  params: GetFeedbacksRequest
+): Promise<GetFeedbacksResult> => {
+  const response = await axiosInstance.get<ApiResponse<GetFeedbacksResult>>(
+    '/feedback',
+    {
+      params,
+    }
+  );
+
+  return response.data.metadata;
+};
+
 export const userFeedbackApi = {
   create,
+  getFeedbacks,
 };

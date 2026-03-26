@@ -1,5 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { managerBookingRequestsApi } from '@/apis/manager/booking-requests.api';
+import { toast } from 'react-toastify';
+import { getApiErrorMessage } from '@/lib/utils';
 
 export const useApproveBookingRequest = () => {
   const queryClient = useQueryClient();
@@ -12,6 +14,12 @@ export const useApproveBookingRequest = () => {
       await queryClient.invalidateQueries({
         queryKey: ['booking-requests'],
       });
+      toast.success('Booking request approved successfully');
+    },
+    onError: error => {
+      toast.error(
+        getApiErrorMessage(error, 'Failed to approve booking request')
+      );
     },
   });
 };

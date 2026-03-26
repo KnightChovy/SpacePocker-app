@@ -30,3 +30,14 @@ export function formatVND(value: number | string): string {
   if (!Number.isFinite(amount)) return vndCurrencyFormatter.format(0);
   return vndCurrencyFormatter.format(amount);
 }
+
+export function getApiErrorMessage(error: unknown, fallback: string): string {
+  const message = (error as { response?: { data?: { message?: string } } })
+    ?.response?.data?.message;
+
+  if (typeof message === 'string' && message.trim()) {
+    return message;
+  }
+
+  return fallback;
+}

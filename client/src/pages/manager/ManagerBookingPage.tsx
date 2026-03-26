@@ -20,7 +20,6 @@ const ManagerBookingPage: React.FC = () => {
   }>();
   const user = useAuthStore(state => state.user);
 
-
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] =
     useState<BookingRequestStatus>('PENDING');
@@ -58,12 +57,20 @@ const ManagerBookingPage: React.FC = () => {
   }, [bookingRequestsQuery.data, searchQuery]);
 
   const handleApprove = async (request: BookingRequestForManager) => {
-    await approveMutation.mutateAsync(request.id);
+    try {
+      await approveMutation.mutateAsync(request.id);
+    } catch {
+      return;
+    }
   };
 
   const handleReject = async (request: BookingRequestForManager) => {
     if (window.confirm('Reject this booking request?')) {
-      await rejectMutation.mutateAsync(request.id);
+      try {
+        await rejectMutation.mutateAsync(request.id);
+      } catch {
+        return;
+      }
     }
   };
 
@@ -103,10 +110,14 @@ const ManagerBookingPage: React.FC = () => {
       return;
     }
 
-    await cancelMutation.mutateAsync({
-      bookingRequestId: cancelModalRequest.id,
-      reason: trimmedReason,
-    });
+    try {
+      await cancelMutation.mutateAsync({
+        bookingRequestId: cancelModalRequest.id,
+        reason: trimmedReason,
+      });
+    } catch {
+      return;
+    }
 
     closeCancelModal();
   };
