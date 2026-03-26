@@ -468,6 +468,14 @@ const BookingList = ({
                           {selectedBooking?.status ?? selectedRequest.status}
                         </span>
                       </div>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-border-light dark:border-border-dark">
+                        <span className="text-text-sub-light dark:text-text-sub-dark font-medium">
+                          Total Price
+                        </span>
+                        <span className="font-bold text-text-main-light dark:text-text-main-dark text-lg text-primary">
+                          {formatVND(pricing.total)}
+                        </span>
+                      </div>
                     </div>
 
                     <div>
