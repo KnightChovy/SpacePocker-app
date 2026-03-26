@@ -1,14 +1,14 @@
 import BookingDetailCard from '@/components/booking/BookingDetailCard';
-import { Booking, BookingStatus } from '@/types/booking.type';
+import bookingService from '@/services/booking.service';
+import { Booking } from '@/types/booking.type';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
-import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function BookingDetailScreen() {
   const params = useLocalSearchParams<{
-    bookingJson?: string;
     bookingId?: string;
     roomName?: string;
     roomCode?: string;
@@ -17,38 +17,22 @@ export default function BookingDetailScreen() {
     endTime?: string;
   }>();
 
-  const booking = useMemo<Booking | null>(() => {
-    // From mybooking list — full object serialized as JSON
-    if (params.bookingJson) {
-      try {
-        return JSON.parse(params.bookingJson) as Booking;
-      } catch {
-        return null;
-      }
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!params.bookingId) {
+      setLoading(false);
+      setError(true);
+      return;
     }
-    // From booking-success — construct from individual params
-    if (params.bookingId) {
-      return {
-        id: params.bookingId,
-        userId: '',
-        roomId: '',
-        startTime: params.startTime ?? '',
-        endTime: params.endTime ?? '',
-        purpose: '',
-        status: BookingStatus.PENDING,
-        room: {
-          id: '',
-          name: params.roomName ?? '—',
-          roomCode: params.roomCode ?? '',
-        },
-        user: { id: '', name: '', email: '' },
-        amenities: [],
-        services: [],
-        totalCost: Number(params.amount ?? 0),
-      };
-    }
-    return null;
-  }, [params]);
+    bookingService
+      .getBookingById(params.bookingId)
+      .then(res => setBooking(res.metadata))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [params.bookingId]);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={['top', 'bottom']}>
@@ -74,12 +58,18 @@ export default function BookingDetailScreen() {
       </View>
 
       {/* Content */}
-      {booking ? (
+      {loading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#5B4FE9" />
+        </View>
+      ) : booking ? (
         <BookingDetailCard booking={booking} />
       ) : (
         <View className="flex-1 items-center justify-center px-8">
           <Text className="text-gray-400 text-sm text-center">
-            No booking data found.
+            {error
+              ? 'Failed to load booking details.'
+              : 'No booking data found.'}
           </Text>
           <TouchableOpacity
             onPress={() => router.back()}

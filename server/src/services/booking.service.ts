@@ -129,7 +129,8 @@ export default class BookingService {
       !isNaN(parsedLimit) && parsedLimit > 0 && parsedLimit <= 100
         ? parsedLimit
         : 10;
-    const safeOffset = !isNaN(parsedOffset) && parsedOffset >= 0 ? parsedOffset : 0;
+    const safeOffset =
+      !isNaN(parsedOffset) && parsedOffset >= 0 ? parsedOffset : 0;
 
     const [total, bookings] = await Promise.all([
       prisma.booking.count({ where }),
@@ -268,6 +269,12 @@ export default class BookingService {
       throw new BadRequestError("Completed booking cannot be cancelled");
     }
 
+    if (booking.status === "CHECKED_IN") {
+      throw new BadRequestError(
+        "Cannot cancel a booking that is currently checked in",
+      );
+    }
+
     const cancelledBooking = await prisma.booking.update({
       where: { id },
       data: {
@@ -280,6 +287,121 @@ export default class BookingService {
     });
 
     return { booking: cancelledBooking };
+  }
+
+  async userCancelBooking(id: string, userId: string) {
+    if (!id || id.trim() === "") {
+      throw new BadRequestError("Booking ID is required");
+    }
+
+    if (!userId || userId.trim() === "") {
+      throw new BadRequestError("User ID is required");
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: {
+        user: true,
+        room: true,
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundError("Booking not found");
+    }
+
+    if (booking.userId !== userId) {
+      throw new ForbiddenError("You are not allowed to cancel this booking");
+    }
+
+    if (booking.status === "CANCELLED") {
+      throw new BadRequestError("Booking is already cancelled");
+    }
+
+    // Only allow cancelling if status is APPROVED, COMPLETED or PENDING
+    // Based on requirement: "cancel booking đã thanh toán cọc" -> APPROVED and COMPLETED
+    if (
+      booking.status !== "APPROVED" &&
+      booking.status !== "PENDING" &&
+      booking.status !== "COMPLETED"
+    ) {
+      throw new BadRequestError(
+        "Only PENDING, APPROVED or COMPLETED bookings can be cancelled by user",
+      );
+    }
+
+    // Check if booking has already started
+    if (new Date() > booking.startTime) {
+      throw new BadRequestError(
+        "Cannot cancel a booking that has already started",
+      );
+    }
+
+    const cancelledBooking = await prisma.booking.update({
+      where: { id },
+      data: {
+        status: "CANCELLED",
+      },
+      include: {
+        user: true,
+        room: true,
+        transaction: true,
+      },
+    });
+
+    if (cancelledBooking.transaction?.bookingRequestId) {
+      await prisma.bookingRequest.updateMany({
+        where: { id: cancelledBooking.transaction.bookingRequestId },
+        data: { status: "CANCELLED" },
+      });
+    }
+
+    // Send email notification regarding no refund for APPROVED and COMPLETED bookings
+    if (booking.status === "APPROVED" || booking.status === "COMPLETED") {
+      await this.mailQueueService.publishBookingCancelledNoRefundEmailJob({
+        to: booking.user.email,
+        customerName: booking.user.name,
+        bookingId: booking.id,
+        roomName: booking.room.name,
+        startTime: booking.startTime.toISOString(),
+        endTime: booking.endTime.toISOString(),
+      });
+    }
+
+    return { booking: cancelledBooking };
+  }
+
+  async userCancelBookingByRequestId(bookingRequestId: string, userId: string) {
+    if (!bookingRequestId || bookingRequestId.trim() === "") {
+      throw new BadRequestError("Booking Request ID is required");
+    }
+
+    if (!userId || userId.trim() === "") {
+      throw new BadRequestError("User ID is required");
+    }
+
+    const booking = await prisma.booking.findFirst({
+      where: {
+        transaction: {
+          bookingRequestId: bookingRequestId,
+        },
+        userId,
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundError("Booking associated with this request not found");
+    }
+
+    const result = await this.userCancelBooking(booking.id, userId);
+
+    // Ensure the booking request itself is also explicitly cancelled
+    await prisma.bookingRequest.updateMany({
+      where: { id: bookingRequestId },
+      data: { status: "CANCELLED" },
+    });
+
+    return result;
   }
 
   async managerCancelPaidBookingAndNotifyRefund(
@@ -313,6 +435,22 @@ export default class BookingService {
 
     if (!bookingRequest) {
       throw new NotFoundError("Booking request not found");
+    }
+
+    if (bookingRequest.status === "CHECKED_IN") {
+      throw new BadRequestError(
+        "Cannot cancel a booking that is currently checked in",
+      );
+    }
+
+    const checkInRecord = await prisma.checkInRecord.findUnique({
+      where: { bookingRequestId },
+    });
+
+    if (bookingRequest.status === "COMPLETED" && checkInRecord?.checkedOutAt) {
+      throw new BadRequestError(
+        "Cannot cancel a booking that has already checked out",
+      );
     }
 
     const isManagerOrAdmin =
@@ -390,15 +528,16 @@ export default class BookingService {
       });
 
     const isCompletedCancellation = previousBookingStatus === "COMPLETED";
-    const refundAmount = isCompletedCancellation && cancelledBooking
-      ? Math.max(
-          0,
-          cancelledBooking.room.pricePerHour *
-            ((cancelledBooking.endTime.getTime() -
-              cancelledBooking.startTime.getTime()) /
-              (1000 * 60 * 60)),
-        )
-      : 0;
+    const refundAmount =
+      isCompletedCancellation && cancelledBooking
+        ? Math.max(
+            0,
+            cancelledBooking.room.pricePerHour *
+              ((cancelledBooking.endTime.getTime() -
+                cancelledBooking.startTime.getTime()) /
+                (1000 * 60 * 60)),
+          )
+        : 0;
 
     if (isCompletedCancellation && cancelledBooking) {
       await this.mailQueueService.publishBookingRefundSuccessEmailJob({

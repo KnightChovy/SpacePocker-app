@@ -59,6 +59,20 @@
  *                 type: integer
  *                 minimum: 1
  *                 example: 2
+ *         paymentMethod:
+ *           type: string
+ *           enum: [VNPAY, CASH, BANK_TRANSFER]
+ *           default: VNPAY
+ *           description: |
+ *             Payment method for this booking.
+ *             - **VNPAY**: Online payment via VNPAY gateway (default)
+ *             - **CASH**: Pay in cash — manager confirms manually after approval
+ *             - **BANK_TRANSFER**: Bank transfer — manager confirms manually after approval
+ *           example: "CASH"
+ *         totalAmount:
+ *           type: number
+ *           description: Optional total amount pre-calculated by FE
+ *           example: 500000
  *
  *     BookingRequestRoom:
  *       type: object
@@ -138,6 +152,14 @@
  *           type: string
  *           enum: [PENDING, APPROVED, REJECTED, CANCELLED, COMPLETED]
  *           example: "PENDING"
+ *         paymentMethod:
+ *           type: string
+ *           enum: [VNPAY, CASH, BANK_TRANSFER]
+ *           example: "VNPAY"
+ *         totalAmount:
+ *           type: number
+ *           nullable: true
+ *           example: 500000
  *         approvedBy:
  *           type: string
  *           nullable: true

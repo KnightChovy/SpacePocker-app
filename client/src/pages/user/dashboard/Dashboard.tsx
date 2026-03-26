@@ -9,6 +9,11 @@ import BookingList, {
 import { useAuthStore } from '@/stores/auth.store';
 import { formatVND, getAvatarUrl } from '@/lib/utils';
 import { useGetMyBookingRequests } from '@/hooks/user/booking-requests/use-get-my-booking-requests';
+import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
+import {
+  useBookingDraftStore,
+  type LocalBookingRecord,
+} from '@/stores/bookingDraft.store';
 import { useMemo } from 'react';
 
 const Dashboard = () => {
@@ -17,6 +22,40 @@ const Dashboard = () => {
   }>();
   const navigate = useNavigate();
   const user = useAuthStore(state => state.user);
+
+  const localBookingsById = useBookingDraftStore(
+    state => state.localBookingsById
+  );
+  const serviceCategoriesQuery = useGetServiceCategories();
+
+  const serviceById = useMemo(() => {
+    const map = new Map<string, { name: string; price: number }>();
+    const categories = serviceCategoriesQuery.data ?? [];
+    for (const cat of categories) {
+      for (const s of cat.services ?? []) {
+        map.set(s.id, { name: s.name, price: s.price });
+      }
+    }
+    return map;
+  }, [serviceCategoriesQuery.data]);
+
+  const readPersistedBookingStorage = ():
+    | { localBookingsById?: Record<string, LocalBookingRecord> }
+    | undefined => {
+    if (typeof window === 'undefined') return undefined;
+    try {
+      const raw = window.localStorage.getItem('spacepocker-booking-storage');
+      if (!raw) return undefined;
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const state = parsed?.state ?? parsed;
+      return {
+        localBookingsById: (state as Record<string, unknown>)
+          ?.localBookingsById as Record<string, LocalBookingRecord> | undefined,
+      };
+    } catch {
+      return undefined;
+    }
+  };
 
   const bookingRequestsQuery = useGetMyBookingRequests();
 
@@ -32,6 +71,13 @@ const Dashboard = () => {
       .map(request => {
         const start = new Date(request.startTime);
         const end = new Date(request.endTime);
+        const now = new Date();
+
+        const isBookingCheckedOut = !!request.checkInRecord?.checkedOutAt;
+        const isPastEndTime = !!(end && now > end);
+        const isBookingCompleted =
+          request.status === 'COMPLETED' &&
+          (isBookingCheckedOut || isPastEndTime);
 
         return {
           id: request.id,
@@ -58,12 +104,15 @@ const Dashboard = () => {
                 minute: '2-digit',
               }),
           image: request.room?.images?.[0] ?? '',
+          canWriteReview: isBookingCompleted,
         };
       });
   }, [bookingRequestsQuery.data]);
 
   const stats = useMemo(() => {
     const requests = bookingRequestsQuery.data ?? [];
+
+    const persisted = readPersistedBookingStorage();
 
     const totalBookings = requests.length;
     const totalHours = requests.reduce((sum, request) => {
@@ -78,7 +127,23 @@ const Dashboard = () => {
       const end = new Date(request.endTime).getTime();
       if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return sum;
       const hours = (end - start) / (1000 * 60 * 60);
-      return sum + hours * (request.room?.pricePerHour ?? 0);
+
+      let extraPrice = 0;
+      const fromLocal =
+        localBookingsById[request.id] ??
+        persisted?.localBookingsById?.[request.id];
+      if (fromLocal && fromLocal.services) {
+        for (const svcItem of fromLocal.services) {
+          if (!svcItem?.serviceId) continue;
+          const svc = serviceById.get(svcItem.serviceId);
+          if (svc) {
+            const qty = Number(svcItem.quantity ?? 1);
+            extraPrice += svc.price * (Number.isFinite(qty) ? qty : 1);
+          }
+        }
+      }
+
+      return sum + hours * (request.room?.pricePerHour ?? 0) + extraPrice;
     }, 0);
 
     return {
@@ -86,7 +151,7 @@ const Dashboard = () => {
       totalHours,
       estimatedCredits,
     };
-  }, [bookingRequestsQuery.data]);
+  }, [bookingRequestsQuery.data, localBookingsById, serviceById]);
 
   const headerActions = [
     {

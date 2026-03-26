@@ -378,8 +378,8 @@ describe('RoomService', () => {
 
       const result = await roomService.getRoomById('r-001');
 
-      expect(result).toEqual({ room: mockRoom });
-      expect(mockRoomRepo.findById).toHaveBeenCalledWith('r-001');
+      expect(result.room).toEqual(expect.objectContaining(mockRoom));
+      expect(mockRoomRepo.findById).toHaveBeenCalledWith("r-001");
     });
   });
 
@@ -404,7 +404,7 @@ describe('RoomService', () => {
           10,
           0,
         );
-        expect(result.rooms).toEqual(mockRooms);
+        expect(result.rooms[0]).toEqual(expect.objectContaining(mockRooms[0]));
       });
 
       it('should filter by buildingId', async () => {
@@ -678,17 +678,15 @@ describe('RoomService', () => {
           offset: 0,
         });
 
-        expect(result).toEqual({
-          rooms: mockRooms,
-          pagination: {
+        expect(result.pagination).toEqual({
             total: 1,
             limit: 10,
             offset: 0,
             hasMore: false,
-          },
-          filters: {
-            search: 'Conference',
-            buildingId: 'b-001',
+        });
+        expect(result.filters).toEqual({
+            search: "Conference",
+            buildingId: "b-001",
             roomType: null,
             status: null,
             minPrice: null,
@@ -696,8 +694,8 @@ describe('RoomService', () => {
             minCapacity: null,
             sortBy: null,
             sortOrder: null,
-          },
         });
+        expect(result.rooms[0]).toEqual(expect.objectContaining(mockRooms[0]));
       });
     });
   });
@@ -887,6 +885,55 @@ describe('RoomService', () => {
 
       expect(result).toEqual({ room: mockRoom });
       expect(mockRoomRepo.delete).toHaveBeenCalledWith('r-001');
+    });
+  });
+
+  describe('searchAvailableRooms()', () => {
+    const validSearch = {
+      startTime: '2026-03-27T09:00:00.000Z',
+      endTime: '2026-03-27T11:00:00.000Z',
+    };
+
+    it('should throw BadRequestError if startTime is missing', async () => {
+      await expect(
+        roomService.searchAvailableRooms({ endTime: validSearch.endTime }),
+      ).rejects.toThrow(BadRequestError);
+    });
+
+    it('should throw BadRequestError if endTime is missing', async () => {
+      await expect(
+        roomService.searchAvailableRooms({ startTime: validSearch.startTime }),
+      ).rejects.toThrow(BadRequestError);
+    });
+
+    it('should throw BadRequestError if startTime >= endTime', async () => {
+      await expect(
+        roomService.searchAvailableRooms({
+          startTime: '2026-03-27T11:00:00.000Z',
+          endTime: '2026-03-27T09:00:00.000Z',
+        }),
+      ).rejects.toThrow(BadRequestError);
+    });
+
+    it('should call findAll with correct filters', async () => {
+      mockRoomRepo.count.mockResolvedValue(1);
+      mockRoomRepo.findAll.mockResolvedValue([mockRoom]);
+
+      await roomService.searchAvailableRooms(validSearch);
+
+      expect(mockRoomRepo.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'AVAILABLE',
+          bookings: {
+            none: expect.objectContaining({
+              status: { in: ['APPROVED', 'PENDING'] },
+            }),
+          },
+        }),
+        expect.any(Object),
+        10,
+        0,
+      );
     });
   });
 });

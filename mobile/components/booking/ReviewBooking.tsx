@@ -154,9 +154,7 @@ export default function ReviewBooking({
 }: Props) {
   const duration = getDurationHours(bookingData.startTime, bookingData.endTime);
   const pricePerHour = roomDetail?.pricePerHour ?? 0;
-  const securityDeposit = roomDetail?.securityDeposit ?? 0;
   const roomCost = duration * pricePerHour;
-  const totalCost = roomCost + securityDeposit;
 
   const selectedAmenities =
     roomDetail?.amenities.filter(({ amenity }) =>
@@ -165,12 +163,28 @@ export default function ReviewBooking({
 
   const selectedServices = bookingData.services
     .map(s => {
-      const cat = roomDetail?.serviceCategories.find(
-        c => c.category.id === s.serviceId
-      );
-      return cat ? { name: cat.category.name, quantity: s.quantity } : null;
+      for (const rsc of roomDetail?.serviceCategories ?? []) {
+        const svc = rsc.category.services?.find(sv => sv.id === s.serviceId);
+        if (svc)
+          return {
+            id: s.serviceId,
+            name: svc.name,
+            price: svc.price,
+            quantity: s.quantity,
+          };
+      }
+      return null;
     })
-    .filter((v): v is { name: string; quantity: number } => v !== null);
+    .filter(
+      (v): v is { id: string; name: string; price: number; quantity: number } =>
+        v !== null
+    );
+
+  const serviceCost = selectedServices.reduce(
+    (sum, s) => sum + s.price * s.quantity,
+    0
+  );
+  const totalCost = roomCost + serviceCost;
 
   const coverImage = roomDetail?.images?.[0];
 
@@ -302,15 +316,23 @@ export default function ReviewBooking({
                   key={i}
                   className="flex-row items-center justify-between py-2 border-b border-gray-50"
                 >
-                  <View className="flex-row items-center gap-2">
+                  <View className="flex-row items-center gap-2 flex-1">
                     <Package size={14} color="#6B7280" strokeWidth={2} />
-                    <Text className="text-sm text-gray-700 font-medium">
+                    <Text
+                      className="text-sm text-gray-700 font-medium flex-1"
+                      numberOfLines={1}
+                    >
                       {s.name}
                     </Text>
                   </View>
-                  <Text className="text-sm font-semibold text-gray-900">
-                    ×{s.quantity}
-                  </Text>
+                  <View className="items-end">
+                    <Text className="text-sm font-semibold text-gray-900">
+                      ×{s.quantity}
+                    </Text>
+                    <Text className="text-xs text-[#5B4FE9] font-semibold">
+                      {(s.price * s.quantity).toLocaleString('vi-VN')}đ
+                    </Text>
+                  </View>
                 </View>
               ))}
             </View>
@@ -328,11 +350,13 @@ export default function ReviewBooking({
             sub={`${pricePerHour.toLocaleString('vi-VN')}đ/giờ × ${duration}h`}
             value={`${roomCost.toLocaleString('vi-VN')}đ`}
           />
-          <CostRow
-            label="Tiền đặt cọc"
-            sub="Hoàn trả sau khi trả phòng"
-            value={`${securityDeposit.toLocaleString('vi-VN')}đ`}
-          />
+          {serviceCost > 0 && (
+            <CostRow
+              label="Dịch vụ"
+              sub={`${selectedServices.length} dịch vụ đã chọn`}
+              value={`${serviceCost.toLocaleString('vi-VN')}đ`}
+            />
+          )}
           <View className="border-t border-gray-200 mt-1 pt-1">
             <CostRow
               label="Tổng cộng"

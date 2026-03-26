@@ -171,17 +171,16 @@ async function ensureTestUser() {
 
 async function ensureAmenities(): Promise<Record<string, string>> {
   const names = [
-    "WiFi",
-    "Projector",
-    "Whiteboard",
-    "Air Conditioner",
-    "Parking",
-    "Coffee/Tea",
+    "High-Speed WiFi",
+    "Whiteboard & Markers",
+    "Air Conditioning",
     "Smart TV",
-    "Microphone",
-    "Speaker",
-    "HDMI Cable",
-    "Charging Station",
+    "Standard Built-in Speakers",
+    "HDMI/Type-C Cables",
+    "Charging Power Outlets",
+    "Water Dispenser",
+    "Ergonomic Chairs",
+    "Parking",
   ];
 
   await prisma.amenity.createMany({
@@ -200,25 +199,35 @@ async function ensureAmenities(): Promise<Record<string, string>> {
 async function ensureBuilding(managerId: string) {
   const buildingName = "Main Building";
   const campus = "HQ";
-  const address = "1 Example Street";
+  const address =
+    "Vinhomes Central Park, 720A P. Điện Biên Phủ, Phường 22, Bình Thạnh, Hồ Chí Minh";
+  const latitude = 10.794611;
+  const longitude = 106.722287;
 
   const existing = await prisma.building.findFirst({
     where: {
       buildingName,
       campus,
-      address,
       managerId,
     },
     select: { id: true },
   });
 
-  if (existing) return existing.id;
+  if (existing) {
+    await prisma.building.update({
+      where: { id: existing.id },
+      data: { address, latitude, longitude },
+    });
+    return existing.id;
+  }
 
   const building = await prisma.building.create({
     data: {
       buildingName,
       campus,
       address,
+      latitude,
+      longitude,
       managerId,
     },
     select: { id: true },
@@ -264,9 +273,7 @@ async function ensureRooms(managerId: string, buildingId: string) {
       capacity: 12,
       roomType: RoomType.MEETING,
       status: RoomStatus.AVAILABLE,
-      images: [
-        "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1200&q=80",
-      ],
+      images: ["https://alo360.com/media/images/123(2).jpg"],
     },
     {
       roomCode: "MEET-103",
@@ -358,30 +365,30 @@ async function ensureServices(
   const services = [
     {
       id: "2f1dfd59-6e65-4a1d-bf6f-c0f111c41361",
-      name: "Coffee Break",
-      description: "Coffee and tea set for your session",
+      name: "Standard Coffee Break",
+      description: "Coffee, tea, and cookies for your session",
       price: 50000,
       categoryName: "Catering",
     },
     {
       id: "57f4ce46-1d44-4c71-8b53-7dcc5b1681bb",
-      name: "Projector Rental",
-      description: "Add a projector to your booking",
-      price: 80000,
+      name: "4K Projector Rental",
+      description: "High-lumens 4K projector for presentations",
+      price: 150000,
       categoryName: "Equipment",
     },
     {
       id: "10208610-e7d1-4e14-8c5a-12ccacdef0b3",
-      name: "Snack Box",
-      description: "Light snacks for participants",
+      name: "Fresh Fruit Platter",
+      description: "Assorted seasonal fresh fruits",
       price: 70000,
       categoryName: "Catering",
     },
     {
       id: "57ace955-33d8-4f8b-b8f8-4e39f2e99115",
-      name: "Portable Speaker",
-      description: "Portable speaker for events and class activities",
-      price: 90000,
+      name: "Wireless Microphone Set",
+      description: "Set of 2 wireless microphones and receiver",
+      price: 100000,
       categoryName: "Equipment",
     },
   ] as const;
@@ -416,32 +423,32 @@ async function ensureRoomAmenities(
   amenityIdsByName: Record<string, string>,
 ) {
   const mappings: Array<{ roomCode: string; amenityName: string }> = [
-    { roomCode: "MEET-101", amenityName: "WiFi" },
-    { roomCode: "MEET-101", amenityName: "Projector" },
-    { roomCode: "MEET-101", amenityName: "Whiteboard" },
-    { roomCode: "MEET-101", amenityName: "Air Conditioner" },
+    { roomCode: "MEET-101", amenityName: "High-Speed WiFi" },
     { roomCode: "MEET-101", amenityName: "Smart TV" },
-    { roomCode: "CLAS-201", amenityName: "WiFi" },
-    { roomCode: "CLAS-201", amenityName: "Whiteboard" },
-    { roomCode: "CLAS-201", amenityName: "Air Conditioner" },
-    { roomCode: "CLAS-201", amenityName: "Projector" },
-    { roomCode: "MEET-102", amenityName: "WiFi" },
-    { roomCode: "MEET-102", amenityName: "Projector" },
-    { roomCode: "MEET-102", amenityName: "Whiteboard" },
-    { roomCode: "MEET-102", amenityName: "Speaker" },
-    { roomCode: "MEET-102", amenityName: "HDMI Cable" },
-    { roomCode: "MEET-103", amenityName: "WiFi" },
-    { roomCode: "MEET-103", amenityName: "Whiteboard" },
-    { roomCode: "MEET-103", amenityName: "Charging Station" },
-    { roomCode: "CLAS-202", amenityName: "WiFi" },
-    { roomCode: "CLAS-202", amenityName: "Projector" },
-    { roomCode: "CLAS-202", amenityName: "Whiteboard" },
-    { roomCode: "CLAS-202", amenityName: "Microphone" },
-    { roomCode: "CLAS-203", amenityName: "WiFi" },
-    { roomCode: "CLAS-203", amenityName: "Projector" },
-    { roomCode: "CLAS-203", amenityName: "Whiteboard" },
-    { roomCode: "CLAS-203", amenityName: "Microphone" },
-    { roomCode: "CLAS-203", amenityName: "Speaker" },
+    { roomCode: "MEET-101", amenityName: "Whiteboard & Markers" },
+    { roomCode: "MEET-101", amenityName: "Air Conditioning" },
+    { roomCode: "MEET-101", amenityName: "Water Dispenser" },
+    { roomCode: "CLAS-201", amenityName: "High-Speed WiFi" },
+    { roomCode: "CLAS-201", amenityName: "Whiteboard & Markers" },
+    { roomCode: "CLAS-201", amenityName: "Air Conditioning" },
+    { roomCode: "CLAS-201", amenityName: "Ergonomic Chairs" },
+    { roomCode: "MEET-102", amenityName: "High-Speed WiFi" },
+    { roomCode: "MEET-102", amenityName: "Smart TV" },
+    { roomCode: "MEET-102", amenityName: "Whiteboard & Markers" },
+    { roomCode: "MEET-102", amenityName: "Standard Built-in Speakers" },
+    { roomCode: "MEET-102", amenityName: "HDMI/Type-C Cables" },
+    { roomCode: "MEET-103", amenityName: "High-Speed WiFi" },
+    { roomCode: "MEET-103", amenityName: "Whiteboard & Markers" },
+    { roomCode: "MEET-103", amenityName: "Charging Power Outlets" },
+    { roomCode: "CLAS-202", amenityName: "High-Speed WiFi" },
+    { roomCode: "CLAS-202", amenityName: "Smart TV" },
+    { roomCode: "CLAS-202", amenityName: "Whiteboard & Markers" },
+    { roomCode: "CLAS-202", amenityName: "Air Conditioning" },
+    { roomCode: "CLAS-203", amenityName: "High-Speed WiFi" },
+    { roomCode: "CLAS-203", amenityName: "Smart TV" },
+    { roomCode: "CLAS-203", amenityName: "Whiteboard & Markers" },
+    { roomCode: "CLAS-203", amenityName: "Standard Built-in Speakers" },
+    { roomCode: "CLAS-203", amenityName: "Ergonomic Chairs" },
   ];
 
   const data = mappings

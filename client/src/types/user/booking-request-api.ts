@@ -36,7 +36,8 @@ export type BookingRequestStatus =
   | 'APPROVED'
   | 'REJECTED'
   | 'CANCELLED'
-  | 'COMPLETED';
+  | 'COMPLETED'
+  | 'CHECKED_IN';
 
 export interface BookingRequestUserLite {
   id: string;
@@ -62,6 +63,11 @@ export interface BookingRequestForManager {
   createdAt: string;
   user: BookingRequestUserLite;
   room: BookingRequestRoomLite;
+  checkInRecord?: {
+    id: string;
+    checkedInAt: string;
+    checkedOutAt?: string | null;
+  } | null;
 }
 
 export interface BookingRequestAmenity {
@@ -125,7 +131,18 @@ export interface MyBookingRequest {
   startTime: string;
   endTime: string;
   purpose?: string | null;
+  reason?: string | null;
+  cancelReason?: string | null;
+  rejectionReason?: string | null;
+  refund?: {
+    reason?: string | null;
+  } | null;
   status: BookingRequestStatus;
   createdAt: string;
   room: MyBookingRequestRoomLite;
+  checkInRecord?: {
+    id: string;
+    checkedInAt: string;
+    checkedOutAt?: string | null;
+  } | null;
 }

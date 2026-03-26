@@ -14,6 +14,142 @@ export default class RoomService {
     private buildingRepo: IBuildingRepository,
   ) {}
 
+  async searchAvailableRooms(query: any) {
+    const {
+      startTime: startStr,
+      endTime: endStr,
+      search,
+      buildingId,
+      roomType,
+      minPrice,
+      maxPrice,
+      minCapacity,
+      sortBy,
+      sortOrder,
+      limit,
+      offset,
+    } = query;
+
+    if (!startStr || !endStr) {
+      throw new BadRequestError('Start time and End time are required');
+    }
+
+    const startTime = new Date(startStr);
+    const endTime = new Date(endStr);
+
+    if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+      throw new BadRequestError('Invalid date format');
+    }
+
+    if (startTime >= endTime) {
+      throw new BadRequestError('Start time must be before end time');
+    }
+
+    const filter: any = {
+      status: 'AVAILABLE', // Only list rooms that are generally available (not under maintenance)
+    };
+
+    // Date overlap check
+    filter.bookings = {
+      none: {
+        startTime: { lt: endTime },
+        endTime: { gt: startTime },
+        status: { in: ['APPROVED', 'PENDING'] },
+      },
+    };
+
+    if (search && typeof search === 'string') {
+      filter.OR = [
+        {
+          name: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          roomCode: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      ];
+    }
+
+    if (buildingId && typeof buildingId === 'string') {
+      filter.buildingId = buildingId;
+    }
+
+    if (roomType && typeof roomType === 'string') {
+      const validRoomTypes = ['MEETING', 'CLASSROOM', 'EVENT', 'OTHER'];
+      if (validRoomTypes.includes(roomType.toUpperCase())) {
+        filter.roomType = roomType.toUpperCase();
+      }
+    }
+
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      filter.pricePerHour = {};
+      if (minPrice !== undefined) {
+        const parsedMinPrice = parseFloat(String(minPrice));
+        if (!isNaN(parsedMinPrice)) {
+          filter.pricePerHour.gte = parsedMinPrice;
+        }
+      }
+      if (maxPrice !== undefined) {
+        const parsedMaxPrice = parseFloat(String(maxPrice));
+        if (!isNaN(parsedMaxPrice)) {
+          filter.pricePerHour.lte = parsedMaxPrice;
+        }
+      }
+    }
+
+    if (minCapacity !== undefined) {
+      const parsedMinCapacity = parseInt(String(minCapacity), 10);
+      if (!isNaN(parsedMinCapacity)) {
+        filter.capacity = { gte: parsedMinCapacity };
+      }
+    }
+
+    let orderBy: any = undefined;
+    if (sortBy) {
+      const validSortFields = [
+        'name',
+        'pricePerHour',
+        'capacity',
+        'roomType',
+        'createdAt',
+      ];
+      const validSortOrders = ['asc', 'desc'];
+
+      if (validSortFields.includes(sortBy)) {
+        const order = validSortOrders.includes(sortOrder?.toLowerCase())
+          ? sortOrder.toLowerCase()
+          : 'asc';
+        orderBy = { [sortBy]: order };
+      }
+    } else {
+      orderBy = { createdAt: 'desc' };
+    }
+
+    const parsedLimit = limit ? parseInt(limit) : 10;
+    const parsedOffset = offset ? parseInt(offset) : 0;
+
+    const rooms = await this.roomRepo.findAll(
+      filter,
+      orderBy,
+      parsedLimit,
+      parsedOffset,
+    );
+    const total = await this.roomRepo.count(filter);
+
+    return {
+      rooms,
+      total,
+      page: Math.floor(parsedOffset / parsedLimit) + 1,
+      limit: parsedLimit,
+      totalPages: Math.ceil(total / parsedLimit),
+    };
+  }
+
   async createRoom(data: {
     buildingId: string;
     managerId: string;

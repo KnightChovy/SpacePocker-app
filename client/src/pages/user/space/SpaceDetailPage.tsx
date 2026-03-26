@@ -12,6 +12,7 @@ import { useGetRoomById } from '@/hooks/user/rooms/use-get-room-by-id';
 import { useGetBuildingById } from '@/hooks/user/buildings/use-get-building-by-id';
 import { ChevronLeft, Heart, MapPin, Share } from 'lucide-react';
 import { useGetRoomAmenitiesServices } from '@/hooks/user/rooms/use-get-room-amenities-services';
+import { useGetFeedbacks } from '@/hooks/user/feedback/use-get-feedbacks';
 
 const parseCoordinate = (value: unknown): number | undefined => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -36,6 +37,15 @@ const SpaceDetailPage: React.FC = () => {
   const building = buildingQuery.data;
 
   const extrasQuery = useGetRoomAmenitiesServices(roomId || undefined);
+  const feedbackQuery = useGetFeedbacks(
+    roomId
+      ? {
+          roomId,
+          page: 1,
+          limit: 10,
+        }
+      : undefined
+  );
 
   const amenitiesDetail: AmenityDetail[] = useMemo(() => {
     const list = extrasQuery.data?.amenities ?? [];
@@ -83,6 +93,13 @@ const SpaceDetailPage: React.FC = () => {
     room?.building?.latitude,
     room?.building?.longitude,
   ]);
+
+  const feedbacks = feedbackQuery.data?.feedbacks ?? [];
+  const averageRating = useMemo(() => {
+    if (feedbacks.length === 0) return 0;
+    const total = feedbacks.reduce((sum, feedback) => sum + feedback.rating, 0);
+    return Number((total / feedbacks.length).toFixed(1));
+  }, [feedbacks]);
 
   if (roomQuery.isLoading) {
     return (
@@ -172,6 +189,56 @@ const SpaceDetailPage: React.FC = () => {
               }
               coordinates={coordinates}
             />
+
+            <section>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                Feedback
+              </h2>
+
+              {feedbackQuery.isLoading ? (
+                <p className="text-gray-600">Loading feedback...</p>
+              ) : feedbackQuery.isError ? (
+                <p className="text-red-600">
+                  {feedbackQuery.error instanceof Error
+                    ? feedbackQuery.error.message
+                    : 'Failed to load feedback.'}
+                </p>
+              ) : feedbacks.length === 0 ? (
+                <p className="text-gray-600">No feedback available.</p>
+              ) : (
+                <div className="space-y-4">
+                  {feedbacks.map(feedback => (
+                    <article
+                      key={feedback.id}
+                      className="rounded-xl border border-gray-200 p-4"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-semibold text-gray-900">
+                          {feedback.user?.name ?? 'Anonymous'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {new Date(feedback.createdAt).toLocaleDateString(
+                            'vi-VN'
+                          )}
+                        </p>
+                      </div>
+
+                      <p className="mt-1 text-amber-500 text-sm">
+                        {'★'.repeat(feedback.rating)}
+                        {'☆'.repeat(5 - feedback.rating)}
+                        <span className="ml-2 text-gray-600">
+                          ({feedback.rating}/5)
+                        </span>
+                      </p>
+
+                      <p className="mt-2 text-gray-700">
+                        {feedback.comment?.trim() || 'Không có nhận xét.'}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
           </div>
 
           <aside className="relative">
@@ -179,7 +246,7 @@ const SpaceDetailPage: React.FC = () => {
               <SpaceDetailBooking
                 spaceId={room.id}
                 price={room.pricePerHour}
-                rating={0}
+                rating={averageRating}
                 capacity={room.capacity}
               />
             </div>

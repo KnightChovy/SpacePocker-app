@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import AppHeader from '@/components/layouts/AppHeader';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
 import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
@@ -9,6 +10,7 @@ import { useGetServices } from '@/hooks/admin/services/use-get-services';
 import { useUpdateService } from '@/hooks/admin/services/use-update-service';
 import { useDeleteService } from '@/hooks/admin/services/use-delete-service';
 import type { ApiService } from '@/types/user/booking-request-api';
+import { parseAdminServiceForm } from '@/validations/admin/service.validation';
 
 type ServiceModalMode = 'create' | 'edit';
 
@@ -39,6 +41,13 @@ const ServicesPage = () => {
   const [descriptionInput, setDescriptionInput] = useState('');
   const [priceInput, setPriceInput] = useState<string>('');
   const [categoryIdInput, setCategoryIdInput] = useState('');
+  const [deleteConfirmState, setDeleteConfirmState] = useState<{
+    isOpen: boolean;
+    service: ApiService | null;
+  }>({
+    isOpen: false,
+    service: null,
+  });
 
   const services = useMemo(
     () => servicesQuery.data ?? [],
@@ -100,17 +109,20 @@ const ServicesPage = () => {
   };
 
   const canSubmit = useMemo(() => {
-    const name = nameInput.trim();
-    const categoryId = categoryIdInput.trim();
-    const price = Number(priceInput);
-    if (!name || !categoryId || priceInput.trim().length === 0) return false;
-    if (Number.isNaN(price) || price < 0) return false;
+    const parsed = parseAdminServiceForm({
+      name: nameInput,
+      description: descriptionInput,
+      price: priceInput,
+      categoryId: categoryIdInput,
+    });
+    if (!parsed.ok) return false;
     if (createMutation.isPending || updateMutation.isPending) return false;
     return true;
   }, [
     nameInput,
     categoryIdInput,
     priceInput,
+    descriptionInput,
     createMutation.isPending,
     updateMutation.isPending,
   ]);
@@ -118,18 +130,21 @@ const ServicesPage = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const name = nameInput.trim();
-    const description = descriptionInput.trim();
-    const price = Number(priceInput);
-    const categoryId = categoryIdInput.trim();
+    const parsed = parseAdminServiceForm({
+      name: nameInput,
+      description: descriptionInput,
+      price: priceInput,
+      categoryId: categoryIdInput,
+    });
+    if (!parsed.ok) return;
 
-    if (!name || !categoryId || Number.isNaN(price) || price < 0) return;
+    const { name, description, price, categoryId } = parsed.value;
 
     if (modalMode === 'create') {
       createMutation.mutate(
         {
           name,
-          description: description || undefined,
+          description,
           price,
           categoryId,
         },
@@ -149,7 +164,7 @@ const ServicesPage = () => {
       {
         id: editingService.id,
         name,
-        description: description || undefined,
+        description,
         price,
         categoryId,
       },
@@ -164,8 +179,13 @@ const ServicesPage = () => {
 
   const handleDelete = (service: ApiService) => {
     if (deleteMutation.isPending) return;
-    if (!window.confirm(`Delete service "${service.name}"?`)) return;
-    deleteMutation.mutate(service.id);
+    setDeleteConfirmState({ isOpen: true, service });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteConfirmState.service) return;
+    deleteMutation.mutate(deleteConfirmState.service.id);
+    setDeleteConfirmState({ isOpen: false, service: null });
   };
 
   return (
@@ -442,6 +462,18 @@ const ServicesPage = () => {
           </div>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        isOpen={deleteConfirmState.isOpen}
+        title="Delete Service"
+        message={`Delete service "${deleteConfirmState.service?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous={true}
+        isLoading={deleteMutation.isPending}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirmState({ isOpen: false, service: null })}
+      />
     </>
   );
 };

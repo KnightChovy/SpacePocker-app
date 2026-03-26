@@ -1,11 +1,17 @@
 import axiosInstance from '@/lib/axios';
 import type { ApiResponse } from '@/apis/api.types';
-import type { ApiRoom, RoomQueryParams } from '@/types/user/room-api';
+import type {
+  ApiRoom,
+  RoomQueryParams,
+  SearchAvailableRoomsParams,
+  SearchAvailableRoomsResponse,
+} from '@/types/user/room-api';
 
 import type {
   GetRoomAmenitiesServicesResponse,
   GetRoomByIdResponse,
   ListRoomsResponse,
+  SearchAvailableRoomsApiResponse,
 } from '@/types/user/rooms.api.types';
 
 export type {
@@ -15,6 +21,8 @@ export type {
   GetRoomByIdResponse,
   ListRoomsRequest,
   ListRoomsResponse,
+  SearchAvailableRoomsRequest,
+  SearchAvailableRoomsApiResponse,
 } from '@/types/user/rooms.api.types';
 
 const list = async (params?: RoomQueryParams): Promise<ListRoomsResponse> => {
@@ -22,6 +30,15 @@ const list = async (params?: RoomQueryParams): Promise<ListRoomsResponse> => {
     '/rooms',
     { params }
   );
+  return response.data.metadata;
+};
+
+const searchAvailable = async (
+  params: SearchAvailableRoomsParams
+): Promise<SearchAvailableRoomsResponse> => {
+  const response = await axiosInstance.get<
+    ApiResponse<SearchAvailableRoomsApiResponse>
+  >('/rooms/search', { params });
   return response.data.metadata;
 };
 
@@ -43,6 +60,7 @@ const getAmenitiesServices = async (
 
 export const userRoomsApi = {
   list,
+  searchAvailable,
   getById,
   getAmenitiesServices,
 };

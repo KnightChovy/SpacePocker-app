@@ -27,11 +27,8 @@ export default function BookingFooter({ room, onBookPress }: Props) {
             <Text className="text-2xl font-extrabold text-gray-900">
               {room.pricePerHour.toLocaleString('vi-VN')}đ
             </Text>
-            <Text className="text-gray-400 text-sm">/giờ</Text>
+            <Text className="text-gray-700 text-sm">/giờ</Text>
           </View>
-          <Text className="text-xs text-gray-400 mt-0.5">
-            +{room.securityDeposit.toLocaleString('vi-VN')}đ đặt cọc
-          </Text>
         </View>
 
         <TouchableOpacity

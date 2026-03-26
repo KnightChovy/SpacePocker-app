@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Bell, MessageSquare } from 'lucide-react';
 import type {
   BuildingDetail,
   CreateBuildingPayload,
@@ -8,6 +7,7 @@ import type {
   BuildingQueryParams,
 } from '@/types/user/types';
 import AppHeader from '@/components/layouts/AppHeader';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import AddBuildingModal from '@/components/features/manager/buildingManager/AddBuildingModal';
 import EditBuildingModal from '@/components/features/manager/buildingManager/EditBuildingModal';
 import ViewBuildingModal from '@/components/features/manager/buildingManager/ViewBuildingModal';
@@ -17,6 +17,8 @@ import { useGetBuildings } from '@/hooks/manager/buildings/use-get-buildings';
 import { useCreateBuilding } from '@/hooks/manager/buildings/use-create-building';
 import { useDeleteBuilding } from '@/hooks/manager/buildings/use-delete-building';
 import { useUpdateBuilding } from '@/hooks/manager/buildings/use-update-building';
+import { useAuthStore } from '@/stores/auth.store';
+import { getAvatarUrl } from '@/lib/utils';
 
 const LIMIT = 10;
 
@@ -24,11 +26,7 @@ const ManagerBuildingPage = () => {
   const { setSidebarOpen } = useOutletContext<{
     setSidebarOpen: (open: boolean) => void;
   }>();
-
-  const headerActions = [
-    { id: 'notifications', icon: <Bell className="h-5 w-5" />, badge: true },
-    { id: 'messages', icon: <MessageSquare className="h-5 w-5" /> },
-  ];
+  const user = useAuthStore(state => state.user);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCampus, setSelectedCampus] = useState('all');
@@ -44,6 +42,13 @@ const ManagerBuildingPage = () => {
   const [viewingBuilding, setViewingBuilding] = useState<BuildingDetail | null>(
     null
   );
+  const [deleteConfirmState, setDeleteConfirmState] = useState<{
+    isOpen: boolean;
+    buildingId: string | null;
+  }>({
+    isOpen: false,
+    buildingId: null,
+  });
 
   const queryParams = useMemo<BuildingQueryParams>(
     () => ({
@@ -84,12 +89,18 @@ const ManagerBuildingPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this building?'))
-      return;
+    setDeleteConfirmState({ isOpen: true, buildingId: id });
+  };
+
+  const handleConfirmDelete = async () => {
+    const { buildingId } = deleteConfirmState;
+    if (!buildingId) return;
     try {
-      await deleteBuildingMutation.mutateAsync(id);
+      await deleteBuildingMutation.mutateAsync(buildingId);
     } catch (err) {
       console.error('Failed to delete building:', err);
+    } finally {
+      setDeleteConfirmState({ isOpen: false, buildingId: null });
     }
   };
 
@@ -103,11 +114,10 @@ const ManagerBuildingPage = () => {
         title="Building Management"
         subtitle="Manage all buildings, campuses, and facilities."
         onMenuClick={() => setSidebarOpen(true)}
-        actions={headerActions}
         profile={{
-          name: 'Alex Morgan',
-          subtitle: 'Manager',
-          avatarUrl: 'https://picsum.photos/id/64/100/100',
+          name: user?.name || 'Manager',
+          subtitle: user?.role || 'MANAGER',
+          avatarUrl: getAvatarUrl(user?.name, 'Manager'),
           showDropdown: true,
         }}
       />
@@ -161,6 +171,20 @@ const ManagerBuildingPage = () => {
           setViewingBuilding(null);
           setEditingBuilding(building);
         }}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteConfirmState.isOpen}
+        title="Delete Building"
+        message="Are you sure you want to delete this building? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous={true}
+        isLoading={deleteBuildingMutation.isPending}
+        onConfirm={handleConfirmDelete}
+        onCancel={() =>
+          setDeleteConfirmState({ isOpen: false, buildingId: null })
+        }
       />
     </>
   );

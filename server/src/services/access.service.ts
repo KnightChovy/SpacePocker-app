@@ -1,6 +1,5 @@
 import bcrypt from 'bcrypt';
 import { AuthFailureError, BadRequestError } from '../core/error.response';
-
 import crypto from 'crypto';
 import { createTokenPair } from '../auth/authUtils';
 import KeyTokenService from '../services/keyToken.service';
@@ -226,6 +225,7 @@ export default class AccessService {
       const otpHash = await bcrypt.hash(otp, 10);
       const otpExpiresIn = (process.env.PASSWORD_RESET_OTP_EXPIRES_IN ||
         '10m') as SignOptions['expiresIn'];
+
       const otpToken = jwt.sign(
         {
           userId: foundUser.id,
@@ -301,6 +301,7 @@ export default class AccessService {
 
     const resetTokenExpiresIn = (process.env.PASSWORD_RESET_EXPIRES_IN ||
       '15m') as SignOptions['expiresIn'];
+
     const resetToken = jwt.sign(
       {
         userId: payload.userId,

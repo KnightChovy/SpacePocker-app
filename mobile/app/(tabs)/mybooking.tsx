@@ -1,7 +1,6 @@
 import BookingCard from '@/components/booking/BookingCard';
-import BookingStatusTabs from '@/components/booking/BookingStatusTabs';
 import bookingService from '@/services/booking.service';
-import { Booking, BookingStatus } from '@/types/booking.type';
+import { Booking } from '@/types/booking.type';
 import { useIsFocused } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { CalendarCheck } from 'lucide-react-native';
@@ -17,33 +16,27 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function MyBookingScreen() {
   const isFocused = useIsFocused();
-  const [activeTab, setActiveTab] = useState<BookingStatus | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchBookings = useCallback(
-    async (isRefresh = false) => {
-      if (isRefresh) setRefreshing(true);
-      else setLoading(true);
-      try {
-        const res = await bookingService.getMyBookings(
-          activeTab ? { status: activeTab } : undefined
-        );
-        setBookings(res.metadata ?? []);
-      } catch {
-        setBookings([]);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [activeTab]
-  );
+  const fetchBookings = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    try {
+      const res = await bookingService.getMyBookings();
+      setBookings(res.metadata ?? []);
+    } catch {
+      setBookings([]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (isFocused) fetchBookings();
-  }, [isFocused, activeTab]);
+  }, [isFocused, fetchBookings]);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
@@ -59,9 +52,6 @@ export default function MyBookingScreen() {
           Manage all your booking requests
         </Text>
       </View>
-
-      {/* Status filter tabs */}
-      <BookingStatusTabs activeTab={activeTab} onSelect={setActiveTab} />
 
       {/* List */}
       {loading ? (
@@ -91,7 +81,7 @@ export default function MyBookingScreen() {
               onPress={() =>
                 router.push({
                   pathname: '/(modals)/booking-detail' as any,
-                  params: { bookingJson: JSON.stringify(item) },
+                  params: { bookingId: item.id },
                 })
               }
             />

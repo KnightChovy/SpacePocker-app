@@ -17,12 +17,17 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { useCreateFeedback } from '@/hooks/user/feedback/use-create-feedback';
 import { useGetAmenities } from '@/hooks/user/amenities/use-get-amenities';
 import { useGetServiceCategories } from '@/hooks/user/service-categories/use-get-service-categories';
+import { useCheckInBooking } from '@/hooks/user/booking-requests/use-check-in-booking';
+import { useCheckOutBooking } from '@/hooks/user/booking-requests/use-check-out-booking';
+import { useCancelPaidBooking } from '@/hooks/user/booking-requests/use-cancel-paid-booking';
 import { bookingPaymentApi } from '@/apis/booking-payment.api';
 import type { LocalBookingRecord } from '@/stores/bookingDraft.store';
 import { useBookingDraftStore } from '@/stores/bookingDraft.store';
+import { useBookingReviewStore } from '@/stores/bookingReview.store';
 import { formatVND } from '@/lib/utils';
 
 type BookingListProps = {
@@ -30,6 +35,18 @@ type BookingListProps = {
   requests: MyBookingRequest[];
   onCancelRequest?: (requestId: string) => Promise<void> | void;
   isCancelling?: boolean;
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  const maybeAxiosError = error as {
+    response?: {
+      data?: {
+        message?: string;
+      };
+    };
+  };
+
+  return maybeAxiosError?.response?.data?.message ?? fallback;
 };
 
 const BookingList = ({
@@ -40,6 +57,9 @@ const BookingList = ({
 }: BookingListProps) => {
   const amenitiesQuery = useGetAmenities();
   const serviceCategoriesQuery = useGetServiceCategories();
+  const checkInBookingMutation = useCheckInBooking();
+  const checkOutBookingMutation = useCheckOutBooking();
+  const cancelPaidBookingMutation = useCancelPaidBooking();
 
   const localBookingsById = useBookingDraftStore(
     state => state.localBookingsById
@@ -51,6 +71,16 @@ const BookingList = ({
   );
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
+  const [activeBookingActionId, setActiveBookingActionId] = useState<
+    string | null
+  >(null);
+  const [confirmDialogState, setConfirmDialogState] = useState<{
+    isOpen: boolean;
+    requestId: string | null;
+  }>({
+    isOpen: false,
+    requestId: null,
+  });
 
   const selectedRequest = useMemo(() => {
     if (selectedIndex === null) return null;
@@ -62,11 +92,24 @@ const BookingList = ({
     return bookings[selectedIndex] ?? null;
   }, [bookings, selectedIndex]);
 
+  const selectedCancellationReason = useMemo(() => {
+    if (!selectedRequest) return null;
+
+    return (
+      selectedRequest.refund?.reason ??
+      selectedRequest.cancelReason ??
+      selectedRequest.rejectionReason ??
+      selectedRequest.reason ??
+      null
+    );
+  }, [selectedRequest]);
+
   const [rating, setRating] = useState<number>(5);
   const [comment, setComment] = useState<string>('');
-  const [submittedRoomIds, setSubmittedRoomIds] = useState<Set<string>>(
-    () => new Set()
-  );
+
+  const isRoomReviewed = useBookingReviewStore(s => s.isRoomReviewed);
+  const isBookingReviewed = useBookingReviewStore(s => s.isBookingReviewed);
+  const markReviewed = useBookingReviewStore(s => s.markReviewed);
 
   const createFeedback = useCreateFeedback();
 
@@ -225,10 +268,9 @@ const BookingList = ({
         comment: comment.trim() ? comment.trim() : undefined,
       });
 
-      setSubmittedRoomIds(prev => {
-        const next = new Set(prev);
-        next.add(selectedRequest.roomId);
-        return next;
+      markReviewed({
+        roomId: selectedRequest.roomId,
+        bookingRequestId: selectedRequest.id,
       });
       setSheetOpen(false);
     } catch (error: unknown) {
@@ -237,13 +279,99 @@ const BookingList = ({
       };
       const message = axiosError?.response?.data?.message as string | undefined;
       if (message?.toLowerCase?.().includes('already left feedback')) {
-        setSubmittedRoomIds(prev => {
-          const next = new Set(prev);
-          next.add(selectedRequest.roomId);
-          return next;
+        markReviewed({
+          roomId: selectedRequest.roomId,
+          bookingRequestId: selectedRequest.id,
         });
         setSheetOpen(false);
       }
+    }
+  };
+
+  const handleCheckIn = async (request: MyBookingRequest) => {
+    if (request.status !== 'COMPLETED') {
+      toast.error('Check-in requires a paid booking');
+      return;
+    }
+
+    const now = new Date();
+    const startTime = new Date(request.startTime);
+    const earliestCheckIn = new Date(startTime.getTime() - 15 * 60 * 1000);
+    const latestCheckIn = new Date(startTime.getTime() + 30 * 60 * 1000);
+
+    if (now < earliestCheckIn) {
+      toast.error(
+        'You can only check in 15 minutes before booking time starts'
+      );
+      return;
+    }
+
+    if (now > latestCheckIn) {
+      toast.error(
+        'Check-in time has expired (more than 30 minutes after start)'
+      );
+      return;
+    }
+
+    try {
+      setActiveBookingActionId(request.id);
+      await checkInBookingMutation.mutateAsync(request.id);
+      toast.success('Check-in successful');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Check-in failed'));
+    } finally {
+      setActiveBookingActionId(null);
+    }
+  };
+
+  const handleCheckOut = async (request: MyBookingRequest) => {
+    if (request.status !== 'CHECKED_IN') {
+      toast.error('Please check in before check out');
+      return;
+    }
+
+    try {
+      setActiveBookingActionId(request.id);
+      await checkOutBookingMutation.mutateAsync(request.id);
+      toast.success('Check-out successful');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Check-out failed'));
+    } finally {
+      setActiveBookingActionId(null);
+    }
+  };
+
+  const handleCancelPaidBooking = async (request: MyBookingRequest) => {
+    const startTime = new Date(request.startTime);
+    if (new Date() > startTime) {
+      toast.error('Cannot cancel a booking that has already started');
+      return;
+    }
+
+    if (request.status !== 'COMPLETED') {
+      toast.error('This booking cannot be cancelled now');
+      return;
+    }
+
+    setConfirmDialogState({
+      isOpen: true,
+      requestId: request.id,
+    });
+  };
+
+  const handleConfirmCancelPaidBooking = async () => {
+    const { requestId } = confirmDialogState;
+    if (!requestId) return;
+
+    try {
+      setActiveBookingActionId(requestId);
+      await cancelPaidBookingMutation.mutateAsync(requestId);
+      toast.success('Paid booking cancelled');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Cancel paid booking failed'));
+    } finally {
+      setActiveBookingActionId(null);
+      setConfirmDialogState({ isOpen: false, requestId: null });
     }
   };
 
@@ -259,20 +387,112 @@ const BookingList = ({
     <div className="flex flex-col gap-5">
       {bookings.map((booking, idx) => {
         const req = requests[idx];
-        const canWriteFeedback =
-          req?.status === 'COMPLETED' &&
-          !!req?.roomId &&
-          !submittedRoomIds.has(req.roomId);
-        const isFeedbackSubmitted =
-          !!req?.roomId && submittedRoomIds.has(req.roomId);
+        const now = new Date();
+        const startTime = req?.startTime ? new Date(req.startTime) : null;
+        const endTime = req?.endTime ? new Date(req.endTime) : null;
+        // Check-in allowed 15 minutes before start
+        const earliestCheckIn = startTime
+          ? new Date(startTime.getTime() - 15 * 60 * 1000)
+          : null;
+        const isBeforeStart = startTime ? now < startTime : false;
+        const hasReachedBookingTime = earliestCheckIn
+          ? now >= earliestCheckIn
+          : false;
 
-        const canPay = req?.status === 'APPROVED';
-        const isPaid = req?.status === 'COMPLETED';
+        const latestCheckIn = startTime
+          ? new Date(startTime.getTime() + 30 * 60 * 1000)
+          : null;
+        const checkInExpired = latestCheckIn ? now > latestCheckIn : false;
+
+        const reviewed =
+          isBookingReviewed(req?.id) || isRoomReviewed(req?.roomId);
+
+        const isRequestCancelled =
+          req?.status === 'CANCELLED' || req?.status === 'REJECTED';
+        const isPaid =
+          req?.status === 'COMPLETED' || req?.status === 'CHECKED_IN';
+
+        const hasCheckedIn = !!req?.checkInRecord;
+        const hasCheckedOut = !!req?.checkInRecord?.checkedOutAt;
+
+        const canCheckIn =
+          !!req &&
+          req.status === 'COMPLETED' &&
+          !hasCheckedIn &&
+          !isRequestCancelled &&
+          hasReachedBookingTime &&
+          !checkInExpired;
+
+        const canCheckOut =
+          !!req && req.status === 'CHECKED_IN' && !hasCheckedOut;
+
+        const checkInBlockedReasons: string[] = [];
+        if (!canCheckIn) {
+          if (!req) {
+            checkInBlockedReasons.push('Missing booking request data.');
+          } else {
+            if (req.status !== 'COMPLETED' && req.status !== 'CHECKED_IN') {
+              checkInBlockedReasons.push('Booking has not been paid yet.');
+            }
+
+            if (isRequestCancelled) {
+              checkInBlockedReasons.push(
+                'Booking was cancelled or rejected and cannot check in.'
+              );
+            }
+
+            if (
+              req.status === 'CHECKED_IN' ||
+              (hasCheckedIn && !hasCheckedOut)
+            ) {
+              checkInBlockedReasons.push(
+                'Booking is already checked in. Please check out instead.'
+              );
+            }
+
+            if (hasCheckedOut) {
+              checkInBlockedReasons.push('Booking is already checked out.');
+            }
+
+            if (!hasReachedBookingTime) {
+              checkInBlockedReasons.push(
+                'Check-in is only available 15 minutes before booking time starts.'
+              );
+            }
+
+            if (checkInExpired) {
+              checkInBlockedReasons.push(
+                'Check-in time has expired (more than 30 minutes after start).'
+              );
+            }
+          }
+        }
+
+        const isBookingCheckedOut = !!req?.checkInRecord?.checkedOutAt;
+        const isPastEndTime = !!(endTime && now > endTime);
+
+        const isBookingCompleted =
+          req?.status === 'COMPLETED' && (isBookingCheckedOut || isPastEndTime);
+
+        const canWriteFeedback =
+          isBookingCompleted && !!req?.roomId && !reviewed;
+        const isFeedbackSubmitted = !!req?.roomId && reviewed;
+
+        const canPay = req?.status === 'APPROVED' && isBeforeStart;
         const canCancelRequest =
           !!req?.id &&
           req.status !== 'COMPLETED' &&
           req.status !== 'CANCELLED' &&
-          req.status !== 'REJECTED';
+          req.status !== 'REJECTED' &&
+          req.status !== 'CHECKED_IN' &&
+          isBeforeStart;
+
+        const canCancelPaidBooking =
+          !!req &&
+          req.status === 'COMPLETED' &&
+          !isRequestCancelled &&
+          !hasCheckedIn &&
+          isBeforeStart;
 
         return (
           <div
@@ -292,8 +512,18 @@ const BookingList = ({
                     <span className="text-xs font-mono font-bold text-text-sub-light dark:text-text-sub-dark bg-background-light dark:bg-background-dark px-2 py-1 rounded-md border border-border-light dark:border-border-dark">
                       {booking.id}
                     </span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-                      {booking.status}
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${
+                        req?.status === 'CHECKED_IN'
+                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                          : booking.status === 'Completed'
+                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                            : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700'
+                      }`}
+                    >
+                      {req?.status === 'CHECKED_IN'
+                        ? 'Checked In'
+                        : booking.status}
                     </span>
                   </div>
                   <h3 className="text-lg md:text-xl font-bold mb-1">
@@ -355,6 +585,54 @@ const BookingList = ({
                   </button>
                 ) : null}
 
+                {canCancelPaidBooking ? (
+                  <button
+                    type="button"
+                    onClick={() => req && handleCancelPaidBooking(req)}
+                    disabled={cancelPaidBookingMutation.isPending}
+                    className="px-4 py-2 rounded-xl text-sm font-bold border border-red-200 text-red-600 hover:bg-red-50 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {cancelPaidBookingMutation.isPending &&
+                    activeBookingActionId === req.id
+                      ? 'Cancelling...'
+                      : 'Cancel Paid Booking'}
+                  </button>
+                ) : null}
+
+                {canCheckIn ? (
+                  <button
+                    type="button"
+                    onClick={() => req && handleCheckIn(req)}
+                    disabled={
+                      checkInBookingMutation.isPending ||
+                      checkOutBookingMutation.isPending
+                    }
+                    className="px-4 py-2 rounded-xl text-sm font-bold border border-primary text-primary hover:bg-primary/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {checkInBookingMutation.isPending &&
+                    activeBookingActionId === req.id
+                      ? 'Checking in...'
+                      : 'Check In'}
+                  </button>
+                ) : null}
+
+                {canCheckOut ? (
+                  <button
+                    type="button"
+                    onClick={() => req && handleCheckOut(req)}
+                    disabled={
+                      checkOutBookingMutation.isPending ||
+                      checkInBookingMutation.isPending
+                    }
+                    className="px-4 py-2 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/90 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {checkOutBookingMutation.isPending &&
+                    activeBookingActionId === req.id
+                      ? 'Checking out...'
+                      : 'Check Out'}
+                  </button>
+                ) : null}
+
                 {canPay ? (
                   <button
                     onClick={() => openPay(idx)}
@@ -362,12 +640,15 @@ const BookingList = ({
                   >
                     <CreditCard className="h-5 w-5" /> Pay
                   </button>
-                ) : isPaid ? (
+                ) : isPaid &&
+                  !canWriteFeedback &&
+                  !canCheckIn &&
+                  !canCheckOut ? (
                   <button
                     className="px-5 py-2 rounded-xl text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default flex items-center gap-2 ml-auto"
                     disabled
                   >
-                    <CircleCheckBig className="h-5 w-5" /> Paid
+                    <CircleCheckBig className="h-5 w-5 text-emerald-600" /> Paid
                   </button>
                 ) : null}
 
@@ -389,6 +670,19 @@ const BookingList = ({
                   </button>
                 ) : null}
               </div>
+
+              {checkInBlockedReasons.length > 0 && !canCheckOut ? (
+                <div className="mt-3 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark px-3 py-2">
+                  <div className="text-xs font-semibold text-text-main-light dark:text-text-main-dark mb-1">
+                    Cannot check in yet:
+                  </div>
+                  <ul className="list-disc pl-4 space-y-1 text-xs text-text-sub-light dark:text-text-sub-dark">
+                    {checkInBlockedReasons.map(reason => (
+                      <li key={reason}>{reason}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
           </div>
         );
@@ -455,6 +749,14 @@ const BookingList = ({
                           {selectedBooking?.status ?? selectedRequest.status}
                         </span>
                       </div>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-border-light dark:border-border-dark">
+                        <span className="text-text-sub-light dark:text-text-sub-dark font-medium">
+                          Total Price
+                        </span>
+                        <span className="font-bold text-text-main-light dark:text-text-main-dark text-lg text-primary">
+                          {formatVND(pricing.total)}
+                        </span>
+                      </div>
                     </div>
 
                     <div>
@@ -463,6 +765,19 @@ const BookingList = ({
                         {selectedRequest.purpose || '—'}
                       </div>
                     </div>
+
+                    {(selectedRequest.status === 'CANCELLED' ||
+                      selectedRequest.status === 'REJECTED') &&
+                    selectedCancellationReason ? (
+                      <div>
+                        <div className="text-xs font-semibold mb-1">
+                          Cancellation reason
+                        </div>
+                        <div className="rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark p-3 text-text-sub-light dark:text-text-sub-dark whitespace-pre-wrap wrap-break-word">
+                          {selectedCancellationReason}
+                        </div>
+                      </div>
+                    ) : null}
 
                     <div>
                       <div className="text-xs font-semibold mb-1">
@@ -700,6 +1015,20 @@ const BookingList = ({
           )}
         </SheetContent>
       </Sheet>
+
+      <ConfirmDialog
+        isOpen={confirmDialogState.isOpen}
+        title="Cancel Paid Booking"
+        message="Cancel this paid booking? You may lose your deposit and receive an email notification."
+        confirmText="Cancel Booking"
+        cancelText="Keep Booking"
+        isDangerous={true}
+        isLoading={activeBookingActionId === confirmDialogState.requestId}
+        onConfirm={handleConfirmCancelPaidBooking}
+        onCancel={() =>
+          setConfirmDialogState({ isOpen: false, requestId: null })
+        }
+      />
     </div>
   );
 };

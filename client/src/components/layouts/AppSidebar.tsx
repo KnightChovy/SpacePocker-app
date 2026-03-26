@@ -103,34 +103,34 @@ function SidebarContent({
   const navigate = useNavigate();
 
   return (
-    <ScrollArea className="h-full flex flex-col">
-      <div className="flex flex-col h-full p-4">
+    <div className="flex h-full flex-col p-4">
+      <div
+        className="flex gap-3 px-2 py-4 mb-6 cursor-pointer"
+        onClick={() => navigate('/')}
+      >
         <div
-          className="flex gap-3 px-2 py-4 mb-6 cursor-pointer"
-          onClick={() => navigate('/')}
+          className={cn(
+            'aspect-square rounded-xl h-10 w-10 flex items-center justify-center text-white shadow-lg',
+            brandIconBg,
+            brandIconBg.includes('primary') && 'shadow-primary/30'
+          )}
         >
-          <div
-            className={cn(
-              'aspect-square rounded-xl h-10 w-10 flex items-center justify-center text-white shadow-lg',
-              brandIconBg,
-              brandIconBg.includes('primary') && 'shadow-primary/30'
-            )}
-          >
-            {brandIcon}
-          </div>
-          <div className="flex flex-col justify-center">
-            <h1 className="text-slate-900 dark:text-text-main-dark text-base font-bold leading-tight tracking-tight">
-              {brandName}
-            </h1>
-            {brandSubtitle && (
-              <p className="text-slate-500 dark:text-text-sub-dark text-xs font-medium">
-                {brandSubtitle}
-              </p>
-            )}
-          </div>
+          {brandIcon}
         </div>
+        <div className="flex flex-col justify-center">
+          <h1 className="text-slate-900 dark:text-text-main-dark text-base font-bold leading-tight tracking-tight">
+            {brandName}
+          </h1>
+          {brandSubtitle && (
+            <p className="text-slate-500 dark:text-text-sub-dark text-xs font-medium">
+              {brandSubtitle}
+            </p>
+          )}
+        </div>
+      </div>
 
-        <nav className="flex flex-col gap-2 flex-1">
+      <ScrollArea className="min-h-0 flex-1">
+        <nav className="flex flex-col gap-2 pr-1">
           {menuSections.map((section, sectionIdx) => (
             <div key={sectionIdx} className="mb-2">
               {section.title && (
@@ -176,75 +176,75 @@ function SidebarContent({
             </div>
           ))}
         </nav>
+      </ScrollArea>
 
-        {footerCards.length > 0 && (
-          <div className="mt-auto space-y-4">
-            {footerCards.map((card, idx) => {
-              if (card.renderCustom) {
-                return <div key={idx}>{card.renderCustom()}</div>;
-              }
+      {footerCards.length > 0 && (
+        <div className="mt-4 space-y-4">
+          {footerCards.map((card, idx) => {
+            if (card.renderCustom) {
+              return <div key={idx}>{card.renderCustom()}</div>;
+            }
 
-              if (card.variant === 'action') {
-                return (
-                  <div
-                    key={idx}
-                    className="bg-linear-to-br from-[#0e0d1b] to-[#1c1e31] rounded-2xl p-5 text-white shadow-lg relative overflow-hidden group cursor-pointer"
-                    onClick={card.onClick}
-                  >
-                    <div className="absolute top-0 right-0 h-24 w-24 bg-primary blur-2xl opacity-40 group-hover:opacity-60 transition-opacity" />
-                    <div className="relative z-10">
-                      {card.icon && (
-                        <div className="bg-white/10 w-fit p-2 rounded-lg mb-3 backdrop-blur-sm">
-                          {card.icon}
-                        </div>
-                      )}
-                      <h4 className="font-bold text-sm mb-1">{card.title}</h4>
-                      <p className="text-xs text-slate-300 mb-3">
-                        {card.description}
-                      </p>
-                      {card.buttonText && (
-                        <span className="text-xs font-bold text-primary-light flex items-center gap-1 group-hover:gap-2 transition-all">
-                          {card.buttonText} <span className="text-sm">→</span>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              }
-
+            if (card.variant === 'action') {
               return (
                 <div
                   key={idx}
-                  className="bg-linear-to-br from-primary/10 to-primary/5 rounded-2xl p-4 border border-primary/10 dark:border-primary/20"
+                  className="bg-linear-to-br from-[#0e0d1b] to-[#1c1e31] rounded-2xl p-5 text-white shadow-lg relative overflow-hidden group cursor-pointer"
                   onClick={card.onClick}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="absolute top-0 right-0 h-24 w-24 bg-primary blur-2xl opacity-40 group-hover:opacity-60 transition-opacity" />
+                  <div className="relative z-10">
                     {card.icon && (
-                      <div className="bg-white dark:bg-surface-dark p-2 rounded-lg shadow-sm text-primary">
+                      <div className="bg-white/10 w-fit p-2 rounded-lg mb-3 backdrop-blur-sm">
                         {card.icon}
                       </div>
                     )}
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-text-main-dark">
-                        {card.title}
-                      </h4>
-                      <p className="text-xs text-slate-500 dark:text-text-sub-dark mt-1">
-                        {card.description}
-                      </p>
-                      {card.buttonText && (
-                        <button className="text-xs font-bold text-primary hover:text-primary-dark transition-colors mt-2">
-                          {card.buttonText}
-                        </button>
-                      )}
-                    </div>
+                    <h4 className="font-bold text-sm mb-1">{card.title}</h4>
+                    <p className="text-xs text-slate-300 mb-3">
+                      {card.description}
+                    </p>
+                    {card.buttonText && (
+                      <span className="text-xs font-bold text-primary-light flex items-center gap-1 group-hover:gap-2 transition-all">
+                        {card.buttonText} <span className="text-sm">→</span>
+                      </span>
+                    )}
                   </div>
                 </div>
               );
-            })}
-          </div>
-        )}
-      </div>
-    </ScrollArea>
+            }
+
+            return (
+              <div
+                key={idx}
+                className="bg-linear-to-br from-primary/10 to-primary/5 rounded-2xl p-4 border border-primary/10 dark:border-primary/20"
+                onClick={card.onClick}
+              >
+                <div className="flex items-start gap-3">
+                  {card.icon && (
+                    <div className="bg-white dark:bg-surface-dark p-2 rounded-lg shadow-sm text-primary">
+                      {card.icon}
+                    </div>
+                  )}
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-text-main-dark">
+                      {card.title}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-text-sub-dark mt-1">
+                      {card.description}
+                    </p>
+                    {card.buttonText && (
+                      <button className="text-xs font-bold text-primary hover:text-primary-dark transition-colors mt-2">
+                        {card.buttonText}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 

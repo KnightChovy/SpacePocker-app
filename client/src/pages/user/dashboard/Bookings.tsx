@@ -6,6 +6,7 @@ import {
 } from 'react-router-dom';
 import { Search, Plus, CircleCheckBig, CircleAlert, X } from 'lucide-react';
 import AppHeader from '@/components/layouts/AppHeader';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAvatarUrl } from '@/lib/utils';
 import FilterButton from '@/components/features/user/bookings/FilterButton';
@@ -74,6 +75,8 @@ const mapStatusToUserLabel = (status: BookingRequestStatus) => {
       return 'Awaiting Payment' as const;
     case 'COMPLETED':
       return 'Completed' as const;
+    case 'CHECKED_IN':
+      return 'Checked In' as const;
     case 'CANCELLED':
       return 'Cancelled' as const;
     case 'REJECTED':
@@ -140,6 +143,13 @@ const Bookings = () => {
   const [dismissedPaymentToken, setDismissedPaymentToken] = useState<
     string | null
   >(null);
+  const [cancelConfirmState, setCancelConfirmState] = useState<{
+    isOpen: boolean;
+    bookingRequestId: string | null;
+  }>({
+    isOpen: false,
+    bookingRequestId: null,
+  });
 
   const paymentStatusParam = searchParams.get('paymentStatus');
   const bookingRequestIdParam =
@@ -350,12 +360,14 @@ const Bookings = () => {
 
   const handleCancelBookingRequest = async (bookingRequestId: string) => {
     if (!bookingRequestId) return;
+    setCancelConfirmState({ isOpen: true, bookingRequestId });
+  };
 
-    if (!window.confirm('Cancel this booking request?')) {
-      return;
-    }
-
+  const handleConfirmCancel = async () => {
+    const { bookingRequestId } = cancelConfirmState;
+    if (!bookingRequestId) return;
     await cancelMyBookingRequestMutation.mutateAsync(bookingRequestId);
+    setCancelConfirmState({ isOpen: false, bookingRequestId: null });
   };
 
   const headerActions = [
@@ -598,6 +610,20 @@ const Bookings = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={cancelConfirmState.isOpen}
+        title="Cancel Booking Request"
+        message="Are you sure you want to cancel this booking request?"
+        confirmText="Yes, Cancel"
+        cancelText="Keep Booking"
+        isDangerous={true}
+        isLoading={cancelMyBookingRequestMutation.isPending}
+        onConfirm={handleConfirmCancel}
+        onCancel={() =>
+          setCancelConfirmState({ isOpen: false, bookingRequestId: null })
+        }
+      />
     </>
   );
 };
